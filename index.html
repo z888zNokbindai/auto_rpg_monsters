@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Abyss Grimoire V21 Scroll Fix</title>
+  <meta name="theme-color" content="#080407" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app" class="app-shell"></div>
+
+  <div id="toastHost" class="toast-host"></div>
+
+  <div id="battleOverlay" class="battle-overlay hidden">
+    <div class="battle-stage">
+      <div class="battle-topline">
+        <div>
+          <div class="tiny-label">BATTLE</div>
+          <h2 id="battleTitle">Stage</h2>
+        </div>
+        <div class="speed-box">
+          <button class="chip-btn slow-read" data-speed="0.75">อ่านช้า</button>
+          <button class="chip-btn active" data-speed="1">ปกติ</button>
+          <button class="chip-btn" data-speed="2">เร็ว</button>
+          <button class="chip-btn farm-speed" data-speed="4">ฟาร์ม x4</button>
+          <button class="chip-btn farm-speed" data-speed="8">ฟาร์ม x8</button>
+          <button id="stopAutoBtn" class="chip-btn stop-auto hidden">หยุด Auto</button>
+        </div>
+      </div>
+      <div id="pressTurnBar" class="press-turn-bar"><span>Press Turn</span><b>-</b></div>
+
+      <div class="battle-board">
+        <section>
+          <div class="field-title enemy-title">ศัตรู</div>
+          <div id="enemyField" class="combat-field"></div>
+        </section>
+        <section>
+          <div class="field-title ally-title">ทีมเรา</div>
+          <div id="allyField" class="combat-field"></div>
+        </section>
+      </div>
+
+      <div id="eventPopup" class="event-popup">
+        <div class="event-icon">⚔️</div>
+        <div>
+          <div id="eventTitle" class="event-title">เริ่มต่อสู้</div>
+          <div id="eventText" class="event-text">เริ่มต่อสู้...</div>
+        </div>
+      </div>
+
+      <div class="battle-footer">
+        <div class="progress-rail"><div id="battleProgress" class="progress-fill"></div></div>
+        <div id="battleLog" class="battle-log"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/battle.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
