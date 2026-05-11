@@ -7,6 +7,7 @@ window.UI = (() => {
   let battleSpeed = 1;
   let farmRepeatRun = false;
   let battleWidgetExpanded = false;
+  let lastBrowseScreen = 'home';
 
   function h(str){
     return String(str ?? '').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -21,6 +22,7 @@ window.UI = (() => {
     setTimeout(()=>el.remove(), 2600);
   }
   function setScreen(screen){
+    if(screen !== 'battle') lastBrowseScreen = screen;
     S().state.screen = screen;
     if(battleRunning && screen !== 'battle') battleWidgetExpanded = false;
     if(screen === 'battle') battleWidgetExpanded = true;
@@ -46,7 +48,7 @@ window.UI = (() => {
     const expandBtn = document.getElementById('expandBattleBtn');
     if(expandBtn) expandBtn.classList.toggle('hidden', !isCollapsedDock);
     const minimizeBtn = document.getElementById('minimizeBattleBtn');
-    if(minimizeBtn) minimizeBtn.classList.toggle('hidden', !isExpandedDock);
+    if(minimizeBtn) minimizeBtn.classList.toggle('hidden', !(isExpandedDock || (battleRunning && !isDock)));
     const browseNote = document.getElementById('battleBrowseNote');
     if(browseNote) browseNote.classList.toggle('hidden', !isExpandedDock);
   }
@@ -59,6 +61,20 @@ window.UI = (() => {
     });
   }
 
+  function minimizeBattleToDock(){
+    if(!battleRunning) return;
+    battleWidgetExpanded = false;
+    if(currentScreen() === 'battle'){
+      const target = lastBrowseScreen && lastBrowseScreen !== 'battle' ? lastBrowseScreen : 'home';
+      S().state.screen = target;
+      S().save();
+      render();
+      scrollGameToTop();
+    } else {
+      syncBattleOverlayMode();
+    }
+  }
+
   function hud(){
     const s = S().state;
     return `
@@ -66,7 +82,7 @@ window.UI = (() => {
         <div class="brand-row">
           <div class="logo">
             <div class="logo-mark">🩸</div>
-            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V27</small></div>
+            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V28</small></div>
           </div>
           <button class="btn small ghost" data-action="save">Save</button>
         </div>
@@ -724,7 +740,7 @@ window.UI = (() => {
   function manualScreen(){
     return `
       <div class="screen manual-screen">
-        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V26 Background Battle: ต่อสู้ค้างไว้แล้วกดดูหน้าอื่นได้</p></div></div>
+        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V28 Mini Battle: กดปุ่มย่อเพื่อเก็บไฟต์เป็นกล่องเล็ก แล้วไปดูหน้าอื่นได้</p></div></div>
         <section class="panel manual-hero">
           <div class="section-title"><h3>เป้าหมายใหม่</h3><small>Endless Loop ถึงด่าน 3000</small></div>
           <p class="muted">ด่านจะสร้างต่อเนื่องและยากขึ้นเรื่อย ๆ จนถึง <b class="gold">ด่าน 3000</b> ถ้าติดด่าน ให้ฟาร์มด่านที่ผ่านได้ อัปเลเวล เปิดกาชา ผสมมอนสเตอร์ และ Rebirth เพื่อเพิ่มพลังถาวร</p>
@@ -1141,7 +1157,7 @@ window.UI = (() => {
     const expandBtn = document.getElementById('expandBattleBtn');
     if(expandBtn) expandBtn.onclick = (e) => { e.stopPropagation(); battleWidgetExpanded = true; syncBattleOverlayMode(); };
     const minimizeBtn = document.getElementById('minimizeBattleBtn');
-    if(minimizeBtn) minimizeBtn.onclick = (e) => { e.stopPropagation(); battleWidgetExpanded = false; syncBattleOverlayMode(); };
+    if(minimizeBtn) minimizeBtn.onclick = (e) => { e.stopPropagation(); minimizeBattleToDock(); };
     const stageBox = overlay.querySelector('.battle-stage');
     if(stageBox) stageBox.onclick = (e) => {
       if(e.target && e.target.closest && e.target.closest('button')) return;

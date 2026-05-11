@@ -1,12 +1,12 @@
 {
-  "name": "Abyss Grimoire V27 Background Battle",
-  "short_name": "Abyss V27",
+  "name": "Abyss Grimoire V29 Readable Theme",
+  "short_name": "Abyss V29",
   "description": "Dark Fantasy Text RPG Auto Battle + Gacha + Fusion + Rebirth",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#080407",
-  "theme_color": "#080407",
+  "background_color": "#111827",
+  "theme_color": "#111827",
   "orientation": "portrait",
   "icons": [
     {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
