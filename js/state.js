@@ -1,10 +1,11 @@
 window.GameState = (() => {
-  const KEY = 'abyss_grimoire_v39_save';
-  const OLD_KEYS = ['abyss_grimoire_v38_save','abyss_grimoire_v37_save','abyss_grimoire_v36_save','abyss_grimoire_v35_save','abyss_grimoire_v34_save','abyss_grimoire_v33_save','abyss_grimoire_v32_save','abyss_grimoire_v31_save','abyss_grimoire_v30_save','abyss_grimoire_v28_save','abyss_grimoire_v27_save','abyss_grimoire_v26_save','abyss_grimoire_v25_save','abyss_grimoire_v24_save','abyss_grimoire_v23_save','abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
+  const KEY = 'abyss_grimoire_v42_save';
+  const OLD_KEYS = ['abyss_grimoire_v41_save','abyss_grimoire_v40_save','abyss_grimoire_v39_save','abyss_grimoire_v38_save','abyss_grimoire_v37_save','abyss_grimoire_v36_save','abyss_grimoire_v35_save','abyss_grimoire_v34_save','abyss_grimoire_v33_save','abyss_grimoire_v32_save','abyss_grimoire_v31_save','abyss_grimoire_v30_save','abyss_grimoire_v28_save','abyss_grimoire_v27_save','abyss_grimoire_v26_save','abyss_grimoire_v25_save','abyss_grimoire_v24_save','abyss_grimoire_v23_save','abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
   const G = () => window.GameData;
   let state = null;
 
   function todayKey(){ return new Date().toISOString().slice(0,10); }
+  function dayNumber(key){ if(!key) return 0; return Math.floor(new Date(key+'T00:00:00Z').getTime()/86400000); }
   function uid(){ return 'i' + Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4); }
   function clone(x){ return JSON.parse(JSON.stringify(x)); }
   function encodeText(str){
@@ -20,19 +21,19 @@ window.GameState = (() => {
     const starterPool = G().heroes.filter(h => ['Common','Rare'].includes(h.rarity));
     const starter = starterPool[Math.floor(Math.random() * starterPool.length)] || G().heroes[0];
     const s = {
-      version:39,
+      version:42,
       screen:'home',
-      resources:{gold:420,gems:180,tickets:1,dust:60},
+      resources:{gold:420,gems:180,tickets:1,dust:60,ssrShards:0},
       campaign:{selected:1,unlocked:1,highestCleared:0,clears:{}},
       roster:{},
       team:[starter.id,null,null,null,null],
       inventory:[],
       gacha:{rolls:0,rarePity:0,epicPity:0,legendPity:0,lastResults:[]},
-      daily:{date:todayKey(),wins:0,gachas:0,upgrades:0,bossWins:0,claimed:{}},
-      loginReward:{date:null,tickets:0,claimedAt:null},
+      daily:{date:todayKey(),wins:0,gachas:0,upgrades:0,bossWins:0,dungeonRuns:{},claimed:{}},
+      loginReward:{date:null,tickets:0,claimedAt:null,streak:0,day:0,reward:{}},
       stats:{totalWins:0,totalLosses:0,totalGachas:0,totalUpgrades:0,totalFusions:0,totalRebirths:0,totalShopBuys:0},
       idle:{last:now},
-      settings:{battleSpeed:1,heroFilter:'all',heroSort:'power',heroSearch:'',selectedHero:null,farmStop:'lose'},
+      settings:{battleSpeed:1,heroFilter:'all',heroSort:'power',heroSearch:'',selectedHero:null,farmStop:'lose',logMode:'full'},
       teamPresets:{},
       favorites:{},
       codex:{seen:{}},
@@ -51,17 +52,25 @@ window.GameState = (() => {
 
   function ensureDaily(){
     if(!state.daily || state.daily.date !== todayKey()){
-      state.daily = {date:todayKey(),wins:0,gachas:0,upgrades:0,bossWins:0,claimed:{}};
+      state.daily = {date:todayKey(),wins:0,gachas:0,upgrades:0,bossWins:0,dungeonRuns:{},claimed:{}};
     }
+    state.daily.dungeonRuns ||= {};
   }
 
   function grantDailyLoginReward(){
-    state.loginReward ||= {date:null,tickets:0,claimedAt:null};
+    state.loginReward ||= {date:null,tickets:0,claimedAt:null,streak:0,day:0,reward:{}};
     const today = todayKey();
     if(state.loginReward.date !== today){
-      state.resources ||= {gold:0,gems:0,tickets:0,dust:0};
-      state.resources.tickets = Number(state.resources.tickets || 0) + 200;
-      state.loginReward = {date:today,tickets:200,claimedAt:Date.now()};
+      state.resources ||= {gold:0,gems:0,tickets:0,dust:0,ssrShards:0};
+      const prevDay = dayNumber(state.loginReward.date);
+      const diff = prevDay ? (dayNumber(today) - prevDay) : 99;
+      const streak = diff === 1 ? Number(state.loginReward.streak || 0) + 1 : 1;
+      const day = ((streak - 1) % 7) + 1;
+      const table = G().loginRewards7 || [{day:1,reward:{tickets:200}}];
+      const row = table.find(x=>x.day===day) || table[0];
+      const reward = clone(row.reward || {tickets:200});
+      applyRewards(reward);
+      state.loginReward = {date:today,tickets:reward.tickets||0,claimedAt:Date.now(),streak,day,title:row.title,reward};
     }
     return state.loginReward;
   }
@@ -85,7 +94,8 @@ window.GameState = (() => {
     if(Number(state.version || 0) < 30){
       state.version = 34;
     }
-    state.resources ||= {gold:0,gems:0,tickets:0,dust:0};
+    state.resources ||= {gold:0,gems:0,tickets:0,dust:0,ssrShards:0};
+    state.resources.ssrShards = Number(state.resources.ssrShards || 0);
     state.campaign ||= {selected:1,unlocked:1,highestCleared:0,clears:{}};
     state.roster ||= {};
     state.team ||= [];
@@ -94,7 +104,8 @@ window.GameState = (() => {
     state.gacha.rarePity = Number(state.gacha.rarePity || 0);
     state.gacha.epicPity = Number(state.gacha.epicPity || 0);
     state.gacha.legendPity = Number(state.gacha.legendPity || 0);
-    state.daily ||= {date:todayKey(),wins:0,gachas:0,upgrades:0,bossWins:0,claimed:{}};
+    state.daily ||= {date:todayKey(),wins:0,gachas:0,upgrades:0,bossWins:0,dungeonRuns:{},claimed:{}};
+    state.daily.dungeonRuns ||= {};
     state.stats ||= {totalWins:0,totalLosses:0,totalGachas:0,totalUpgrades:0};
     state.stats.totalFusions = Number(state.stats.totalFusions || 0);
     state.stats.totalRebirths = Number(state.stats.totalRebirths || 0);
@@ -106,6 +117,7 @@ window.GameState = (() => {
       if(state.teamPresets[k]) state.teamPresets[k] = state.teamPresets[k].slice(0,5).map(id=>state.roster?.[id] ? id : null);
     }
     if(![0.5,0.75,1,2,4,8,12,20,50].includes(Number(state.settings.battleSpeed))) state.settings.battleSpeed = 1;
+    if(!['full','skill','result','hidden'].includes(state.settings.logMode)) state.settings.logMode = 'full';
     if(!['lose','ticket','levelcap','raredrop'].includes(state.settings.farmStop)) state.settings.farmStop = 'lose';
     state.settings.heroFilter ||= 'all';
     state.settings.heroSort ||= 'power';
@@ -122,7 +134,7 @@ window.GameState = (() => {
     state.achievements ||= {claimed:{}}; state.achievements.claimed ||= {};
     state.codexRewards ||= {claimed:{}}; state.codexRewards.claimed ||= {};
     state.shop ||= {buys:{}}; state.shop.buys ||= {};
-    state.loginReward ||= {date:null,tickets:0,claimedAt:null};
+    state.loginReward ||= {date:null,tickets:0,claimedAt:null,streak:0,day:0,reward:{}};
     Object.keys(state.roster || {}).forEach(id=>{ if(!state.codex.seen[id]) state.codex.seen[id] = Date.now(); });
     state.lastBattle ||= null;
     state.fusion ||= {selected:[],last:null};
@@ -131,6 +143,7 @@ window.GameState = (() => {
       const usedFree = Math.max(0, state.starter.history.length - 1);
       state.starter.freeRollsLeft = Math.max(Number(state.starter.freeRollsLeft||0), Math.max(0, 5 - usedFree));
     }
+    (state.inventory||[]).forEach(item=>{ if(!item.set){ const sets=Object.keys(G().gearSets||{}); item.set = sets[Math.floor(Math.random()*sets.length)] || 'Grave'; } });
     Object.values(state.roster || {}).forEach(inst=>{
       inst.level = Math.max(1, Math.min(maxHeroLevel(), Number(inst.level || 1))); // V35 max Lv.100
       inst.exp = Math.max(0, Number(inst.exp || 0));
@@ -142,7 +155,7 @@ window.GameState = (() => {
     });
     state.team = (state.team||[]).slice(0,5); while(state.team.length<5) state.team.push(null);
     state.team = state.team.map(id => state.roster && state.roster[id] ? id : null);
-    state.version = 39;
+    state.version = 42;
     state.fusion.selected = (state.fusion.selected||[]).filter(id=>state.roster && state.roster[id] && !state.team.includes(id) && !state.favorites[id]);
     ensureDaily();
     grantDailyLoginReward();
@@ -195,7 +208,7 @@ window.GameState = (() => {
     normalize();
     const payload = {
       game:'Abyss Grimoire',
-      version:39,
+      version:42,
       exportedAt:new Date().toISOString(),
       save:state
     };
@@ -219,7 +232,7 @@ window.GameState = (() => {
       }
       state = incoming;
       backupNow();
-      state.version = 39;
+      state.version = 42;
       normalize();
       save();
       return {ok:true,msg:'นำเข้าเซฟสำเร็จ'};
@@ -245,7 +258,9 @@ window.GameState = (() => {
     };
     const base = {weapon:16,armor:12,charm:90,boots:5}[type] || 10;
     const value = Math.round((base + level*3) * eqRareDef(rarity).mult);
-    return {uid:uid(),type,rarity,level,value,name:names[type][Math.floor(Math.random()*names[type].length)]};
+    const sets = Object.keys(G().gearSets || {});
+    const set = sets[Math.floor(Math.random()*sets.length)] || 'Grave';
+    return {uid:uid(),type,rarity,level,value,name:names[type][Math.floor(Math.random()*names[type].length)],set};
   }
 
   function randomEquipment(stageId=1, boss=false){
@@ -260,34 +275,105 @@ window.GameState = (() => {
 
   function getEquipment(uid){ return state.inventory.find(i=>i.uid===uid); }
 
-  function heroStats(id){
-    const inst = state.roster[id];
-    const def = heroDef(id);
+  function rebirthMultiplier(rebirth=0){
+    const r = Number(rebirth || 0);
+    return 1 + r*0.18 + Math.pow(r,1.12)*0.018;
+  }
+
+  function heroStatsFrom(def, inst){
     if(!inst || !def) return null;
     const rm = rarityDef(def.rarity).mult;
     const rebirth = Number(inst.rebirth || 0);
-    const starM = 1 + (inst.stars-1)*0.22;
-    const levelM = 1 + (inst.level-1)*0.035;
+    const starM = 1 + (Number(inst.stars || 1)-1)*0.22;
+    const level = Math.max(1, Number(inst.level || 1));
+    const levelM = 1 + (level-1)*0.035;
     // Rebirth เป็นสแต็กถาวร ยิ่งเกิดใหม่หลายรอบโบนัสยิ่งโตแบบค่อยเป็นค่อยไป
-    const rebirthM = 1 + rebirth*0.18 + Math.pow(rebirth,1.12)*0.018;
+    const rebirthM = rebirthMultiplier(rebirth);
     const stats = {
       hp: Math.round(def.base.hp * rm * starM * levelM * rebirthM),
       atk: Math.round(def.base.atk * rm * starM * levelM * rebirthM),
       def: Math.round(def.base.def * rm * starM * levelM * rebirthM),
-      spd: Math.round(def.base.spd * (1 + (inst.level-1)*0.004) + (inst.stars-1)*2 + rebirth*1.5),
+      spd: Math.round(def.base.spd * (1 + (level-1)*0.004) + (Number(inst.stars || 1)-1)*2 + rebirth*1.5),
     };
+    const setCounts = {};
     for(const slot of Object.keys(inst.equipped||{})){
       const item = getEquipment(inst.equipped[slot]);
       if(!item) continue;
       const stat = eqTypeDef(item.type).stat;
       stats[stat] += item.value;
+      if(item.set) setCounts[item.set] = (setCounts[item.set]||0) + 1;
     }
-    stats.power = Math.round(stats.hp/5 + stats.atk*4 + stats.def*3 + stats.spd*2 + inst.stars*90 + inst.level*13 + (inst.rebirth||0)*900);
+    for(const [setName,count] of Object.entries(setCounts)){
+      const set = G().gearSets?.[setName];
+      if(!set) continue;
+      const bonus = count >= 4 ? set.stats4 : count >= 2 ? set.stats2 : null;
+      if(!bonus) continue;
+      for(const [k,m] of Object.entries(bonus)) stats[k] = Math.round(stats[k] * m);
+    }
+    stats.power = Math.round(stats.hp/5 + stats.atk*4 + stats.def*3 + stats.spd*2 + Number(inst.stars || 1)*90 + level*13 + (inst.rebirth||0)*900);
     return stats;
   }
 
+  function heroStats(id){
+    const inst = state.roster[id];
+    const def = heroDef(id);
+    return heroStatsFrom(def, inst);
+  }
+
+  function previewRebirth(id){
+    const inst = state.roster[id];
+    const def = heroDef(id);
+    if(!inst || !def) return null;
+    const max = maxHeroLevel();
+    const currentR = Number(inst.rebirth || 0);
+    const nextR = currentR + 1;
+    const beforeNow = heroStatsFrom(def, inst);
+    const beforeAtCap = heroStatsFrom(def, {...inst, level:max, exp:0, rebirth:currentR});
+    const afterImmediate = heroStatsFrom(def, {...inst, level:1, exp:0, rebirth:nextR});
+    const afterAtCap = heroStatsFrom(def, {...inst, level:max, exp:0, rebirth:nextR});
+    const currentBonus = Math.round((rebirthMultiplier(currentR)-1)*1000)/10;
+    const nextBonus = Math.round((rebirthMultiplier(nextR)-1)*1000)/10;
+    return {
+      id,
+      name:def.name,
+      can: Number(inst.level||1) >= max,
+      currentRebirth: currentR,
+      nextRebirth: nextR,
+      currentBonus,
+      nextBonus,
+      bonusGain: Math.round((nextBonus-currentBonus)*10)/10,
+      cost: rebirthCost(inst),
+      beforeNow,
+      beforeAtCap,
+      afterImmediate,
+      afterAtCap,
+    };
+  }
+
+  function formationBonus(ids=state.team){
+    ids = (ids || []).filter(Boolean).filter(id=>state.roster[id]);
+    const defs = ids.map(heroDef).filter(Boolean);
+    const roleCount = {}, elemCount = {};
+    defs.forEach(d=>{ roleCount[d.role]=(roleCount[d.role]||0)+1; elemCount[d.element]=(elemCount[d.element]||0)+1; });
+    const stats = {hp:1,atk:1,def:1,spd:1};
+    let heal = 1;
+    const active=[];
+    for(const b of (G().formationBonuses || [])){
+      let ok=false;
+      if(b.check?.role) ok = (roleCount[b.check.role]||0) >= b.check.need;
+      if(b.check?.sameElement) ok = Object.values(elemCount).some(n=>n >= b.check.sameElement);
+      if(b.check?.uniqueElements) ok = Object.keys(elemCount).length >= b.check.uniqueElements;
+      if(!ok) continue;
+      for(const [k,m] of Object.entries(b.stats||{})) stats[k] *= m;
+      if(b.heal) heal *= b.heal;
+      active.push(b);
+    }
+    return {stats, heal, active, powerMult:(stats.hp+stats.atk+stats.def+stats.spd)/4};
+  }
+
   function teamPower(ids=state.team){
-    return ids.filter(Boolean).reduce((sum,id)=>sum + (heroStats(id)?.power || 0),0);
+    const base = ids.filter(Boolean).reduce((sum,id)=>sum + (heroStats(id)?.power || 0),0);
+    return Math.round(base * formationBonus(ids).powerMult);
   }
 
   function maxHeroLevel(){
@@ -344,6 +430,38 @@ window.GameState = (() => {
   }
   function starCost(inst){ return inst.stars * 60; }
   function shardsNeeded(stars){ return 18 + stars*14; }
+
+  function previewStar(id){
+    const inst = state.roster[id];
+    const def = heroDef(id);
+    if(!inst || !def) return null;
+    const currentStars = Number(inst.stars || 1);
+    const maxStars = 6;
+    const need = currentStars < maxStars ? shardsNeeded(currentStars) : 0;
+    const cost = currentStars < maxStars ? starCost(inst) : 0;
+    const before = heroStatsFrom(def, inst);
+    const afterInst = {...inst, stars: Math.min(maxStars, currentStars + 1)};
+    const after = heroStatsFrom(def, afterInst);
+    return {
+      id,
+      can: currentStars < maxStars && Number(inst.shards || 0) >= need && state.resources.dust >= cost,
+      currentStars,
+      nextStars: Math.min(maxStars, currentStars + 1),
+      maxStars,
+      need,
+      cost,
+      shards: Number(inst.shards || 0),
+      before,
+      after,
+      gain:{
+        hp: after.hp - before.hp,
+        atk: after.atk - before.atk,
+        def: after.def - before.def,
+        spd: after.spd - before.spd,
+        power: after.power - before.power
+      }
+    };
+  }
 
   function addHero(id){
     const def = heroDef(id);
@@ -434,29 +552,67 @@ window.GameState = (() => {
     return {ok:true,results};
   }
 
-  function autoTeam(){
-    const owned = Object.keys(state.roster).map(id=>({id,def:heroDef(id),power:heroStats(id).power}));
-    const tanks = owned.filter(x=>x.def.role==='Tank').sort((a,b)=>b.power-a.power);
-    const supports = owned.filter(x=>x.def.role==='Support').sort((a,b)=>b.power-a.power);
-    const damage = owned.filter(x=>!['Tank','Support'].includes(x.def.role)).sort((a,b)=>b.power-a.power);
-    const chosen=[];
-    if(tanks[0]) chosen.push(tanks[0].id);
-    if(damage[0]) chosen.push(damage[0].id);
-    if(supports[0]) chosen.push(supports[0].id);
-    for(const x of [...damage.slice(1),...tanks.slice(1),...supports.slice(1),...owned.sort((a,b)=>b.power-a.power)]){
-      if(chosen.length>=5) break;
-      if(!chosen.includes(x.id)) chosen.push(x.id);
+  function teamCandidates(){
+    return Object.keys(state.roster)
+      .filter(id=>state.roster[id] && heroDef(id))
+      .map(id=>({id, def:heroDef(id), inst:state.roster[id], stats:heroStats(id), power:heroStats(id).power}));
+  }
+
+  function arrangeTeam(chosen){
+    const unique=[];
+    for(const id of chosen){
+      if(id && state.roster[id] && !unique.includes(id)) unique.push(id);
+      if(unique.length >= 5) break;
     }
-    // slot 0-1 หน้า: tank/warrior ก่อน, หลัง: support/mage/ranger
-    const front = chosen.filter(id=>['Tank','Warrior'].includes(heroDef(id).role)).slice(0,2);
-    const rest = chosen.filter(id=>!front.includes(id));
-    while(front.length<2 && rest.length) front.push(rest.shift());
+    const front = unique.filter(id=>['Tank','Warrior'].includes(heroDef(id).role)).slice(0,2);
+    const rest = unique.filter(id=>!front.includes(id));
+    while(front.length < 2 && rest.length) front.push(rest.shift());
     const arranged = [...front, ...rest].slice(0,5);
     while(arranged.length < 5) arranged.push(null);
-    state.team = arranged;
-    save();
-    return state.team;
+    return arranged;
   }
+
+  function autoTeamStyle(style='balanced'){
+    const owned = teamCandidates();
+    if(!owned.length){ state.team = [null,null,null,null,null]; save(); return {ok:false,msg:'ยังไม่มีปีศาจ'}; }
+    const byPower = [...owned].sort((a,b)=>b.power-a.power);
+    const bySpeed = [...owned].sort((a,b)=>b.stats.spd-a.stats.spd || b.power-a.power);
+    const byTank = owned.filter(x=>x.def.role==='Tank').sort((a,b)=>b.power-a.power);
+    const bySupport = owned.filter(x=>x.def.role==='Support').sort((a,b)=>b.power-a.power);
+    const byDps = owned.filter(x=>!['Tank','Support'].includes(x.def.role)).sort((a,b)=>b.power-a.power);
+    const byMage = owned.filter(x=>x.def.role==='Mage').sort((a,b)=>b.power-a.power);
+    const byAssassin = owned.filter(x=>x.def.role==='Assassin').sort((a,b)=>b.stats.spd-a.stats.spd || b.power-a.power);
+    const byRanger = owned.filter(x=>x.def.role==='Ranger').sort((a,b)=>b.stats.spd-a.stats.spd || b.power-a.power);
+    let chosen=[];
+    if(style === 'survival'){
+      chosen = [...byTank.slice(0,2), ...bySupport.slice(0,2), ...byDps.slice(0,1), ...byPower];
+    } else if(style === 'boss'){
+      chosen = [...byTank.slice(0,1), ...bySupport.slice(0,1), ...byDps.slice(0,3), ...byPower];
+    } else if(style === 'speed'){
+      chosen = [...byAssassin.slice(0,2), ...byRanger.slice(0,2), ...byMage.slice(0,1), ...bySpeed];
+    } else if(style === 'magic'){
+      chosen = [...byMage.slice(0,3), ...bySupport.slice(0,1), ...byTank.slice(0,1), ...byPower];
+    } else if(style === 'sameElement'){
+      const groups = {};
+      for(const x of owned){ (groups[x.def.element] ||= []).push(x); }
+      const best = Object.values(groups).sort((a,b)=>b.reduce((s,x)=>s+x.power,0)-a.reduce((s,x)=>s+x.power,0))[0] || [];
+      chosen = [...best.sort((a,b)=>b.power-a.power), ...byTank, ...bySupport, ...byPower];
+    } else if(style === 'farm'){
+      chosen = [...bySpeed.slice(0,2), ...byDps.slice(0,2), ...bySupport.slice(0,1), ...byPower];
+    } else {
+      chosen = [...byTank.slice(0,1), ...byDps.slice(0,1), ...bySupport.slice(0,1), ...byDps.slice(1), ...byTank.slice(1), ...bySupport.slice(1), ...byPower];
+    }
+    state.team = arrangeTeam(chosen.map(x=>x.id || x));
+    save();
+    const labels = {balanced:'สมดุล',farm:'ฟาร์มไว',boss:'บอส',survival:'ถึก/ปลอดภัย',speed:'สปีด/Press Turn',magic:'เวทหมู่',sameElement:'ธาตุเดียว'};
+    return {ok:true,style,label:labels[style]||style,team:state.team};
+  }
+
+  function autoTeam(){
+    const r = autoTeamStyle('balanced');
+    return r.team || state.team;
+  }
+
 
   function levelUp(id){
     ensureDaily();
@@ -553,8 +709,9 @@ window.GameState = (() => {
     inst.stars++;
     state.daily.upgrades++;
     state.stats.totalUpgrades++;
+    const preview = previewStar(id);
     save();
-    return {ok:true};
+    return {ok:true,stars:inst.stars,preview};
   }
 
 
@@ -576,6 +733,106 @@ window.GameState = (() => {
     state.stats.totalRebirths = Number(state.stats.totalRebirths || 0) + 1;
     save();
     return {ok:true,rebirth:inst.rebirth};
+  }
+
+
+  function bulkStarUpAll(){
+    ensureDaily();
+    let count = 0;
+    let heroes = 0;
+    let spentDust = 0;
+    const perHero = {};
+    const order = Object.keys(state.roster || {})
+      .filter(id=>state.roster[id] && heroDef(id))
+      .sort((a,b)=> (state.team.includes(b)-state.team.includes(a)) || (heroStats(b).power-heroStats(a).power));
+    let guard = 0;
+    while(guard++ < 1000){
+      let changed = false;
+      for(const id of order){
+        const inst = state.roster[id];
+        if(!inst || inst.stars >= 6) continue;
+        const need = shardsNeeded(inst.stars);
+        const dust = starCost(inst);
+        if(Number(inst.shards || 0) < need || state.resources.dust < dust) continue;
+        inst.shards -= need;
+        state.resources.dust -= dust;
+        inst.stars++;
+        count++;
+        spentDust += dust;
+        perHero[id] = (perHero[id] || 0) + 1;
+        changed = true;
+      }
+      if(!changed) break;
+    }
+    heroes = Object.keys(perHero).length;
+    if(count){
+      state.daily.upgrades += count;
+      state.stats.totalUpgrades += count;
+      save();
+      return {ok:true,count,heroes,spentDust,msg:`อัปดาวทั้งหมด ${count} ครั้ง จาก ${heroes} ตัว ใช้ Dust ${fmt(spentDust)}`};
+    }
+    return {ok:false,count:0,heroes:0,spentDust:0,msg:'ยังไม่มีตัวที่อัปดาวได้ หรือ Dust/Shard ไม่พอ'};
+  }
+
+  function bulkRebirthAll(){
+    ensureDaily();
+    let count = 0;
+    let spentGold = 0;
+    let spentDust = 0;
+    const names = [];
+    const order = Object.keys(state.roster || {})
+      .filter(id=>state.roster[id] && heroDef(id))
+      .sort((a,b)=> (state.team.includes(b)-state.team.includes(a)) || (heroStats(b).power-heroStats(a).power));
+    for(const id of order){
+      const inst = state.roster[id];
+      if(!inst || inst.level < maxHeroLevel()) continue;
+      const cost = rebirthCost(inst);
+      if(state.resources.gold < cost.gold || state.resources.dust < cost.dust) continue;
+      state.resources.gold -= cost.gold;
+      state.resources.dust -= cost.dust;
+      inst.level = 1;
+      inst.exp = 0;
+      inst.rebirth = Number(inst.rebirth || 0) + 1;
+      count++;
+      spentGold += cost.gold;
+      spentDust += cost.dust;
+      names.push(heroDef(id).name);
+    }
+    if(count){
+      state.daily.upgrades += count;
+      state.stats.totalUpgrades += count;
+      state.stats.totalRebirths = Number(state.stats.totalRebirths || 0) + count;
+      save();
+      return {ok:true,count,spentGold,spentDust,names,msg:`Rebirth ทั้งหมด ${count} ตัว ใช้ Gold ${fmt(spentGold)} + Dust ${fmt(spentDust)}`};
+    }
+    return {ok:false,count:0,msg:`ยังไม่มีตัว Lv.${maxHeroLevel()} ที่ Rebirth ได้ หรือทรัพยากรไม่พอ`};
+  }
+
+  function bulkUpgradeTeamToCap(){
+    ensureDaily();
+    const ids = (state.team || []).filter(id=>id && state.roster[id]);
+    if(!ids.length) return {ok:false,count:0,msg:'ยังไม่มีทีม'};
+    let count = 0;
+    let guard = 0;
+    while(guard++ < 2000){
+      const candidates = ids.map(id=>({id,inst:state.roster[id]}))
+        .filter(x=>x.inst.level < maxHeroLevel())
+        .map(x=>({...x,cost:levelCost(x.inst)}))
+        .filter(x=>x.cost <= state.resources.gold)
+        .sort((a,b)=>a.inst.level-b.inst.level || a.cost-b.cost);
+      if(!candidates.length) break;
+      state.resources.gold -= candidates[0].cost;
+      candidates[0].inst.level++;
+      candidates[0].inst.exp = 0;
+      count++;
+    }
+    if(count){
+      state.daily.upgrades += count;
+      state.stats.totalUpgrades += count;
+      save();
+      return {ok:true,count,msg:`อัปเลเวลทีมปัจจุบัน ${count} ครั้ง`};
+    }
+    return {ok:false,count:0,msg:'Gold ไม่พอ หรือทีมถึง Lv.100 แล้ว'};
   }
 
   function equipBest(){
@@ -972,7 +1229,7 @@ window.GameState = (() => {
     state.favorites ||= {};
     if(state.favorites[id]) delete state.favorites[id];
     else state.favorites[id] = Date.now();
-    state.version = 39;
+    state.version = 42;
     state.fusion.selected = (state.fusion.selected||[]).filter(x=>!state.favorites[x]);
     save();
     return {ok:true,locked:!!state.favorites[id]};
@@ -1038,6 +1295,77 @@ window.GameState = (() => {
     return {reward,first,item,exp:expReward};
   }
 
+
+  function dungeonDef(id){ return (G().dungeons || []).find(d=>d.id===id); }
+  function dungeonRunsLeft(id){
+    ensureDaily();
+    const d = dungeonDef(id);
+    if(!d) return 0;
+    return Math.max(0, Number(d.runsPerDay||0) - Number(state.daily.dungeonRuns[id]||0));
+  }
+  function dungeonStage(id){
+    const d = dungeonDef(id);
+    if(!d) return null;
+    const baseStage = Math.max(1, state.campaign.highestCleared || state.campaign.selected || 1);
+    const scale = Number(((0.88 + Math.pow(baseStage,1.12)*0.035 + baseStage*0.04) * (d.powerMul || 1)).toFixed(3));
+    return {
+      id:100000 + (G().dungeons||[]).findIndex(x=>x.id===id) + 1,
+      dungeonId:id,
+      difficultyId:baseStage,
+      title:d.title,
+      area:'Daily Dungeon',
+      isBoss:true,
+      modifier:{id:'dungeon',title:d.title,desc:d.desc,effects:{enemyAtk:1,enemyHp:1,enemyDef:1,enemySpd:1}},
+      bossSkill:{id:'dungeon_keeper',title:'Dungeon Keeper',desc:'ศัตรูปรับระดับตามด่านสูงสุดของผู้เล่น',effects:{bossHp:1.15,bossAtk:1.06}},
+      enemyCount:4,
+      power:Math.round(560 * scale * 4.2),
+      enemyScale:scale,
+      firstReward:{},repeatReward:{},
+      dungeon:d,
+    };
+  }
+  function dungeonReward(id, win=true){
+    const d = dungeonDef(id); if(!d || !win) return {};
+    const base = Math.max(1, state.campaign.highestCleared || state.campaign.selected || 1);
+    if(d.kind === 'gold') return {gold: Math.round(10000 + base*620 + Math.pow(base,1.12)*40)};
+    if(d.kind === 'dust') return {dust: Math.round(900 + base*38 + Math.pow(base,1.08)*14)};
+    if(d.kind === 'tickets') return {tickets: 4 + Math.floor(base/120)};
+    if(d.kind === 'ssrShards') return {ssrShards: 1 + Math.floor(base/750), dust: Math.round(600 + base*10)};
+    if(d.kind === 'shard') return {dust: Math.round(350 + base*12)};
+    if(d.kind === 'gear') return {gold: Math.round(1800 + base*75)};
+    return {gold:1000};
+  }
+  function completeDungeon(id, win){
+    ensureDaily();
+    const d = dungeonDef(id);
+    if(!d) return {ok:false,msg:'ไม่พบ Dungeon',reward:{}};
+    if(dungeonRunsLeft(id) <= 0) return {ok:false,msg:'วันนี้ลงดันเจี้ยนนี้ครบแล้ว',reward:{}};
+    state.daily.dungeonRuns[id] = Number(state.daily.dungeonRuns[id] || 0) + 1;
+    if(!win){ state.stats.totalLosses++; save(); return {ok:true,reward:{},msg:'แพ้ใน Dungeon'}; }
+    state.stats.totalWins++;
+    state.daily.wins++;
+    const reward = dungeonReward(id,true);
+    let item = null, shard = null;
+    if(d.kind === 'gear'){
+      item = randomEquipment(Math.max(1,state.campaign.highestCleared||1), true);
+      state.inventory.push(item);
+    }
+    if(d.kind === 'shard'){
+      const owned = Object.keys(state.roster || {});
+      if(owned.length){
+        const hid = owned[Math.floor(Math.random()*owned.length)];
+        const def = heroDef(hid);
+        const amount = Math.round(18 * (rarityDef(def.rarity)?.mult || 1));
+        state.roster[hid].shards = Number(state.roster[hid].shards || 0) + amount;
+        shard = {id:hid,name:def.name,amount};
+      }
+    }
+    const exp = grantTeamExp(Math.max(1,state.campaign.highestCleared||1), true);
+    applyRewards(reward);
+    save();
+    return {ok:true,reward,item,shard,exp,msg:`เคลียร์ ${d.title}`};
+  }
+
   function idlePreview(){
     const now = Date.now();
     const elapsed = Math.max(0, now - (state.idle.last || now));
@@ -1080,7 +1408,7 @@ window.GameState = (() => {
 
   function resourceText(reward){
     if(!reward) return '';
-    const map = {gold:'Gold',gems:'Gem',tickets:'Ticket',dust:'Dust'};
+    const map = {gold:'Gold',gems:'Gem',tickets:'Ticket',dust:'Dust',ssrShards:'SSR Shard'};
     return Object.entries(reward).filter(([k,v])=>v).map(([k,v])=>`+${fmt(v)} ${map[k]||k}`).join('  ');
   }
 
@@ -1177,17 +1505,20 @@ window.GameState = (() => {
     if(claimAch) goals.push(`มี Achievement รับได้: ${claimAch.title}`);
     const claimCodex = (G().codexRewards||[]).find(r=>!state.codexRewards.claimed[r.id] && codexRewardProgress(r)>=r.need);
     if(claimCodex) goals.push(`มี Codex Reward รับได้: ${claimCodex.title}`);
+    const openDungeon = (G().dungeons||[]).find(d=>dungeonRunsLeft(d.id)>0);
+    if(openDungeon) goals.push(`ยังมี Dungeon ลงได้: ${openDungeon.title}`);
+    if((state.resources.ssrShards||0) >= 100) goals.push('SSR Shard ครบ 100 แล้ว รอระบบแลก SSR ในอัปเดตถัดไป');
     if(!goals.length) goals.push(`ลุย/ฟาร์มด่าน ${st.id} เพื่อไต่ไปด่าน 3000`);
     return goals.slice(0,3);
   }
 
   return {
     get state(){ return state; }, load, save, reset, exportSaveText, importSaveText, fmt, todayKey, grantDailyLoginReward,
-    heroDef, stageDef, rarityDef, heroStats, teamPower, maxHeroLevel, expToNext, battleExpForStage, levelCost, rebirthCost, rebirthHero, starCost, shardsNeeded,
-    addHero, starterRecruit, gacha, autoTeam, levelUp, levelUpMany, upgradeOneHero, setSelectedHero, starUp, autoUpgrade, equipBest, autoSellLow, autoFusionLow, saveTeamPreset, loadTeamPreset, teamPresetPower,
+    heroDef, stageDef, rarityDef, heroStats, previewRebirth, previewStar, rebirthMultiplier, formationBonus, teamPower, maxHeroLevel, expToNext, battleExpForStage, levelCost, rebirthCost, rebirthHero, starCost, shardsNeeded,
+    addHero, starterRecruit, gacha, autoTeam, autoTeamStyle, levelUp, levelUpMany, upgradeOneHero, bulkUpgradeTeamToCap, setSelectedHero, starUp, bulkStarUpAll, bulkRebirthAll, autoUpgrade, equipBest, autoSellLow, autoFusionLow, saveTeamPreset, loadTeamPreset, teamPresetPower,
     isFavorite, toggleFavorite, codexSeen, setLastBattle, backupNow, exportBackupText,
     fusionPreview, toggleFusion, clearFusion, doFusion, autoFusion, rarityRank,
-    selectedStage, selectStage, completeStage, stageEnemyPower,
+    selectedStage, selectStage, completeStage, dungeonDef, dungeonRunsLeft, dungeonStage, dungeonReward, completeDungeon, stageEnemyPower,
     makeEquipment, randomEquipment, getEquipment, idlePreview, claimIdle,
     questProgress, questClaim, shopPurchase, achievementProgress, achievementClaim, codexRewardProgress, codexRewardClaim, nextGoal, resourceText
   };

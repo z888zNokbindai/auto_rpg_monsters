@@ -42,6 +42,8 @@ window.BattleSim = (() => {
     const def = S().heroDef(heroId);
     const st = S().heroStats(heroId);
     const inst = S().state.roster[heroId];
+    const passive = D().passiveDefs?.[def.passive] || null;
+    const fx = passive?.effects || {};
     return {
       uid:'a_'+heroId,
       side:'ally',
@@ -53,25 +55,28 @@ window.BattleSim = (() => {
       role:def.role,
       ai:def.ai,
       skill:def.skill,
+      passive,
       slot,
-      maxHp:st.hp,
-      hp:st.hp,
-      atk:st.atk,
-      def:st.def,
-      spd:st.spd,
-      energy:45,
+      maxHp:Math.round(st.hp * (fx.hp||1)),
+      hp:Math.round(st.hp * (fx.hp||1)),
+      atk:Math.round(st.atk * (fx.atk||1)),
+      def:Math.round(st.def * (fx.def||1)),
+      spd:Math.round(st.spd * (fx.spd||1)),
+      energy:clamp(45 + Number(fx.startEnergy||0),0,100),
       stars:inst.stars,
       level:inst.level,
       shield:0, poison:0, burn:0, stun:0, guard:0, cursed:0, buffAtk:0,
-      crit: def.role==='Assassin' ? .20 : def.role==='Ranger' ? .11 : .08,
+      healPower:Number(fx.healPower||1), statusDamage:Number(fx.statusDamage||1), executeBonus:Number(fx.executeBonus||0),
+      crit: (def.role==='Assassin' ? .20 : def.role==='Ranger' ? .11 : .08) + Number(fx.crit||0),
       damage:0, heal:0, taken:0
     };
   }
 
   function scaleEnemy(template, stage, idx){
     const boss = stage.isBoss;
+    const difficultyId = Number(stage.difficultyId || stage.id || 1);
     const isMainBoss = boss && idx === 0;
-    const m = stage.enemyScale || (0.92 + stage.id*0.145 + Math.pow(stage.id,1.22)*0.023);
+    const m = stage.enemyScale || (0.92 + difficultyId*0.145 + Math.pow(difficultyId,1.22)*0.023);
     const countPenalty = boss ? 1.24 : (stage.enemyCount <=2 ? .92 : stage.enemyCount <=3 ? 1.02 : .96);
     const mod = stage.modifier?.effects || {};
     const bfx = stage.bossSkill?.effects || {};
@@ -94,10 +99,10 @@ window.BattleSim = (() => {
       hp: 0,
       atk: Math.round(template.base.atk * m * countPenalty * (isMainBoss ? 1.26 : 1) * atkMul),
       def: Math.round(template.base.def * m * countPenalty * (isMainBoss ? 1.23 : 1) * defMul),
-      spd: Math.round(template.base.spd * (1 + stage.id*0.006) * spdMul),
+      spd: Math.round(template.base.spd * (1 + difficultyId*0.006) * spdMul),
       energy: rint(20,48),
       stars: boss && idx===0 ? 3 : 1,
-      level: stage.id,
+      level: difficultyId,
       shield:0, poison:0, burn:0, stun:0, guard:0, cursed:0, buffAtk:0,
       crit: template.role==='Assassin' ? .16 : .06,
       damage:0, heal:0, taken:0
@@ -193,6 +198,8 @@ window.BattleSim = (() => {
       return {...d, kind:'miss'};
     }
     let amount = d.amount;
+    if((target.poison>0 || target.cursed>0 || target.burn>0) && actor.statusDamage) amount = Math.round(amount * actor.statusDamage);
+    if(target.hp/target.maxHp < .35 && actor.executeBonus) amount = Math.round(amount * (1 + actor.executeBonus));
     if(target.shield>0){
       const block = Math.min(target.shield, amount);
       target.shield -= block;
@@ -215,6 +222,7 @@ window.BattleSim = (() => {
 
   function heal(actor,target,amount,events,allies,enemies,title='ฟื้นฟู',press=null){
     if(!target) return {kind:'normal'};
+    amount = Math.round(amount * (actor.healPower || 1));
     const before = target.hp;
     target.hp = clamp(target.hp + amount,0,target.maxHp);
     const got = target.hp-before;
@@ -380,12 +388,37 @@ window.BattleSim = (() => {
     }
   }
 
-  function simulate(stageId){
-    const stage = S().stageDef(stageId);
+  function applyAllyBattleBonuses(allies, events, enemies){
+    const fb = S().formationBonus(S().state.team);
+    if(fb?.active?.length){
+      allies.forEach(a=>{
+        const hpPct = a.hp / a.maxHp;
+        a.maxHp = Math.round(a.maxHp * (fb.stats.hp||1));
+        a.hp = Math.round(a.maxHp * hpPct);
+        a.atk = Math.round(a.atk * (fb.stats.atk||1));
+        a.def = Math.round(a.def * (fb.stats.def||1));
+        a.spd = Math.round(a.spd * (fb.stats.spd||1));
+        a.healPower = (a.healPower || 1) * (fb.heal || 1);
+      });
+      logEvent(events,allies,enemies,{type:'buff',icon:'🧩',title:'Formation Bonus',text:fb.active.map(x=>x.title).join(' / '),round:0});
+    }
+    allies.forEach(a=>{
+      const fx = a.passive?.effects || {};
+      if(fx.startShield){
+        a.shield += Math.round(a.maxHp * fx.startShield);
+        logEvent(events,allies,enemies,{type:'buff',icon:'🛡️',title:`Passive: ${a.passive.title}`,text:`${a.name} เริ่มไฟต์พร้อม Shield`,actor:a.uid,round:0});
+      } else if(a.passive){
+        logEvent(events,allies,enemies,{type:'buff',icon:'✨',title:`Passive: ${a.passive.title}`,text:`${a.name}: ${a.passive.desc}`,actor:a.uid,round:0});
+      }
+    });
+  }
+
+  function simulateStage(stage){
     const allies = S().state.team.filter(Boolean).map(makeHeroUnit);
     const enemies = makeEnemies(stage);
     const events=[];
     logEvent(events,allies,enemies,{type:'start',icon:'📜',title:`${stage.title}`,text:`${stage.area} — ระบบต่อสู้แบบ Press Turn`,round:0});
+    applyAllyBattleBonuses(allies, events, enemies);
     if(stage.modifier && stage.modifier.id !== 'none'){
       logEvent(events,allies,enemies,{type:'modifier',icon:'⚠️',title:`Modifier: ${stage.modifier.title}`,text:stage.modifier.desc,round:0});
     }
@@ -447,5 +480,8 @@ window.BattleSim = (() => {
     return {stage, allies, enemies, events, win, rounds:round-1, mvp, summary};
   }
 
-  return { simulate };
+  function simulate(stageId){ return simulateStage(S().stageDef(stageId)); }
+  function simulateDungeon(dungeonId){ return simulateStage(S().dungeonStage(dungeonId)); }
+
+  return { simulate, simulateDungeon };
 })();

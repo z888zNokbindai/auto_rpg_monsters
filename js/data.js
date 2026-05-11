@@ -288,6 +288,8 @@ window.GameData = (() => {
     {id:'random_shards',title:'Random Shard Box',desc:'สุ่ม Shard ให้ปีศาจที่มีอยู่ 1 ตัว',cost:{dust:380},kind:'shard',amount:22},
     {id:'gear_box',title:'Abyss Gear Box',desc:'สุ่มอุปกรณ์ตามด่านสูงสุดที่เคลียร์',cost:{gems:160},kind:'gear'},
     {id:'rebirth_supply',title:'Rebirth Supply',desc:'ชุดทรัพยากรสำหรับเตรียม Rebirth',cost:{gems:380},kind:'resource',reward:{gold:42000,dust:900}},
+    {id:'ssr_shard_pack',title:'SSR Shard Pack',desc:'แพงมาก แต่เป็นทางสะสม SSR ระยะยาว',cost:{gems:2200,dust:5000},kind:'resource',reward:{ssrShards:5}},
+    {id:'ssr_fragment_box',title:'Abyss Fragment Box',desc:'แลก Ticket จำนวนมากเป็น SSR Shard เล็กน้อย',cost:{tickets:180},kind:'resource',reward:{ssrShards:2}},
   ];
 
   const codexRewards = [
@@ -298,6 +300,66 @@ window.GameData = (() => {
     {id:'codex_mythic2',title:'Mythic 2 ตัว',rarity:'Mythic',need:2,reward:{gems:1000,tickets:8,dust:2600}},
     {id:'codex_ssr1',title:'SSR 1 ตัว',rarity:'SSR',need:1,reward:{gems:6000,tickets:30,dust:10000}},
   ];
+
+
+  const loginRewards7 = [
+    {day:1,title:'วันแรกของวัฏจักร',desc:'เข้าเกมประจำวัน',reward:{tickets:200,gold:8000}},
+    {day:2,title:'เสบียงนักอัญเชิญ',desc:'Ticket + Dust',reward:{tickets:200,dust:900}},
+    {day:3,title:'คลังทองอเวจี',desc:'Ticket + Gold',reward:{tickets:200,gold:28000}},
+    {day:4,title:'กล่องอุปกรณ์',desc:'Ticket + Gem',reward:{tickets:200,gems:320}},
+    {day:5,title:'เถ้าผสมปีศาจ',desc:'Ticket + Dust ก้อนใหญ่',reward:{tickets:200,dust:2200}},
+    {day:6,title:'ตราผู้ฟาร์ม',desc:'Ticket + Gem',reward:{tickets:200,gems:650}},
+    {day:7,title:'เศษวิญญาณ SSR',desc:'Ticket + SSR Shard',reward:{tickets:200,ssrShards:10,gems:900}},
+  ];
+
+  const dungeons = [
+    {id:'gold',icon:'🪙',title:'Gold Dungeon',desc:'ฟาร์ม Gold สำหรับอัปเลเวล',runsPerDay:3,kind:'gold',element:'Dark',role:'Warrior',powerMul:.88},
+    {id:'dust',icon:'✨',title:'Dust Dungeon',desc:'ฟาร์ม Dust สำหรับผสม/อัปดาว/Rebirth',runsPerDay:3,kind:'dust',element:'Nature',role:'Debuffer',powerMul:.96},
+    {id:'ticket',icon:'🎟️',title:'Ticket Dungeon',desc:'ฟาร์ม Ticket เพิ่มสำหรับกาชา',runsPerDay:2,kind:'tickets',element:'Light',role:'Assassin',powerMul:1.08},
+    {id:'shard',icon:'🧩',title:'Shard Dungeon',desc:'สุ่ม Shard ให้ปีศาจที่มีอยู่',runsPerDay:3,kind:'shard',element:'Water',role:'Support',powerMul:1.02},
+    {id:'gear',icon:'🧰',title:'Gear Dungeon',desc:'ฟาร์มอุปกรณ์และ Gear Set',runsPerDay:3,kind:'gear',element:'Fire',role:'Tank',powerMul:1.05},
+    {id:'ssr',icon:'💠',title:'Abyss Rift',desc:'ดันเจี้ยนยากมาก มีโอกาสได้ SSR Shard',runsPerDay:1,kind:'ssrShards',element:'Dark',role:'Mage',powerMul:1.35},
+  ];
+
+  const formationBonuses = [
+    {id:'frontline',title:'มี Tank 1 ตัว',desc:'HP ทีม +10%',check:{role:'Tank',need:1},stats:{hp:1.10}},
+    {id:'healer',title:'มี Support 1 ตัว',desc:'ฮีลแรงขึ้นและ HP +4%',check:{role:'Support',need:1},stats:{hp:1.04},heal:1.12},
+    {id:'mage2',title:'Mage 2 ตัว',desc:'ATK ทีม +8%',check:{role:'Mage',need:2},stats:{atk:1.08}},
+    {id:'assassin2',title:'Assassin 2 ตัว',desc:'SPD ทีม +8%',check:{role:'Assassin',need:2},stats:{spd:1.08}},
+    {id:'sameElement3',title:'ธาตุเดียวกัน 3 ตัว',desc:'ATK/DEF +6%',check:{sameElement:3},stats:{atk:1.06,def:1.06}},
+    {id:'rainbow5',title:'ครบ 5 ธาตุ',desc:'SPD +10% / HP +5%',check:{uniqueElements:5},stats:{spd:1.10,hp:1.05}},
+  ];
+
+  const passiveDefs = {
+    bulwark:{title:'Bulwark',desc:'เริ่มไฟต์ได้ Shield เล็กน้อย',effects:{startShield:.10}},
+    blood_hunt:{title:'Blood Hunt',desc:'Critical เพิ่ม และโจมตีตัวเลือดต่ำแรงขึ้น',effects:{crit:.08,executeBonus:.08}},
+    arcane_start:{title:'Arcane Start',desc:'เริ่มไฟต์ Energy +18',effects:{startEnergy:18}},
+    soothing_aura:{title:'Soothing Aura',desc:'ฮีลแรงขึ้น 12%',effects:{healPower:1.12}},
+    war_cry:{title:'War Cry',desc:'ATK ตัวเอง +6%',effects:{atk:1.06}},
+    venom_mark:{title:'Venom Mark',desc:'ดาเมจใส่ศัตรูติดพิษ/คำสาปแรงขึ้น',effects:{statusDamage:1.12}},
+    ranger_focus:{title:'Ranger Focus',desc:'SPD +6% และ Critical +4%',effects:{spd:1.06,crit:.04}},
+    ssr_dominion:{title:'SSR Dominion',desc:'ค่าสถานะทุกอย่าง +12% และเริ่ม Energy สูง',effects:{hp:1.12,atk:1.12,def:1.12,spd:1.08,startEnergy:25,crit:.05}},
+  };
+
+  function inferPassive(h){
+    if(h.rarity === 'SSR') return 'ssr_dominion';
+    if(h.role === 'Tank') return 'bulwark';
+    if(h.role === 'Support') return 'soothing_aura';
+    if(h.role === 'Mage') return 'arcane_start';
+    if(h.role === 'Assassin') return 'blood_hunt';
+    if(h.role === 'Ranger') return 'ranger_focus';
+    if(h.role === 'Debuffer') return 'venom_mark';
+    return 'war_cry';
+  }
+  heroes.forEach(h=>{ h.passive ||= inferPassive(h); });
+
+  const gearSets = {
+    Blood:{icon:'🩸',title:'Blood Set',two:'ATK +8%',four:'ATK +12% / HP +8%',stats2:{atk:1.08},stats4:{atk:1.12,hp:1.08}},
+    Grave:{icon:'🪦',title:'Grave Set',two:'DEF +10%',four:'DEF +14% / HP +10%',stats2:{def:1.10},stats4:{def:1.14,hp:1.10}},
+    Witch:{icon:'🕯️',title:'Witch Set',two:'ATK +6% / SPD +4%',four:'ATK +12% / SPD +8%',stats2:{atk:1.06,spd:1.04},stats4:{atk:1.12,spd:1.08}},
+    Storm:{icon:'⚡',title:'Storm Set',two:'SPD +8%',four:'SPD +14% / ATK +6%',stats2:{spd:1.08},stats4:{spd:1.14,atk:1.06}},
+    Void:{icon:'🕳️',title:'Void Set',two:'HP +6% / ATK +6%',four:'HP +12% / ATK +12%',stats2:{hp:1.06,atk:1.06},stats4:{hp:1.12,atk:1.12}},
+  };
 
   // V9: ตำรา Fusion แบบระบุคู่ ช่วยให้ผสมได้มากขึ้นและเดาทางได้
   const fusionRecipes = [
@@ -408,5 +470,5 @@ window.GameData = (() => {
     {id:'f100',from:['void_tick','void_emperor'],result:'astral_lich',title:'เห็บสูญญะกลืนจักรพรรดิ',note:'ทางเสี่ยงสู่ Lich ดารา'},
   ];
 
-  return { rarities, elements, roles, heroes, enemyTemplates, bossTemplates, equipmentTypes, equipmentRarities, stages:buildStages(), dailyQuests, achievements, shopItems, codexRewards, fusionRecipes };
+  return { rarities, elements, roles, heroes, enemyTemplates, bossTemplates, equipmentTypes, equipmentRarities, gearSets, stages:buildStages(), dungeons, formationBonuses, passiveDefs, loginRewards7, dailyQuests, achievements, shopItems, codexRewards, fusionRecipes };
 })();

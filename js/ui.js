@@ -95,7 +95,7 @@ window.UI = (() => {
         <div class="brand-row">
           <div class="logo">
             <div class="logo-mark">🩸</div>
-            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V39</small></div>
+            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V42</small></div>
           </div>
           <button class="btn small ghost" data-action="save">Save</button>
         </div>
@@ -104,6 +104,7 @@ window.UI = (() => {
           <div class="res-pill"><span>Gem</span><b>💎 ${fmt(s.resources.gems)}</b></div>
           <div class="res-pill"><span>Ticket</span><b>🎟️ ${fmt(s.resources.tickets)}</b></div>
           <div class="res-pill"><span>Dust</span><b>✨ ${fmt(s.resources.dust)}</b></div>
+          <div class="res-pill"><span>SSR</span><b>💠 ${fmt(s.resources.ssrShards||0)}</b></div>
         </div>
         ${battleRunning ? `<div class="battle-top-status" role="status" aria-live="polite">
           <div class="battle-top-main">
@@ -121,7 +122,7 @@ window.UI = (() => {
 
   function nav(){
     const items = [
-      ['home','🏚️','ฐาน'],['battle','⚔️','ลุย'],['team','🛡️','ทีม'],['fusion','🧬','ผสม'],['gacha','🔮','อัญเชิญ'],['shop','🛒','ร้าน'],['heroes','📦','คลัง'],['codex','📖','ตำรา'],['manual','📜','คู่มือ']
+      ['home','🏚️','ฐาน'],['shortcuts','⚡','เมนูลัด'],['battle','⚔️','ลุย'],['dungeon','🕳️','ดันเจี้ยน'],['team','🛡️','ทีม'],['fusion','🧬','ผสม'],['gacha','🔮','อัญเชิญ'],['shop','🛒','ร้าน'],['heroes','📦','คลัง'],['codex','📖','ตำรา'],['manual','📜','คู่มือ']
     ];
     return `<nav class="bottom-nav">${items.map(([id,ic,tx])=>`<button class="nav-btn ${currentScreen()===id?'active':''}" data-screen="${id}"><i>${ic}</i><span>${tx}</span></button>`).join('')}</nav>`;
   }
@@ -142,6 +143,79 @@ window.UI = (() => {
       <span><i>ATK</i><b>${fmt(st.atk)}</b></span>
       <span><i>DEF</i><b>${fmt(st.def)}</b></span>
       <span><i>SPD</i><b>${fmt(st.spd)}</b></span>
+    </div>`;
+  }
+
+  function statCompareRow(label, before, after){
+    const gain = Math.round((Number(after||0)-Number(before||0)));
+    const cls = gain >= 0 ? 'gain' : 'loss';
+    return `<div><span>${label}</span><b>${fmt(before)} → ${fmt(after)}</b><em class="${cls}">${gain>=0?'+':''}${fmt(gain)}</em></div>`;
+  }
+
+  function rebirthPreviewPanel(id){
+    const p = S().previewRebirth ? S().previewRebirth(id) : null;
+    if(!p) return '';
+    const costOk = S().state.resources.gold >= p.cost.gold && S().state.resources.dust >= p.cost.dust;
+    const can = p.can && costOk;
+    return `<div class="rebirth-preview ${can?'ready':''}">
+      <div class="rebirth-preview-head">
+        <div><b>Rebirth Preview</b><small>เกิดใหม่ Lv.100 → Lv.1 แต่ได้โบนัสถาวร</small></div>
+        <span class="rebirth-stack">R+${p.currentRebirth} → R+${p.nextRebirth}</span>
+      </div>
+      <div class="rebirth-bonus-line">
+        <span>โบนัสถาวร HP/ATK/DEF</span>
+        <b>+${p.currentBonus}% → +${p.nextBonus}%</b>
+        <em>เพิ่ม +${p.bonusGain}%</em>
+      </div>
+      <div class="rebirth-compare-grid">
+        <div class="rebirth-compare-block">
+          <b>หลัง Rebirth ทันที</b>
+          <small>สเตตัสจะลดลงเพราะกลับ Lv.1</small>
+          ${statCompareRow('Power', p.beforeNow.power, p.afterImmediate.power)}
+          ${statCompareRow('HP', p.beforeNow.hp, p.afterImmediate.hp)}
+          ${statCompareRow('ATK', p.beforeNow.atk, p.afterImmediate.atk)}
+          ${statCompareRow('DEF', p.beforeNow.def, p.afterImmediate.def)}
+        </div>
+        <div class="rebirth-compare-block longterm">
+          <b>เมื่อฟาร์มกลับถึง Lv.${S().maxHeroLevel()}</b>
+          <small>นี่คือกำไรระยะยาวจาก Rebirth รอบนี้</small>
+          ${statCompareRow('Power', p.beforeAtCap.power, p.afterAtCap.power)}
+          ${statCompareRow('HP', p.beforeAtCap.hp, p.afterAtCap.hp)}
+          ${statCompareRow('ATK', p.beforeAtCap.atk, p.afterAtCap.atk)}
+          ${statCompareRow('DEF', p.beforeAtCap.def, p.afterAtCap.def)}
+        </div>
+      </div>
+      <div class="rebirth-cost-line ${costOk?'ok':'bad'}">ต้องใช้ 🪙 ${fmt(p.cost.gold)} Gold + ✨ ${fmt(p.cost.dust)} Dust ${p.can?'':' | ต้อง Lv.'+S().maxHeroLevel()+' ก่อน'}</div>
+    </div>`;
+  }
+
+
+  function starPreviewPanel(id){
+    const p = S().previewStar ? S().previewStar(id) : null;
+    if(!p) return '';
+    const can = p.can;
+    const maxed = p.currentStars >= p.maxStars;
+    return `<div class="star-preview ${can?'ready':''} ${maxed?'maxed':''}">
+      <div class="rebirth-preview-head">
+        <div><b>Star Upgrade Preview</b><small>อัปดาวเพิ่มค่าสเตตัสถาวรของปีศาจตัวนี้</small></div>
+        <span class="star-stack">★${p.currentStars} → ★${p.nextStars}</span>
+      </div>
+      <div class="rebirth-bonus-line">
+        <span>ผลที่เพิ่มหลังอัปดาว</span>
+        <b>HP/ATK/DEF เพิ่มประมาณ 22% ต่อดาว</b>
+        <em>SPD +${fmt(p.gain.spd)}</em>
+      </div>
+      <div class="rebirth-compare-grid star-compare-grid">
+        <div class="rebirth-compare-block longterm">
+          <b>ก่อน → หลังอัปดาว</b>
+          ${statCompareRow('Power', p.before.power, p.after.power)}
+          ${statCompareRow('HP', p.before.hp, p.after.hp)}
+          ${statCompareRow('ATK', p.before.atk, p.after.atk)}
+          ${statCompareRow('DEF', p.before.def, p.after.def)}
+          ${statCompareRow('SPD', p.before.spd, p.after.spd)}
+        </div>
+      </div>
+      <div class="rebirth-cost-line ${can?'ok':'bad'}">ต้องใช้ Shard ${fmt(p.shards)}/${fmt(p.need)} + ✨ ${fmt(p.cost)} Dust ${maxed?' | ดาวสูงสุดแล้ว':''}</div>
     </div>`;
   }
 
@@ -313,13 +387,32 @@ window.UI = (() => {
   }
 
 
+  function logModeControls(){
+    const cur = S().state.settings?.logMode || 'full';
+    const opts = [['full','Log เต็ม'],['skill','เฉพาะสกิล'],['result','เฉพาะผล'],['hidden','ซ่อน Log']];
+    return `<div class="speed-panel log-mode-panel">
+      <div><b>Combat Log</b><small>ใช้ลดความรกตอนฟาร์ม x20/x50</small></div>
+      <div class="speed-tune-row">${opts.map(([v,label])=>`<button class="chip-btn ${cur===v?'active':''}" data-action="setLogMode" data-value="${v}">${label}</button>`).join('')}</div>
+    </div>`;
+  }
+
+  function formationPanel(compact=false){
+    const fb = S().formationBonus ? S().formationBonus(S().state.team) : {active:[]};
+    const rows = (D().formationBonuses || []).map(b=>{
+      const active = fb.active?.some(x=>x.id===b.id);
+      return `<div class="formation-row ${active?'active':''}"><b>${active?'✅':'⬜'} ${h(b.title)}</b><small>${h(b.desc)}</small></div>`;
+    }).join('');
+    return `<section class="panel formation-panel"><div class="section-title"><h3>Formation Bonus</h3><small>${fb.active?.length||0} โบนัสทำงาน</small></div><div class="formation-list ${compact?'compact':''}">${rows}</div></section>`;
+  }
+
+
   function dashboardGoals(){
     const goals = S().nextGoal ? S().nextGoal() : [];
     const selected = S().selectedStage();
     const mod = selected.modifier;
     const boss = selected.bossSkill;
     return `<section class="panel dashboard-panel">
-      <div class="section-title"><h3>เป้าหมายตอนนี้</h3><small>ระบบแนะนำ V39</small></div>
+      <div class="section-title"><h3>เป้าหมายตอนนี้</h3><small>ระบบแนะนำ V42</small></div>
       <div class="goal-list">${goals.map((g,i)=>`<div class="goal-item"><b>${i+1}</b><span>${h(g)}</span></div>`).join('')}</div>
       <div class="stage-warn">
         <b>ด่านปัจจุบัน:</b> ${h(selected.title)}
@@ -329,6 +422,7 @@ window.UI = (() => {
       <div class="grid2" style="margin-top:10px">
         <button class="btn primary" data-action="startBattle">สู้ด่านนี้</button>
         <button class="btn amber" data-action="farmRepeat">ฟาร์มตามเงื่อนไข</button>
+        <button class="btn ghost" data-screen="dungeon">Daily Dungeon</button>
         <button class="btn ghost" data-screen="shop">เปิดร้านค้า</button>
         <button class="btn ghost" data-screen="codex">รับ Codex Reward</button>
       </div>
@@ -395,15 +489,99 @@ window.UI = (() => {
   }
 
 
+
+  function quickTeamPanel(){
+    const styles = [
+      ['balanced','สมดุล','Tank + Damage + Support เหมาะใช้ทั่วไป'],
+      ['farm','ฟาร์มไว','เน้นตัวเร็วและดาเมจ ฟาร์มด่านง่าย'],
+      ['boss','บอส','มี Tank/Support แล้วใส่ดาเมจแรง'],
+      ['survival','ถึก','เน้นรอดนาน เหมาะด่านที่แพ้เร็ว'],
+      ['speed','สปีด','เน้น SPD/Press Turn ออกแอ็กชันไว'],
+      ['magic','เวทหมู่','เน้น Mage และสกิลหมู่'],
+      ['sameElement','ธาตุเดียว','พยายามเปิด Formation ธาตุเดียวกัน 3 ตัว']
+    ];
+    return `<section class="panel shortcut-panel">
+      <div class="section-title"><h3>จัดทีมอัตโนมัติหลายแนว</h3><small>ใช้เมื่ออยากลองทีมเร็ว ๆ</small></div>
+      <div class="shortcut-grid">${styles.map(([id,title,desc])=>`<button class="shortcut-card" data-action="autoTeamStyle" data-style="${id}"><b>${title}</b><small>${desc}</small></button>`).join('')}</div>
+    </section>`;
+  }
+
+  function quickUpgradePanel(){
+    const all = Object.keys(S().state.roster || {});
+    const starReady = all.filter(id=>{
+      const inst=S().state.roster[id]; if(!inst) return false;
+      return inst.stars < 6 && inst.shards >= S().shardsNeeded(inst.stars) && S().state.resources.dust >= S().starCost(inst);
+    }).length;
+    const rebirthReady = all.filter(id=>{
+      const inst=S().state.roster[id]; if(!inst) return false;
+      const c=S().rebirthCost(inst);
+      return inst.level >= S().maxHeroLevel() && S().state.resources.gold >= c.gold && S().state.resources.dust >= c.dust;
+    }).length;
+    return `<section class="panel shortcut-panel danger-zone-lite">
+      <div class="section-title"><h3>เมนูอัปเกรดรวม</h3><small>ลดการกดซ้ำตอนมีปีศาจเยอะ</small></div>
+      <div class="shortcut-grid">
+        <button class="shortcut-card" data-action="autoUpgrade"><b>อัปเกรดทีมนี้</b><small>อัปดาว/เลเวลเฉพาะทีมปัจจุบัน ไม่เปลี่ยนทีม</small></button>
+        <button class="shortcut-card" data-action="bulkUpgradeTeam"><b>Lv ทีมจนเงินหมด</b><small>อัปเลเวลทีมปัจจุบันแบบเฉลี่ย</small></button>
+        <button class="shortcut-card" data-action="bulkStarUpAll"><b>อัปดาวทั้งหมด</b><small>ตัวที่ Shard/Dust พอ: ${starReady} ตัว</small></button>
+        <button class="shortcut-card" data-action="bulkRebirthAll"><b>Rebirth ทั้งหมด</b><small>ตัว Lv.${S().maxHeroLevel()} ที่ทรัพยากรพอ: ${rebirthReady} ตัว</small></button>
+        <button class="shortcut-card" data-action="equipBest"><b>Auto Equip</b><small>ใส่อุปกรณ์ดีที่สุดให้ทีม/คลัง</small></button>
+        <button class="shortcut-card" data-action="autoSellLow"><b>ย่อยของต่ำ</b><small>ขาย Common-Rare ที่ไม่ได้ใส่</small></button>
+      </div>
+      <p class="muted tip-line">อัปดาวทั้งหมดและ Rebirth ทั้งหมดจะทำเฉพาะตัวที่เข้าเงื่อนไขและมีทรัพยากรพอ ไม่ใช้การผสม/ลบปีศาจ</p>
+    </section>`;
+  }
+
+  function quickFarmPanel(){
+    return `<section class="panel shortcut-panel">
+      <div class="section-title"><h3>เมนูลัดฟาร์ม</h3><small>ตั้งค่าก่อนฟาร์มยาว</small></div>
+      ${speedControls()}
+      ${logModeControls()}
+      ${autoFarmSettingsPanel()}
+      <div class="shortcut-grid">
+        <button class="shortcut-card primary-card" data-action="startBattle"><b>สู้ 1 ครั้ง</b><small>ใช้ทีมปัจจุบัน</small></button>
+        <button class="shortcut-card" data-action="farmRepeat"><b>ฟาร์มตามเงื่อนไข</b><small>ใช้ Auto Farm Settings</small></button>
+        <button class="shortcut-card" data-action="farmRepeat10"><b>ฟาร์ม 10 รอบ</b><small>ด่านปัจจุบัน</small></button>
+        <button class="shortcut-card" data-action="farmRepeat50"><b>ฟาร์ม 50 รอบ</b><small>เหมาะกับ x20/x50</small></button>
+        <button class="shortcut-card" data-action="autoBattle"><b>ดันด่านจนแพ้</b><small>ชนะแล้วไปด่านถัดไป</small></button>
+        <button class="shortcut-card" data-screen="dungeon"><b>Daily Dungeon</b><small>ฟาร์มทรัพยากรรายวัน</small></button>
+      </div>
+    </section>`;
+  }
+
+  function quickCleanupPanel(){
+    return `<section class="panel shortcut-panel">
+      <div class="section-title"><h3>เคลียร์คลัง / ผสมเร็ว</h3><small>กันคลังรกหลังฟาร์มนาน</small></div>
+      <div class="shortcut-grid">
+        <button class="shortcut-card" data-action="autoFusionLow3"><b>Auto Fusion ต่ำ x3</b><small>ใช้ Common/Rare สำรองที่ไม่ล็อก</small></button>
+        <button class="shortcut-card" data-action="autoFusionLow10"><b>Auto Fusion ต่ำ x10</b><small>ทำหลายครั้งเพื่อลดวัตถุดิบ</small></button>
+        <button class="shortcut-card" data-screen="fusion"><b>เปิดหน้าผสม</b><small>เลือกสูตรเอง / Chaos Fusion</small></button>
+        <button class="shortcut-card" data-screen="heroes"><b>จัดการปีศาจ</b><small>ค้นหา ล็อก อัปเฉพาะตัว</small></button>
+      </div>
+    </section>`;
+  }
+
+  function shortcutsScreen(){
+    return `<div class="screen shortcuts-screen">
+      <div class="page-title"><div><h2>เมนูลัด</h2><p>รวมคำสั่งที่กดบ่อย ลดการเลื่อนหน้าคลัง/ทีม/ผสมเมื่อมีปีศาจเยอะ</p></div><b class="gold">Team ${fmt(S().teamPower())}</b></div>
+      ${dashboardGoals()}
+      ${quickTeamPanel()}
+      ${quickUpgradePanel()}
+      ${quickFarmPanel()}
+      ${quickCleanupPanel()}
+    </div>`;
+  }
+
   function dailyLoginPanel(){
     const r = S().state.loginReward || {};
     const when = r.claimedAt ? new Date(r.claimedAt).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) : '-';
+    const table = D().loginRewards7 || [];
     return `<section class="panel daily-login-panel">
-      <div class="section-title"><h3>รางวัลเข้าเล่นวันนี้</h3><small>${h(r.date || S().todayKey())}</small></div>
+      <div class="section-title"><h3>Daily Login 7 วัน</h3><small>Streak ${fmt(r.streak||1)} | Day ${r.day||1}/7</small></div>
       <div class="quest done">
-        <div><b>รับแล้ว +${fmt(r.tickets || 200)} Ticket</b><small>แจกอัตโนมัติเมื่อเข้าเกมครั้งแรกของวัน ${when}</small></div>
+        <div><b>${h(r.title || 'รับรางวัลวันนี้แล้ว')}</b><small>${S().resourceText(r.reward || {tickets:r.tickets||200})} | แจกอัตโนมัติ ${when}</small></div>
         <button class="btn small ghost" disabled>รับแล้ว</button>
       </div>
+      <div class="daily-track">${table.map(x=>`<div class="daily-day ${(r.day||1)===x.day?'active':''}"><b>D${x.day}</b><small>${S().resourceText(x.reward)}</small></div>`).join('')}</div>
     </section>`;
   }
 
@@ -424,13 +602,17 @@ window.UI = (() => {
             <button class="btn amber" data-action="farmRepeat">🌾 ฟาร์มจนแพ้</button>
             <button class="btn amber" data-action="farmRepeat10">ฟาร์ม 10 รอบ</button>
             <button class="btn ghost" data-screen="battle">เลือกด่าน</button>
+            <button class="btn ghost" data-screen="dungeon">ดันเจี้ยนรายวัน</button>
             <button class="btn ghost" data-screen="manual">คู่มือ</button>
+            <button class="btn ghost" data-screen="shortcuts">เมนูลัด</button>
           </div>
           ${speedControls()}
+          ${logModeControls()}
           <p class="muted"><b>Modifier:</b> ${selected.modifier ? h(selected.modifier.title)+' — '+h(selected.modifier.desc) : 'ปกติ'} ${selected.bossSkill ? ' | <b>Boss Skill:</b> '+h(selected.bossSkill.title)+' — '+h(selected.bossSkill.desc) : ''}</p>
         </section>
         ${dailyLoginPanel()}
         ${autoFarmSettingsPanel()}
+        ${formationPanel(true)}
         ${dashboardGoals()}
         ${starterPanel()}
         ${battleSummaryPanel()}
@@ -468,35 +650,65 @@ window.UI = (() => {
     return `<section class="panel"><div class="section-title"><h3>เควสวันนี้</h3><small>${S().state.daily.date}</small></div><div class="stack">${rows}</div></section>`;
   }
 
+
+  function dungeonScreen(){
+    const cards = (D().dungeons || []).map(d=>{
+      const left = S().dungeonRunsLeft(d.id);
+      const st = S().dungeonStage(d.id);
+      const reward = S().resourceText(S().dungeonReward ? S().dungeonReward(d.id,true) : {});
+      return `<div class="dungeon-card ${left>0?'':'disabled'}">
+        <div class="dungeon-icon">${d.icon}</div>
+        <div class="dungeon-info"><b>${h(d.title)}</b><small>${h(d.desc)}</small><small>เหลือวันนี้ ${left}/${d.runsPerDay} | ศัตรู Power ~${fmt(st?.power||0)}</small><small>รางวัลหลัก: ${reward || h(d.kind)}</small></div>
+        <button class="btn ${left>0?'primary':'ghost'}" data-action="startDungeon" data-id="${d.id}" ${left>0?'':'disabled'}>เข้า</button>
+      </div>`;
+    }).join('');
+    return `<div class="screen dungeon-screen">
+      <div class="page-title"><div><h2>Daily Dungeon</h2><p>ใช้ทีมปัจจุบัน ลงได้จำกัดต่อวัน รางวัลปรับตามด่านสูงสุดที่เคลียร์</p></div></div>
+      <section class="panel"><div class="section-title"><h3>ดันเจี้ยนวันนี้</h3><small>${S().state.daily.date}</small></div><div class="dungeon-grid">${cards}</div></section>
+      ${formationPanel(true)}
+      ${teamMini()}
+    </div>`;
+  }
+
   function battleScreen(){
     const sel = S().selectedStage();
     const from = Math.max(1, Math.min(sel.id-4, D().stages.length-9));
     const list = D().stages.slice(from-1, from+10);
+    const tp = S().teamPower();
+    const ep = S().stageEnemyPower(sel);
     return `
-      <div class="screen">
-        <div class="page-title"><div><h2>เส้นทางอเวจีไร้สิ้นสุด</h2><p>ด่านเพิ่มยาวถึง 3000 และยากขึ้นเรื่อย ๆ ฟาร์มจน Rebirth เพื่อไปต่อ</p></div></div>
-        <section class="panel">
-          <div class="section-title"><h3>${sel.title}</h3><small>${sel.area}</small></div>
-          <div class="grid2">
-            <div class="stat-card"><span>พลังทีม</span><b>${fmt(S().teamPower())}</b></div>
-            <div class="stat-card"><span>พลังศัตรู</span><b>${fmt(S().stageEnemyPower(sel))}</b></div>
+      <div class="screen battle-page-v42">
+        <section class="hero-banner battle-command-hero">
+          <div class="tiny-label">ABYSS ROUTE</div>
+          <h2>${sel.title}</h2>
+          <p>${sel.area} | ทีม ${fmt(tp)} vs ศัตรู ${fmt(ep)} ${tp<ep?'<b class="danger"> เสี่ยงแพ้</b>':'<b class="success"> พร้อมลุย</b>'}</p>
+          <div class="battle-command-stats">
+            <div><span>ด่าน</span><b>${sel.id}/${D().stages.length}</b></div>
+            <div><span>ทีม</span><b>${fmt(tp)}</b></div>
+            <div><span>ศัตรู</span><b>${fmt(ep)}</b></div>
+            <div><span>ปลดล็อก</span><b>${fmt(S().state.campaign.unlocked)}</b></div>
           </div>
-          <p class="muted">First Clear: ${S().resourceText(sel.firstReward)} | Repeat: ${S().resourceText(sel.repeatReward)}</p>
-          <div class="grid2 battle-actions">
+          <div class="banner-actions battle-main-actions">
             <button class="btn primary" data-action="startBattle">⚔️ สู้</button>
-            <button class="btn amber" data-action="farmRepeat">🌾 ฟาร์มจนแพ้</button>
+            <button class="btn amber" data-action="farmRepeat">🌾 ฟาร์มตามเงื่อนไข</button>
             <button class="btn amber" data-action="farmRepeat10">ฟาร์ม 10 รอบ</button>
             <button class="btn amber" data-action="farmRepeat50">ฟาร์ม 50 รอบ</button>
             <button class="btn green" data-action="autoBattle">🔁 ดันด่านจนแพ้</button>
           </div>
           ${speedControls()}
-          <p class="muted"><b>Modifier:</b> ${sel.modifier ? h(sel.modifier.title)+' — '+h(sel.modifier.desc) : 'ปกติ'} ${sel.bossSkill ? ' | <b>Boss Skill:</b> '+h(sel.bossSkill.title)+' — '+h(sel.bossSkill.desc) : ''}</p>
+          ${logModeControls()}
+          <div class="battle-stage-note">
+            <div><b>รางวัล First Clear</b><span>${S().resourceText(sel.firstReward)}</span></div>
+            <div><b>รางวัลฟาร์มซ้ำ</b><span>${S().resourceText(sel.repeatReward)}</span></div>
+            <div><b>Modifier</b><span>${sel.modifier ? h(sel.modifier.title)+' — '+h(sel.modifier.desc) : 'ปกติ'}</span></div>
+            ${sel.bossSkill ? `<div><b>Boss Skill</b><span>${h(sel.bossSkill.title)} — ${h(sel.bossSkill.desc)}</span></div>` : ''}
+          </div>
         </section>
         ${autoFarmSettingsPanel()}
         ${battleSummaryPanel()}
-        <section class="panel">
-          <div class="section-title"><h3>Stage Map</h3><small>ปลดล็อกแล้ว ${S().state.campaign.unlocked}/${D().stages.length}</small></div>
-          <div class="stack">
+        <section class="panel stage-map-panel">
+          <div class="section-title"><h3>เลือกด่าน</h3><small>แสดงรอบด่านปัจจุบัน | ปลดล็อกแล้ว ${S().state.campaign.unlocked}/${D().stages.length}</small></div>
+          <div class="stage-strip">
             ${list.map(stageCard).join('')}
           </div>
         </section>
@@ -529,7 +741,8 @@ window.UI = (() => {
             <div class="slot-row"><div class="slot-label">Back</div><div class="slot-list back">${back.map((id,i)=>slotCard(id,i+2)).join('')}</div></div>
           </div>
           <div class="action-strip">
-            <button class="btn green" data-action="autoTeam">👥 จัดทีมอัตโนมัติ</button>
+            <button class="btn green" data-action="autoTeam">👥 จัดทีมสมดุล</button>
+            <button class="btn ghost" data-screen="shortcuts">Auto Team หลายแนว</button>
             <button class="btn ghost" data-action="clearTeam">ถอดทีมทั้งหมด</button>
             <button class="btn ghost" data-screen="heroes">จัดการปีศาจ</button>
           </div>
@@ -575,12 +788,16 @@ window.UI = (() => {
             <div><span>อัปได้</span><b>${upgradeableCount}</b></div>
           </div>
           <div class="manager-actions compact-actions">
-            <button class="btn green" data-action="autoTeam">👥 จัดทีมอัตโนมัติ</button>
+            <button class="btn green" data-action="autoTeam">👥 จัดทีมสมดุล</button>
             <button class="btn green" data-action="autoUpgrade">⬆️ อัปทีมนี้</button>
+            <button class="btn ghost" data-action="bulkStarUpAll">★ อัปดาวทั้งหมด</button>
+            <button class="btn ghost" data-action="bulkRebirthAll">Rebirth ทั้งหมด</button>
+            <button class="btn ghost" data-screen="shortcuts">เมนูลัด</button>
             <button class="btn ghost" data-action="equipBest">🎒 ใส่ของดีที่สุด</button>
             <button class="btn ghost" data-action="toggleInventory">${showInv?'ซ่อนอุปกรณ์':'ดูอุปกรณ์'}</button>
           </div>
         </section>
+        ${quickUpgradePanel()}
         ${teamPresetPanel()}
         ${farmToolsPanel()}
         <section class="panel compact-manager-panel sticky-manager-panel">
@@ -761,8 +978,11 @@ window.UI = (() => {
           <button class="btn small ghost" data-action="closeMonsterMenu">ปิด</button>
         </div>
         ${statGrid(st)}
+        ${def.passive ? `<div class="sheet-skill passive"><b>Passive: ${h(D().passiveDefs[def.passive]?.title||def.passive)}</b><span>${h(D().passiveDefs[def.passive]?.desc||'')}</span></div>` : ''}
         <div class="sheet-skill"><b>${h(def.skill)}</b><span>${h(def.skillDesc)}</span></div>
         <div class="sheet-costs">Shard ${fmt(inst.shards)}/${fmt(needShard)} | Lv+ 🪙 ${fmt(levelCost)} | ★+ ✨ ${fmt(S().starCost(inst))} | Rebirth 🪙 ${fmt(rbCost.gold)} ✨ ${fmt(rbCost.dust)}</div>
+        ${starPreviewPanel(id)}
+        ${rebirthPreviewPanel(id)}
         <div class="sheet-actions">
           <button class="btn primary" data-action="upgradeOneHero" data-id="${id}">⬆️ อัปตัวนี้จนหมด</button>
           <button class="btn green" data-action="levelUp" data-id="${id}" ${canLevel?'':'disabled'}>Lv +1</button>
@@ -790,7 +1010,7 @@ window.UI = (() => {
 
   function itemCard(it){
     const type=D().equipmentTypes[it.type], rare=D().equipmentRarities[it.rarity];
-    return `<div class="item-card rarity-${it.rarity}"><div class="item-icon">${type.icon}</div><div><b class="rarity-text">${h(it.name)}${type.label}</b><small>${rare.label} | ${type.stat.toUpperCase()} +${it.value} | Lv.${it.level}</small></div><small>${it.rarity}</small></div>`;
+    return `<div class="item-card rarity-${it.rarity}"><div class="item-icon">${type.icon}</div><div><b class="rarity-text">${h(it.name)}${type.label}</b><small>${rare.label} | ${it.set?((D().gearSets[it.set]?.icon||'')+' '+it.set+' Set | '):''}${type.stat.toUpperCase()} +${it.value} | Lv.${it.level}</small></div><small>${it.rarity}</small></div>`;
   }
 
   function gachaScreen(){
@@ -982,7 +1202,7 @@ window.UI = (() => {
   function manualScreen(){
     return `
       <div class="screen manual-screen">
-        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V39: Bestiary Expansion + Daily 200 Ticket</p></div></div>
+        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V42: Shortcut Menu + Star/Rebirth Bulk</p></div></div>
         <section class="panel manual-hero">
           <div class="section-title"><h3>เป้าหมายใหม่</h3><small>Endless Loop ถึงด่าน 3000</small></div>
           <p class="muted">ด่านจะสร้างต่อเนื่องและยากขึ้นเรื่อย ๆ จนถึง <b class="gold">ด่าน 3000</b> ถ้าติดด่าน ให้ฟาร์มด่านที่ผ่านได้ อัปเลเวล เปิดกาชา ผสมมอนสเตอร์ และ Rebirth เพื่อเพิ่มพลังถาวร</p>
@@ -995,13 +1215,18 @@ window.UI = (() => {
           </div>
         </section>
         <section class="panel">
-          <div class="section-title"><h3>ระบบ Progression / V39</h3><small>ทำให้มีเป้าหมายเล่นต่อ</small></div>
+          <div class="section-title"><h3>ระบบ Progression / V42</h3><small>ทำให้มีเป้าหมายเล่นต่อ</small></div>
           <ul class="guide-list">
             <li><b>Achievement:</b> ผ่านด่าน, สะสมปีศาจ, ผสม, Rebirth แล้วรับรางวัลระยะยาว</li>
             <li><b>Pity Gacha:</b> Rare+ ทุก 10, Epic+ ทุก 50, Legendary+ ทุก 200 โรล ส่วน SSR ยังเป็นระดับลับ</li>
             <li><b>Shop:</b> แปลง Gold/Gem/Dust เป็น Ticket, Dust, Gold, Shard หรืออุปกรณ์</li>
             <li><b>Codex Reward:</b> สะสมปีศาจครบตาม Tier แล้วรับรางวัล</li>
-            <li><b>Daily Login:</b> เข้าเกมครั้งแรกของวันรับ Ticket +200 อัตโนมัติ</li>
+            <li><b>Daily Login 7 วัน:</b> เข้าเกมทุกวันยังได้ Ticket +200 และวันที่ 7 มี SSR Shard</li>
+            <li><b>Daily Dungeon:</b> โหมดฟาร์ม Gold/Dust/Ticket/Shard/Gear/SSR Shard จำกัดรอบต่อวัน</li>
+            <li><b>Formation Bonus:</b> จัดทีมให้มีบทบาท/ธาตุตามเงื่อนไขเพื่อเพิ่มค่าสเตตัสทั้งทีม</li>
+            <li><b>Passive Skill:</b> ปีศาจทุกตัวมี Passive ตามสาย เช่น Tank ได้ Shield, Support ฮีลแรงขึ้น, Mage เริ่ม Energy สูง</li>
+            <li><b>Gear Set:</b> อุปกรณ์มี Set ใส่ 2/4 ชิ้นเพื่อได้โบนัสพิเศษ</li>
+            <li><b>Combat Log Mode:</b> เลือก Log เต็ม/เฉพาะสกิล/เฉพาะผล/ซ่อน Log เพื่อฟาร์มเร็วขึ้น</li>
             <li><b>Stage Modifier:</b> ด่านบางด่านมีเงื่อนไขพิเศษ เช่น ศัตรูเร็วขึ้น/เลือดเยอะขึ้น</li>
             <li><b>Boss Skill:</b> บอสทุก 5 ด่านมีออร่าเฉพาะ ทำให้ต้องฟาร์มหรือปรับทีมบ้าง</li>
           </ul>
@@ -1009,10 +1234,13 @@ window.UI = (() => {
         <section class="panel">
           <div class="section-title"><h3>Rebirth คืออะไร</h3><small>วนเกิดใหม่เพื่อไปด่านลึกขึ้น</small></div>
           <ul class="guide-list">
-            <li>มอนสเตอร์ที่เลเวล <b>100</b> จะกด Rebirth ได้ในหน้า <b>คลัง</b></li>
-            <li>Rebirth จะรีเซ็ตเลเวลและ EXP กลับเป็น 1/0 แต่เพิ่มสแต็ก <b>Rebirth +1</b></li>
-            <li>แต่ละสแต็กเพิ่ม HP / ATK / DEF ถาวร และยิ่งสแต็กสูง โบนัสรวมยิ่งดีขึ้น</li>
-            <li>อุปกรณ์ ดาว และ Shard ยังอยู่ ไม่หาย</li>
+            <li>มอนสเตอร์ที่เลเวล <b>100</b> จะกด Rebirth ได้ในหน้า <b>คลัง</b> หรือเมนูสไลด์ของปีศาจ</li>
+            <li>Rebirth จะรีเซ็ตเลเวลและ EXP กลับเป็น <b>Lv.1 / EXP 0</b> แต่เพิ่มสแต็ก <b>Rebirth +1</b></li>
+            <li>แต่ละสแต็กเพิ่มโบนัสถาวรให้ <b>HP / ATK / DEF</b> โดยประมาณ <b>+18% ต่อสแต็ก</b> และมีโบนัสสเกลเพิ่มเล็กน้อยเมื่อสแต็กสูงขึ้น</li>
+            <li><b>หลัง Rebirth ทันที</b> สเตตัสอาจลดลง เพราะเลเวลกลับไป 1</li>
+            <li><b>เมื่อฟาร์มกลับถึง Lv.100</b> ตัวเดิมจะมีสเตตัสสูงกว่าก่อน Rebirth เพราะมีโบนัส R+ เพิ่ม</li>
+            <li>อุปกรณ์ ดาว Shard Favorite และตำแหน่งทีมยังอยู่ ไม่หาย</li>
+            <li>ในหน้าคลัง แตะปีศาจแล้วดูช่อง <b>Rebirth Preview</b> เพื่อเห็นตัวเลข Power / HP / ATK / DEF ก่อนและหลัง Rebirth</li>
           </ul>
         </section>
         <section class="panel">
@@ -1038,10 +1266,11 @@ window.UI = (() => {
           <div class="guide-grid">
             <div class="guide-card"><b>Gold</b><p>ได้จากชนะด่าน, ฟาร์มด่านซ้ำ, Idle Reward และ Daily Quest ใช้สำหรับอัปเลเวล, ผสมมอนสเตอร์ และ Rebirth</p></div>
             <div class="guide-card"><b>Gem</b><p>ได้จาก First Clear บางด่าน, บอสด่านสูง, Idle Reward แบบช้า ๆ และ Daily Quest ใช้เปิดกาชาเมื่อไม่มี Ticket</p></div>
-            <div class="guide-card"><b>Ticket</b><p>ได้จากรางวัลเข้าเล่นรายวัน +200 Ticket, ชนะสะสมทุก 7 ครั้ง, First Clear บอสด่านสำคัญ และ Daily Quest ใช้เปิดกาชา 1 ใบต่อ 1 ครั้ง</p></div>
-            <div class="guide-card"><b>Dust</b><p>ได้จากชนะด่าน, ฟาร์มด่านซ้ำ, Idle Reward และ Daily Quest ใช้สำหรับอัปดาว, ผสมมอนสเตอร์ และ Rebirth</p></div>
+            <div class="guide-card"><b>Ticket</b><p>ได้จากรางวัลเข้าเล่นรายวัน +200 Ticket, Ticket Dungeon, ชนะสะสมทุก 7 ครั้ง, First Clear บอส และ Daily Quest ใช้เปิดกาชา 1 ใบต่อ 1 ครั้ง</p></div>
+            <div class="guide-card"><b>Dust</b><p>ได้จากชนะด่าน, Dust Dungeon, ฟาร์มด่านซ้ำ, Idle Reward และ Daily Quest ใช้สำหรับอัปดาว, ผสมมอนสเตอร์ และ Rebirth</p></div>
             <div class="guide-card"><b>Shard</b><p>ได้จากการเปิดกาชาหรือผสมแล้วได้มอนสเตอร์ซ้ำ Shard ผูกกับมอนสเตอร์ตัวนั้น ใช้สำหรับอัปดาว</p></div>
-            <div class="guide-card"><b>Equipment</b><p>ดรอปจากการชนะด่าน ยิ่งด่านสูงหรือเป็นบอส โอกาสได้ของระดับสูงยิ่งดี ใช้เพิ่ม HP / ATK / DEF / SPD</p></div>
+            <div class="guide-card"><b>Equipment</b><p>ดรอปจากการชนะด่านและ Gear Dungeon ยิ่งด่านสูงหรือเป็นบอส โอกาสได้ของระดับสูงยิ่งดี อุปกรณ์มี Set Bonus เมื่อใส่ 2/4 ชิ้น</p></div>
+            <div class="guide-card"><b>SSR Shard</b><p>ได้จาก Daily Login วันที่ 7, Abyss Rift และร้านค้า ใช้เป็นทรัพยากรสะสมระยะยาวสำหรับระบบ SSR ต่อไป</p></div>
             <div class="guide-card"><b>Level / EXP</b><p>ชนะไฟต์จะได้ EXP ให้มอนสเตอร์ในทีมโดยอัตโนมัติ และยังใช้ Gold กดอัปเกรดเพื่อเร่งเลเวลได้ ถ้าทีมมีตัวถึง Lv.100 Auto Farm แบบ levelcap จะหยุดให้กด Rebirth</p></div>
             <div class="guide-card"><b>Rebirth Stack</b><p>ได้จากมอนสเตอร์ Lv.100 แล้วกด Rebirth ในหน้าคลัง สแต็กนี้เพิ่มค่าสเตตัสถาวรและใช้ไต่ด่านลึกขึ้น</p></div>
           </div>
@@ -1078,7 +1307,9 @@ window.UI = (() => {
             <div class="guide-card"><b>Favorite / Lock</b><p>กด Favorite ที่การ์ดมอนสเตอร์เพื่อกันเอาไปผสมโดยไม่ตั้งใจ ตัวที่ล็อกจะไม่ถูก Auto Fusion และเลือกผสมไม่ได้</p></div>
             <div class="guide-card"><b>Monster Codex</b><p>หน้า “ตำรา” รวมมอนสเตอร์ทั้งหมด ดูตัวที่เคยพบ สกิล ธาตุ บทบาท และสูตรผสมที่เกี่ยวข้อง V35 แยกอัปเกรดอัตโนมัติออกจากจัดทีมอัตโนมัติแล้ว ปุ่มอัปเกรดจะไม่เปลี่ยนทีมที่จัดไว้</p></div>
             <div class="guide-card"><b>Filter / Sort</b><p>หน้า Team, คลัง และ Codex มีตัวกรองตามบทบาท ธาตุ ระดับ และ Favorite พร้อมเรียงตาม Power, Level, Rebirth หรือ Rarity</p></div>
-            <div class="guide-card"><b>Target Upgrade</b><p>หน้า คลัง มีปุ่ม เลือกอัป บนการ์ดปีศาจทุกตัว แล้วใช้แผงใหญ่ด้านบนเพื่ออัป Lv +1, +10, สูงสุดเท่าที่จ่ายไหว, อัปดาว หรือ Rebirth เฉพาะตัวนั้น</p></div>
+            <div class="guide-card"><b>Target Upgrade</b><p>แตะปีศาจในหน้า คลัง/ทีม/ผสม เพื่อเปิดเมนูสไลด์ แล้วอัป Lv +1, +10, Lv Max, อัปดาว หรือ Rebirth เฉพาะตัวนั้น</p></div>
+            <div class="guide-card"><b>Star Upgrade</b><p>อัปดาวใช้ Shard ของตัวนั้น + Dust เพิ่ม HP/ATK/DEF ประมาณ 22% ต่อดาว, SPD +2 ต่อดาว และ Power เพิ่มถาวร ดู Preview ก่อนกดได้ในเมนูปีศาจ</p></div>
+            <div class="guide-card"><b>เมนูลัด</b><p>หน้า “เมนูลัด” รวม Auto Team หลายแนว, อัปดาวทั้งหมด, Rebirth ทั้งหมด, Auto Fusion ต่ำ, ฟาร์มตามเงื่อนไข และปุ่มที่ใช้บ่อย เพื่อลดการเลื่อนเมื่อมีปีศาจเยอะ</p></div>
             <div class="guide-card"><b>Team Preset</b><p>บันทึกทีมได้ 3 ชุด เหมาะสำหรับทีมฟาร์ม ทีมบอส และทีมทดลอง สลับได้จากหน้า ทีม หรือ คลัง</p></div>
             <div class="guide-card"><b>Auto Sell</b><p>ขาย/ย่อยอุปกรณ์ Common-Rare ที่ไม่ได้ใส่อยู่ เพื่อเปลี่ยนเป็น Gold และ Dust ลดความรกของคลัง</p></div>
             <div class="guide-card"><b>Auto Fusion ต่ำ</b><p>ผสมเฉพาะ Common/Rare สำรองที่ไม่อยู่ในทีม ไม่ได้ล็อก และไม่เคย Rebirth ใช้สำหรับเคลียร์วัตถุดิบต่ำหลังฟาร์มยาว</p></div>
@@ -1118,7 +1349,7 @@ window.UI = (() => {
 
   function render(){
     const screen = currentScreen();
-    const map = {home, battle:battleScreen, team:teamScreen, fusion:fusionScreen, gacha:gachaScreen, shop:shopScreen, heroes:heroesScreen, codex:codexScreen, manual:manualScreen};
+    const map = {home, shortcuts:shortcutsScreen, battle:battleScreen, dungeon:dungeonScreen, team:teamScreen, fusion:fusionScreen, gacha:gachaScreen, shop:shopScreen, heroes:heroesScreen, codex:codexScreen, manual:manualScreen};
     app().innerHTML = hud() + (map[screen]||home)() + nav() + monsterActionSheet();
     bind();
     syncBattleOverlayMode();
@@ -1137,12 +1368,16 @@ window.UI = (() => {
   }
 
   function handleAction(action, data, btn){
-    const safeWhileBattle = new Set(['setSpeed','speed','stopAuto','save','exportSave','copyExport','exportBackup','setFarmStop','setHeroFilter','setHeroSort','applyHeroSearch','clearHeroSearch','openMonsterMenu','closeMonsterMenu']);
+    const safeWhileBattle = new Set(['setSpeed','speed','stopAuto','save','exportSave','copyExport','exportBackup','setFarmStop','setLogMode','setHeroFilter','setHeroSort','applyHeroSearch','clearHeroSearch','openMonsterMenu','closeMonsterMenu']);
     if(battleRunning && !safeWhileBattle.has(action)) return toast('กำลังต่อสู้อยู่: ดูหน้าอื่นได้ แต่ยังแก้ทีม/อัปเกรด/ผสมไม่ได้จนจบไฟต์');
     switch(action){
       case 'save': S().save(); toast('บันทึกเกมแล้ว'); break;
       case 'setSpeed': { const v=Number(data.speedValue || data.speed || 1); S().state.settings.battleSpeed=v; battleSpeed=v; S().save(); toast(v===20?'เปิดข้ามไว x20 แล้ว':v===50?'เปิดฟาร์ม x50 แล้ว':`ตั้งความเร็วต่อสู้ ${v}x แล้ว`); render(); break; }
-      case 'autoTeam': S().autoTeam(); toast('จัดทีมอัตโนมัติแล้ว'); render(); break;
+      case 'autoTeam': S().autoTeam(); toast('จัดทีมสมดุลแล้ว'); render(); break;
+      case 'autoTeamStyle': { const r=S().autoTeamStyle(data.style || 'balanced'); toast(r.ok?`จัดทีมแนว ${r.label} แล้ว`:r.msg); render(); break; }
+      case 'bulkUpgradeTeam': { const r=S().bulkUpgradeTeamToCap(); toast(r.msg); render(); break; }
+      case 'bulkStarUpAll': { const r=S().bulkStarUpAll(); toast(r.msg); render(); break; }
+      case 'bulkRebirthAll': { if(!confirm('Rebirth ทุกตัวที่เข้าเงื่อนไข? ตัวที่ Rebirth จะกลับ Lv.1 แต่ได้โบนัสถาวร')) break; const r=S().bulkRebirthAll(); toast(r.msg); render(); break; }
       case 'autoUpgrade': { const c=S().autoUpgrade(); toast(c?`อัปเกรดทีมปัจจุบัน ${c} ครั้ง`:'ยังอัปเกรดไม่ได้ ต้องมีตัวในทีม/ทรัพยากรไม่พอ'); render(); break; }
       case 'equipBest': { const c=S().equipBest(); toast(c?`ใส่อุปกรณ์ ${c} ช่องให้ทีม/คลัง`:'ของที่ใส่อยู่ดีที่สุดแล้ว'); render(); break; }
       case 'autoSellLow': { const r=S().autoSellLow('Rare'); toast(r.msg); render(); break; }
@@ -1176,7 +1411,7 @@ window.UI = (() => {
       case 'gacha1': doGacha(1); break;
       case 'gacha10': doGacha(10); break;
       case 'levelUp': { const r=S().levelUp(data.id); toast(r.ok?'อัปเลเวลแล้ว':r.msg); render(); break; }
-      case 'starUp': { const r=S().starUp(data.id); toast(r.ok?'อัปดาวแล้ว':r.msg); render(); break; }
+      case 'starUp': { const r=S().starUp(data.id); toast(r.ok?`อัปดาวแล้ว ★${r.stars}`:r.msg); render(); break; }
       case 'rebirthHero': { const r=S().rebirthHero(data.id); toast(r.ok?`Rebirth สำเร็จ R+${r.rebirth}`:r.msg); render(); break; }
       case 'toggleTeam': toggleTeam(data.id); break;
       case 'toggleFusion': { const r=S().toggleFusion(data.id); if(!r.ok) toast(r.msg); render(); break; }
@@ -1190,6 +1425,8 @@ window.UI = (() => {
       case 'claimCodexReward': { const r=S().codexRewardClaim(data.id); toast(r.msg || (r.ok?'รับ Codex Reward แล้ว':'ยังรับไม่ได้')); render(); break; }
       case 'shopBuy': { const r=S().shopPurchase(data.id); toast(r.msg); render(); break; }
       case 'setFarmStop': { const v = data.value || 'lose'; S().state.settings.farmStop = v; S().save(); toast(`ตั้งค่า Auto Farm: ${farmStopLabel(v)}`); render(); break; }
+      case 'setLogMode': { const v = data.value || 'full'; S().state.settings.logMode = v; S().save(); toast(`Combat Log: ${v}`); render(); break; }
+      case 'startDungeon': startDungeon(data.id); break;
       case 'exportSave': {
         const box = document.getElementById('saveExportBox');
         if(box){ box.value = S().exportSaveText(); box.focus(); box.select(); }
@@ -1396,6 +1633,28 @@ window.UI = (() => {
     }
   }
 
+
+  async function startDungeon(id){
+    if(battleRunning) return;
+    if(S().state.team.filter(Boolean).length===0) return toast('ยังไม่มีทีม');
+    if(S().dungeonRunsLeft(id) <= 0) return toast('วันนี้ลงดันเจี้ยนนี้ครบแล้ว');
+    battleRunning = true;
+    openBattleFullscreenOnStart();
+    const sim = window.BattleSim.simulateDungeon(id);
+    await playBattle(sim);
+    const result = S().completeDungeon(id, sim.win);
+    S().setLastBattle(makeBattleSummary(sim,result));
+    battleRunning = false;
+    if(sim.win){
+      let msg = `Dungeon Clear! ${S().resourceText(result.reward)}`;
+      if(result.exp?.exp) msg += ` | EXP ทีม +${S().fmt(result.exp.exp)}`;
+      if(result.item) msg += ` | ได้ ${result.item.name}${D().equipmentTypes[result.item.type].label}`;
+      if(result.shard) msg += ` | ${result.shard.name} Shard +${result.shard.amount}`;
+      toast(msg);
+    } else toast('แพ้ใน Dungeon');
+    render();
+  }
+
   async function startBattle(){
     if(battleRunning) return;
     if(S().state.team.filter(Boolean).length===0) return toast('ยังไม่มีทีม');
@@ -1492,13 +1751,19 @@ window.UI = (() => {
       const percent = Math.round((i+1)/sim.events.length*100);
       progress.style.width = `${percent}%`;
       updateBattleTopBar(`⚔️ ${sim.stage.title}`, `${ev.title}: ${eventLine}`, percent);
-      const row=document.createElement('div'); row.textContent=eventLine; log.prepend(row);
-      if(log.children.length>18) log.lastChild.remove();
+      const mode = S().state.settings?.logMode || 'full';
+      const showRow = mode === 'full' || (mode === 'skill' && ['skill','weak','crit','win','lose','boss','modifier'].includes(ev.type)) || (mode === 'result' && ['win','lose','start'].includes(ev.type));
+      if(mode !== 'hidden' && showRow){
+        const row=document.createElement('div'); row.textContent=eventLine; log.prepend(row);
+        if(log.children.length>18) log.lastChild.remove();
+      }
       if(ev.target){
         const target = document.querySelector(`[data-cuid="${ev.target}"]`);
         if(target) target.classList.add(ev.type==='heal'?'heal':'hit');
       }
-      const base = ev.type==='round' ? 1600 : ev.type==='start' ? 2200 : ev.type==='win' || ev.type==='lose' ? 3800 : 2600;
+      let base = ev.type==='round' ? 1600 : ev.type==='start' ? 2200 : ev.type==='win' || ev.type==='lose' ? 3800 : 2600;
+      if(mode === 'result') base *= .55;
+      if(mode === 'hidden') base *= .25;
       await wait(base / Math.max(0.75, battleSpeed));
     }
     await wait(1500 / Math.max(0.75, battleSpeed));
