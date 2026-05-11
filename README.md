@@ -1,4 +1,4 @@
-# Abyss Grimoire V38 Top Battle Bar Fix
+# Abyss Grimoire V39 Bestiary Daily Fix
 
 Dark Fantasy Text RPG / Auto Battle / Gacha / Fusion / Rebirth แบบเล่นบนมือถือได้
 
@@ -7,7 +7,7 @@ Dark Fantasy Text RPG / Auto Battle / Gacha / Fusion / Rebirth แบบเล�
 เปิด `index.html` ได้เลย หรือรัน local server:
 
 ```bash
-cd text_auto_gacha_v38_top_battle_bar
+cd text_auto_gacha_v39_bestiary_daily
 python -m http.server 8000
 ```
 
@@ -17,7 +17,7 @@ python -m http.server 8000
 http://localhost:8000
 ```
 
-## สิ่งที่มีใน V38
+## สิ่งที่มีใน V39
 
 ### 1. Mission / Achievement
 - เพิ่มเป้าหมายระยะยาว เช่น ผ่านด่าน 10/50/100, ชนะ 100 ครั้ง, ผสม 10 ครั้ง, Rebirth ครั้งแรก
@@ -72,17 +72,17 @@ http://localhost:8000
 
 ## หมายเหตุเรื่องเซฟ
 
-V38 ใช้ save key ใหม่:
+V39 ใช้ save key ใหม่:
 
 ```text
-abyss_grimoire_v38_save
+abyss_grimoire_v39_save
 ```
 
 และพยายามอ่านเซฟ V35 เดิมให้อัตโนมัติ
 
 
 
-## แก้ใน V38
+## แก้ใน V39
 
 - แก้ Auto Farm Settings ที่กดแล้วไม่จำค่า เพราะ `data-value` ของปุ่มถูกทับเป็นค่าว่าง
 - กดตั้งค่า Auto Farm ระหว่างดู Battle ได้แล้ว
@@ -92,10 +92,18 @@ abyss_grimoire_v38_save
 - เงื่อนไข “หยุดเมื่อทีมมีตัว Lv.100” จะทำงานเมื่อมอนสเตอร์ในทีมถึง Max Level จาก EXP หรืออัปเกรด
 - หน้าต่อสู้แบบเต็มจอโชว์ HP, ATK, DEF, SPD, Lv และดาวของแต่ละตัว
 
-## V38 Top Battle Bar
+## V39 Bestiary Daily
 
 - เอาหน้าต่าง Battle ย่อแบบแถบด้านบนออกแล้ว
 - ระหว่างสู้แล้วไปหน้าอื่น เกมจะแสดงเป็นแถบสถานะด้านบนของเว็บแทน
 - แถบด้านบนไม่ทับ bottom nav และไม่ทับเนื้อหาหลัก
 - กด “ดูไฟต์เต็ม” เพื่อกลับไปหน้าต่อสู้เต็มจอ
 - ปุ่ม “ย่อ” ในหน้าไฟต์เต็มจะพากลับหน้าแรกและใช้แถบบนแทน
+
+## เพิ่มใน V39
+
+- เพิ่มมอนสเตอร์ใหม่ 30 ตัวแบบคละเทียร์
+- เพิ่มสูตร Fusion ใหม่ 40 สูตร
+- รวมมอนสเตอร์ในเกมมากขึ้นสำหรับสายสะสม/ฟาร์มยาว
+- เข้าเล่นครั้งแรกของวันรับ Ticket +200 อัตโนมัติ
+- อัปเดตคู่มือและหน้าแรกให้บอกรางวัลเข้าเล่นรายวัน

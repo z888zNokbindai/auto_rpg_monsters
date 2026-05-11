@@ -1,6 +1,6 @@
 window.GameState = (() => {
-  const KEY = 'abyss_grimoire_v38_save';
-  const OLD_KEYS = ['abyss_grimoire_v37_save','abyss_grimoire_v36_save','abyss_grimoire_v35_save','abyss_grimoire_v34_save','abyss_grimoire_v33_save','abyss_grimoire_v32_save','abyss_grimoire_v31_save','abyss_grimoire_v30_save','abyss_grimoire_v28_save','abyss_grimoire_v27_save','abyss_grimoire_v26_save','abyss_grimoire_v25_save','abyss_grimoire_v24_save','abyss_grimoire_v23_save','abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
+  const KEY = 'abyss_grimoire_v39_save';
+  const OLD_KEYS = ['abyss_grimoire_v38_save','abyss_grimoire_v37_save','abyss_grimoire_v36_save','abyss_grimoire_v35_save','abyss_grimoire_v34_save','abyss_grimoire_v33_save','abyss_grimoire_v32_save','abyss_grimoire_v31_save','abyss_grimoire_v30_save','abyss_grimoire_v28_save','abyss_grimoire_v27_save','abyss_grimoire_v26_save','abyss_grimoire_v25_save','abyss_grimoire_v24_save','abyss_grimoire_v23_save','abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
   const G = () => window.GameData;
   let state = null;
 
@@ -20,7 +20,7 @@ window.GameState = (() => {
     const starterPool = G().heroes.filter(h => ['Common','Rare'].includes(h.rarity));
     const starter = starterPool[Math.floor(Math.random() * starterPool.length)] || G().heroes[0];
     const s = {
-      version:38,
+      version:39,
       screen:'home',
       resources:{gold:420,gems:180,tickets:1,dust:60},
       campaign:{selected:1,unlocked:1,highestCleared:0,clears:{}},
@@ -29,6 +29,7 @@ window.GameState = (() => {
       inventory:[],
       gacha:{rolls:0,rarePity:0,epicPity:0,legendPity:0,lastResults:[]},
       daily:{date:todayKey(),wins:0,gachas:0,upgrades:0,bossWins:0,claimed:{}},
+      loginReward:{date:null,tickets:0,claimedAt:null},
       stats:{totalWins:0,totalLosses:0,totalGachas:0,totalUpgrades:0,totalFusions:0,totalRebirths:0,totalShopBuys:0},
       idle:{last:now},
       settings:{battleSpeed:1,heroFilter:'all',heroSort:'power',heroSearch:'',selectedHero:null,farmStop:'lose'},
@@ -52,6 +53,17 @@ window.GameState = (() => {
     if(!state.daily || state.daily.date !== todayKey()){
       state.daily = {date:todayKey(),wins:0,gachas:0,upgrades:0,bossWins:0,claimed:{}};
     }
+  }
+
+  function grantDailyLoginReward(){
+    state.loginReward ||= {date:null,tickets:0,claimedAt:null};
+    const today = todayKey();
+    if(state.loginReward.date !== today){
+      state.resources ||= {gold:0,gems:0,tickets:0,dust:0};
+      state.resources.tickets = Number(state.resources.tickets || 0) + 200;
+      state.loginReward = {date:today,tickets:200,claimedAt:Date.now()};
+    }
+    return state.loginReward;
   }
 
   function normalize(){
@@ -110,6 +122,7 @@ window.GameState = (() => {
     state.achievements ||= {claimed:{}}; state.achievements.claimed ||= {};
     state.codexRewards ||= {claimed:{}}; state.codexRewards.claimed ||= {};
     state.shop ||= {buys:{}}; state.shop.buys ||= {};
+    state.loginReward ||= {date:null,tickets:0,claimedAt:null};
     Object.keys(state.roster || {}).forEach(id=>{ if(!state.codex.seen[id]) state.codex.seen[id] = Date.now(); });
     state.lastBattle ||= null;
     state.fusion ||= {selected:[],last:null};
@@ -129,9 +142,10 @@ window.GameState = (() => {
     });
     state.team = (state.team||[]).slice(0,5); while(state.team.length<5) state.team.push(null);
     state.team = state.team.map(id => state.roster && state.roster[id] ? id : null);
-    state.version = 37;
+    state.version = 39;
     state.fusion.selected = (state.fusion.selected||[]).filter(id=>state.roster && state.roster[id] && !state.team.includes(id) && !state.favorites[id]);
     ensureDaily();
+    grantDailyLoginReward();
   }
 
   function load(){
@@ -181,7 +195,7 @@ window.GameState = (() => {
     normalize();
     const payload = {
       game:'Abyss Grimoire',
-      version:38,
+      version:39,
       exportedAt:new Date().toISOString(),
       save:state
     };
@@ -205,7 +219,7 @@ window.GameState = (() => {
       }
       state = incoming;
       backupNow();
-      state.version = 37;
+      state.version = 39;
       normalize();
       save();
       return {ok:true,msg:'นำเข้าเซฟสำเร็จ'};
@@ -958,7 +972,7 @@ window.GameState = (() => {
     state.favorites ||= {};
     if(state.favorites[id]) delete state.favorites[id];
     else state.favorites[id] = Date.now();
-    state.version = 37;
+    state.version = 39;
     state.fusion.selected = (state.fusion.selected||[]).filter(x=>!state.favorites[x]);
     save();
     return {ok:true,locked:!!state.favorites[id]};
@@ -1168,7 +1182,7 @@ window.GameState = (() => {
   }
 
   return {
-    get state(){ return state; }, load, save, reset, exportSaveText, importSaveText, fmt, todayKey,
+    get state(){ return state; }, load, save, reset, exportSaveText, importSaveText, fmt, todayKey, grantDailyLoginReward,
     heroDef, stageDef, rarityDef, heroStats, teamPower, maxHeroLevel, expToNext, battleExpForStage, levelCost, rebirthCost, rebirthHero, starCost, shardsNeeded,
     addHero, starterRecruit, gacha, autoTeam, levelUp, levelUpMany, upgradeOneHero, setSelectedHero, starUp, autoUpgrade, equipBest, autoSellLow, autoFusionLow, saveTeamPreset, loadTeamPreset, teamPresetPower,
     isFavorite, toggleFavorite, codexSeen, setLastBattle, backupNow, exportBackupText,

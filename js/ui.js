@@ -6,7 +6,7 @@ window.UI = (() => {
   let autoRun = false;
   let battleSpeed = 1;
   let farmRepeatRun = false;
-  let battleWidgetExpanded = false; // kept for old save compatibility; V38 uses top battle bar instead of mini dock
+  let battleWidgetExpanded = false; // kept for old save compatibility; V39 uses top battle bar instead of mini dock
   let lastBrowseScreen = 'home';
 
   function h(str){
@@ -39,7 +39,7 @@ window.UI = (() => {
     if(!overlay) return;
     const isAwayFromBattle = battleRunning && currentScreen() !== 'battle';
 
-    // V38: no floating mini/half window. When browsing other pages, the battle UI
+    // V39: no floating mini/half window. When browsing other pages, the battle UI
     // is hidden completely and the non-overlapping top status bar in HUD is used.
     overlay.classList.toggle('hidden', !battleRunning || isAwayFromBattle);
     overlay.classList.toggle('dock-mode', false);
@@ -95,7 +95,7 @@ window.UI = (() => {
         <div class="brand-row">
           <div class="logo">
             <div class="logo-mark">🩸</div>
-            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V38</small></div>
+            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V39</small></div>
           </div>
           <button class="btn small ghost" data-action="save">Save</button>
         </div>
@@ -319,7 +319,7 @@ window.UI = (() => {
     const mod = selected.modifier;
     const boss = selected.bossSkill;
     return `<section class="panel dashboard-panel">
-      <div class="section-title"><h3>เป้าหมายตอนนี้</h3><small>ระบบแนะนำ V38</small></div>
+      <div class="section-title"><h3>เป้าหมายตอนนี้</h3><small>ระบบแนะนำ V39</small></div>
       <div class="goal-list">${goals.map((g,i)=>`<div class="goal-item"><b>${i+1}</b><span>${h(g)}</span></div>`).join('')}</div>
       <div class="stage-warn">
         <b>ด่านปัจจุบัน:</b> ${h(selected.title)}
@@ -394,6 +394,19 @@ window.UI = (() => {
     </div>`;
   }
 
+
+  function dailyLoginPanel(){
+    const r = S().state.loginReward || {};
+    const when = r.claimedAt ? new Date(r.claimedAt).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) : '-';
+    return `<section class="panel daily-login-panel">
+      <div class="section-title"><h3>รางวัลเข้าเล่นวันนี้</h3><small>${h(r.date || S().todayKey())}</small></div>
+      <div class="quest done">
+        <div><b>รับแล้ว +${fmt(r.tickets || 200)} Ticket</b><small>แจกอัตโนมัติเมื่อเข้าเกมครั้งแรกของวัน ${when}</small></div>
+        <button class="btn small ghost" disabled>รับแล้ว</button>
+      </div>
+    </section>`;
+  }
+
   function home(){
     const idle = S().idlePreview();
     const selected = S().selectedStage();
@@ -416,6 +429,7 @@ window.UI = (() => {
           ${speedControls()}
           <p class="muted"><b>Modifier:</b> ${selected.modifier ? h(selected.modifier.title)+' — '+h(selected.modifier.desc) : 'ปกติ'} ${selected.bossSkill ? ' | <b>Boss Skill:</b> '+h(selected.bossSkill.title)+' — '+h(selected.bossSkill.desc) : ''}</p>
         </section>
+        ${dailyLoginPanel()}
         ${autoFarmSettingsPanel()}
         ${dashboardGoals()}
         ${starterPanel()}
@@ -968,12 +982,12 @@ window.UI = (() => {
   function manualScreen(){
     return `
       <div class="screen manual-screen">
-        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V38: Top Battle Bar + EXP + Battle Stats</p></div></div>
+        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V39: Bestiary Expansion + Daily 200 Ticket</p></div></div>
         <section class="panel manual-hero">
           <div class="section-title"><h3>เป้าหมายใหม่</h3><small>Endless Loop ถึงด่าน 3000</small></div>
           <p class="muted">ด่านจะสร้างต่อเนื่องและยากขึ้นเรื่อย ๆ จนถึง <b class="gold">ด่าน 3000</b> ถ้าติดด่าน ให้ฟาร์มด่านที่ผ่านได้ อัปเลเวล เปิดกาชา ผสมมอนสเตอร์ และ Rebirth เพื่อเพิ่มพลังถาวร</p>
           <div class="manual-steps">
-            <div><b>1</b><span>สุ่มฟรีให้ครบ 2 ตัว แล้วจัดทีมเริ่มต้น</span></div>
+            <div><b>1</b><span>สุ่มฟรีให้ครบ 5 ครั้ง แล้วจัดทีมเริ่มต้น</span></div>
             <div><b>2</b><span>ฟาร์ม Gold/Dust จากด่านล่าสุดที่ชนะได้</span></div>
             <div><b>3</b><span>อัปเลเวลมอนสเตอร์ไปเรื่อย ๆ สูงสุด 100</span></div>
             <div><b>4</b><span>ผสมตัวสำรองเพื่อสร้างตัวระดับสูงกว่า</span></div>
@@ -981,12 +995,13 @@ window.UI = (() => {
           </div>
         </section>
         <section class="panel">
-          <div class="section-title"><h3>ระบบ Progression / V38</h3><small>ทำให้มีเป้าหมายเล่นต่อ</small></div>
+          <div class="section-title"><h3>ระบบ Progression / V39</h3><small>ทำให้มีเป้าหมายเล่นต่อ</small></div>
           <ul class="guide-list">
             <li><b>Achievement:</b> ผ่านด่าน, สะสมปีศาจ, ผสม, Rebirth แล้วรับรางวัลระยะยาว</li>
             <li><b>Pity Gacha:</b> Rare+ ทุก 10, Epic+ ทุก 50, Legendary+ ทุก 200 โรล ส่วน SSR ยังเป็นระดับลับ</li>
             <li><b>Shop:</b> แปลง Gold/Gem/Dust เป็น Ticket, Dust, Gold, Shard หรืออุปกรณ์</li>
             <li><b>Codex Reward:</b> สะสมปีศาจครบตาม Tier แล้วรับรางวัล</li>
+            <li><b>Daily Login:</b> เข้าเกมครั้งแรกของวันรับ Ticket +200 อัตโนมัติ</li>
             <li><b>Stage Modifier:</b> ด่านบางด่านมีเงื่อนไขพิเศษ เช่น ศัตรูเร็วขึ้น/เลือดเยอะขึ้น</li>
             <li><b>Boss Skill:</b> บอสทุก 5 ด่านมีออร่าเฉพาะ ทำให้ต้องฟาร์มหรือปรับทีมบ้าง</li>
           </ul>
@@ -1023,7 +1038,7 @@ window.UI = (() => {
           <div class="guide-grid">
             <div class="guide-card"><b>Gold</b><p>ได้จากชนะด่าน, ฟาร์มด่านซ้ำ, Idle Reward และ Daily Quest ใช้สำหรับอัปเลเวล, ผสมมอนสเตอร์ และ Rebirth</p></div>
             <div class="guide-card"><b>Gem</b><p>ได้จาก First Clear บางด่าน, บอสด่านสูง, Idle Reward แบบช้า ๆ และ Daily Quest ใช้เปิดกาชาเมื่อไม่มี Ticket</p></div>
-            <div class="guide-card"><b>Ticket</b><p>ได้จากชนะสะสมทุก 7 ครั้ง, First Clear บอสด่านสำคัญ และ Daily Quest ใช้เปิดกาชา 1 ใบต่อ 1 ครั้ง</p></div>
+            <div class="guide-card"><b>Ticket</b><p>ได้จากรางวัลเข้าเล่นรายวัน +200 Ticket, ชนะสะสมทุก 7 ครั้ง, First Clear บอสด่านสำคัญ และ Daily Quest ใช้เปิดกาชา 1 ใบต่อ 1 ครั้ง</p></div>
             <div class="guide-card"><b>Dust</b><p>ได้จากชนะด่าน, ฟาร์มด่านซ้ำ, Idle Reward และ Daily Quest ใช้สำหรับอัปดาว, ผสมมอนสเตอร์ และ Rebirth</p></div>
             <div class="guide-card"><b>Shard</b><p>ได้จากการเปิดกาชาหรือผสมแล้วได้มอนสเตอร์ซ้ำ Shard ผูกกับมอนสเตอร์ตัวนั้น ใช้สำหรับอัปดาว</p></div>
             <div class="guide-card"><b>Equipment</b><p>ดรอปจากการชนะด่าน ยิ่งด่านสูงหรือเป็นบอส โอกาสได้ของระดับสูงยิ่งดี ใช้เพิ่ม HP / ATK / DEF / SPD</p></div>
@@ -1038,7 +1053,7 @@ window.UI = (() => {
             <li>ถ้าต้องการอัปตัวเดียว ให้เข้า <b>คลัง</b> → กด <b>เลือกอัป</b> → ใช้แผง <b>อัปเกรดเฉพาะตัวที่เลือก</b></li>
             <li>กด <b>อัปเกรดทีมนี้</b> เพื่อใช้ Gold/Dust กับตัวในทีมปัจจุบันเท่านั้น ระบบจะไม่เปลี่ยนทีมให้เอง</li>
             <li>อุปกรณ์ดรอปจากด่าน ยิ่งด่านสูง/บอสยิ่งมีโอกาสดีขึ้น</li>
-            <li>Ticket ได้จากชนะสะสมทุก 7 ครั้ง, บอส, และ Daily Quest</li>
+            <li>Ticket ได้จากรางวัลเข้าเล่นรายวัน +200, ชนะสะสมทุก 7 ครั้ง, บอส, และ Daily Quest</li>
             <li>บอสทุก 5 ด่านจะเป็นจุดเช็กพลัง ถ้าติดบอสให้ฟาร์ม/ผสม/อัปเกรดก่อน</li>
             <li>ตอนสู้สามารถกด <b>ฟาร์ม x4</b> หรือ <b>ฟาร์ม x8</b> เพื่อเร่งข้อความและใช้ฟาร์มซ้ำได้เร็วขึ้น</li>
           </ul>

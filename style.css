@@ -1470,7 +1470,7 @@ body{background:linear-gradient(180deg,#080a10,#0b0f18 45%,#07090f)!important;co
   .combat-unit .cu-stat-grid b{font-size:9.5px!important;}
 }
 
-/* V38: replace intrusive floating mini battle window with non-overlapping top battle bar */
+/* V39: replace intrusive floating mini battle window with non-overlapping top battle bar */
 .battle-top-status{
   display:grid;
   grid-template-columns:minmax(0,1fr) auto;
