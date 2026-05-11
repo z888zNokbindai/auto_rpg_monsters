@@ -1,47 +1,82 @@
-# Abyss Grimoire V34 Manager UI
+# Abyss Grimoire V36 Progression
 
-Dark Fantasy Text RPG / Auto Battle / Gacha / Fusion / Rebirth
+Dark Fantasy Text RPG / Auto Battle / Gacha / Fusion / Rebirth แบบเล่นบนมือถือได้
 
 ## วิธีรัน
 
-เปิดไฟล์ `index.html` ได้เลย หรือรันผ่าน local server:
+เปิด `index.html` ได้เลย หรือรัน local server:
 
 ```bash
-cd text_auto_gacha_v34_manager_ui
+cd text_auto_gacha_v36_progression
 python -m http.server 8000
 ```
 
-แล้วเปิด:
+เปิด:
 
 ```text
 http://localhost:8000
 ```
 
-## สิ่งที่ปรับใน V34
+## สิ่งที่เพิ่มใน V36
 
-- ปรับหน้า **คลัง / จัดการปีศาจ** ให้เลื่อนน้อยลง
-- ปรับหน้า **จัดทีม** ให้แตะปีศาจแล้วจัดการผ่านเมนูสไลด์
-- ปรับหน้า **ผสม** ให้แตะปีศาจแล้วเลือกผสมผ่านเมนูสไลด์
-- เพิ่ม **Bottom Sheet เมนูปีศาจ**
-  - ใส่ทีม / ถอดทีม
-  - เลือกผสม / เอาออกจากผสม
-  - ล็อก / ปลดล็อก
-  - Lv +1 / Lv +10 / Lv Max
-  - อัปดาว
-  - Rebirth
-  - อัปเฉพาะตัวนี้จนทรัพยากรหมด
-- หน้า Fusion Recipe ซ่อนไว้ก่อน กดปุ่ม `ดูสูตร` ค่อยเปิด เพื่อลดการเลื่อนยาว
-- หน้าอุปกรณ์ในคลังซ่อนไว้ก่อน กด `ดูอุปกรณ์` ค่อยเปิด
-- ใช้ save key ใหม่ `abyss_grimoire_v34_save`
-- อ่านเซฟเก่าจาก V32/V31/V30 และเวอร์ชันก่อนหน้าให้อัตโนมัติ
+### 1. Mission / Achievement
+- เพิ่มเป้าหมายระยะยาว เช่น ผ่านด่าน 10/50/100, ชนะ 100 ครั้ง, ผสม 10 ครั้ง, Rebirth ครั้งแรก
+- รับรางวัลได้จากหน้า ฐาน / ร้าน / คู่มือ
 
-## วิธีจัดการปีศาจแบบใหม่
+### 2. Pity Gacha
+- Rare+ ทุก 10 โรล
+- Epic+ ทุก 50 โรล
+- Legendary+ ทุก 200 โรล
+- SSR ยังเป็น ultra rare ไม่เข้า pity
 
-1. ไปหน้า `คลัง`, `ทีม`, หรือ `ผสม`
-2. แตะปีศาจ 1 ตัว
-3. เมนูสไลด์จะเด้งขึ้นด้านล่าง
-4. เลือกคำสั่งที่ต้องการ เช่น ใส่ทีม, เลือกผสม, อัปเลเวล, อัปดาว, Rebirth
+### 3. Shop
+ร้านค้าใหม่ใช้แปลงทรัพยากร:
+- Gem -> Ticket
+- Gold -> Dust
+- Gem -> Gold
+- Dust -> Random Shard
+- Gem -> Gear Box
+- Gem -> Rebirth Supply
 
-## หมายเหตุ
+### 4. Codex Reward
+สะสมปีศาจตาม Tier แล้วรับรางวัล เช่น Common/Rare/Epic/Legendary/Mythic/SSR
 
-ถ้าใช้บนมือถือแล้ว PWA โหลดไฟล์เก่า ให้ปิดแท็บเก่า เปิดใหม่ หรือเคลียร์ cache ของ browser หนึ่งครั้ง
+### 5. Stage Modifier
+ด่านบางด่านมีเงื่อนไขพิเศษ เช่น:
+- ศัตรู ATK เพิ่ม
+- ศัตรู DEF เพิ่ม
+- ศัตรู SPD เพิ่ม
+- ศัตรู HP เพิ่ม
+
+### 6. Boss Skill
+บอสทุก 5 ด่านมีออร่าพิเศษ เช่น:
+- Blood Regen
+- Summoner Aura
+- Anti-Magic Shell
+- Curse Wave
+- Executioner
+
+### 7. Auto Farm Settings
+เลือกเงื่อนไขฟาร์มได้:
+- จนกว่าแพ้
+- หยุดเมื่อได้ Ticket
+- หยุดเมื่อทีมมีตัว Lv.100
+- หยุดเมื่อดรอป Epic+
+
+### 8. Dashboard แนะนำเป้าหมาย
+หน้าแรกจะบอกว่าควรทำอะไรต่อ เช่น:
+- สุ่มฟรีให้ครบ
+- จัดทีมให้ครบ
+- ฟาร์ม/อัปเกรดก่อนลุย
+- รับ Achievement หรือ Codex Reward
+
+## หมายเหตุเรื่องเซฟ
+
+V36 ใช้ save key ใหม่:
+
+```text
+abyss_grimoire_v36_save
+```
+
+และพยายามอ่านเซฟ V35 เดิมให้อัตโนมัติ
+

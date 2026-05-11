@@ -70,8 +70,15 @@ window.BattleSim = (() => {
 
   function scaleEnemy(template, stage, idx){
     const boss = stage.isBoss;
+    const isMainBoss = boss && idx === 0;
     const m = stage.enemyScale || (0.92 + stage.id*0.145 + Math.pow(stage.id,1.22)*0.023);
     const countPenalty = boss ? 1.24 : (stage.enemyCount <=2 ? .92 : stage.enemyCount <=3 ? 1.02 : .96);
+    const mod = stage.modifier?.effects || {};
+    const bfx = stage.bossSkill?.effects || {};
+    const hpMul = (mod.enemyHp || 1) * (bfx.enemyHp || 1) * (isMainBoss ? (bfx.bossHp || 1) : (bfx.minionHp || 1));
+    const atkMul = (mod.enemyAtk || 1) * (bfx.enemyAtk || 1) * (isMainBoss ? (bfx.bossAtk || 1) : (bfx.minionAtk || 1));
+    const defMul = (mod.enemyDef || 1) * (bfx.enemyDef || 1) * (isMainBoss ? (bfx.bossDef || 1) : (bfx.minionDef || 1));
+    const spdMul = (mod.enemySpd || 1) * (bfx.enemySpd || 1);
     return {
       uid:'e_'+idx,
       side:'enemy',
@@ -83,11 +90,11 @@ window.BattleSim = (() => {
       ai: template.ai,
       skill: boss && idx===0 ? 'ท่าบอส' : 'สกิลศัตรู',
       slot: idx,
-      maxHp: Math.round(template.base.hp * m * countPenalty * (boss && idx===0 ? 1.82 : 1)),
+      maxHp: Math.round(template.base.hp * m * countPenalty * (isMainBoss ? 1.82 : 1) * hpMul),
       hp: 0,
-      atk: Math.round(template.base.atk * m * countPenalty * (boss && idx===0 ? 1.26 : 1)),
-      def: Math.round(template.base.def * m * countPenalty * (boss && idx===0 ? 1.23 : 1)),
-      spd: Math.round(template.base.spd * (1 + stage.id*0.006)),
+      atk: Math.round(template.base.atk * m * countPenalty * (isMainBoss ? 1.26 : 1) * atkMul),
+      def: Math.round(template.base.def * m * countPenalty * (isMainBoss ? 1.23 : 1) * defMul),
+      spd: Math.round(template.base.spd * (1 + stage.id*0.006) * spdMul),
       energy: rint(20,48),
       stars: boss && idx===0 ? 3 : 1,
       level: stage.id,
@@ -379,6 +386,12 @@ window.BattleSim = (() => {
     const enemies = makeEnemies(stage);
     const events=[];
     logEvent(events,allies,enemies,{type:'start',icon:'📜',title:`${stage.title}`,text:`${stage.area} — ระบบต่อสู้แบบ Press Turn`,round:0});
+    if(stage.modifier && stage.modifier.id !== 'none'){
+      logEvent(events,allies,enemies,{type:'modifier',icon:'⚠️',title:`Modifier: ${stage.modifier.title}`,text:stage.modifier.desc,round:0});
+    }
+    if(stage.bossSkill){
+      logEvent(events,allies,enemies,{type:'boss',icon:'👑',title:`Boss Skill: ${stage.bossSkill.title}`,text:stage.bossSkill.desc,round:0});
+    }
 
     let round=1;
     while(round<=25 && alive(allies).length && alive(enemies).length){
@@ -414,6 +427,8 @@ window.BattleSim = (() => {
       stageId:stage.id,
       stageTitle:stage.title,
       rounds:round-1,
+      modifier: stage.modifier ? {title:stage.modifier.title, desc:stage.modifier.desc} : null,
+      bossSkill: stage.bossSkill ? {title:stage.bossSkill.title, desc:stage.bossSkill.desc} : null,
       mvp:mvp ? {name:mvp.name, icon:mvp.icon} : null,
       topDamage:topDamage ? {name:topDamage.name, icon:topDamage.icon, value:topDamage.damage} : null,
       topHeal:topHeal ? {name:topHeal.name, icon:topHeal.icon, value:topHeal.heal} : null,

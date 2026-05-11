@@ -156,6 +156,22 @@ window.GameData = (() => {
       'สุสานไร้ชื่อ','ป่ากระดูกดำ','วิหารเลือดเก่า','บึงคำสาป','บัลลังก์อเวจี',
       'เหมืองเถ้าปีศาจ','หอคอยจันทร์ดับ','รอยแยกสูญญะ','นครใต้ดิน','ประตูโลกหลังความตาย'
     ];
+    const modifierPool = [
+      {id:'none',title:'ปกติ',desc:'ไม่มีเงื่อนไขพิเศษ',effects:{}},
+      {id:'enemy_rage',title:'Blood Moon',desc:'ศัตรู ATK +12%',effects:{enemyAtk:1.12}},
+      {id:'iron_hide',title:'Iron Hide',desc:'ศัตรู DEF +18%',effects:{enemyDef:1.18}},
+      {id:'swift_abyss',title:'Swift Abyss',desc:'ศัตรู SPD +16%',effects:{enemySpd:1.16}},
+      {id:'thick_mist',title:'Thick Mist',desc:'ศัตรู HP +16%',effects:{enemyHp:1.16}},
+      {id:'elite_guard',title:'Elite Guard',desc:'ศัตรู HP +10% / DEF +10%',effects:{enemyHp:1.10,enemyDef:1.10}},
+      {id:'berserk_hall',title:'Berserk Hall',desc:'ศัตรู ATK +18% แต่ DEF -6%',effects:{enemyAtk:1.18,enemyDef:0.94}},
+    ];
+    const bossSkillPool = [
+      {id:'blood_regen',title:'Blood Regen',desc:'บอส HP +25% และ DEF +8%',effects:{enemyHp:1.25,enemyDef:1.08}},
+      {id:'summoner_aura',title:'Summoner Aura',desc:'ลูกน้องแข็งขึ้น ATK +10%',effects:{minionAtk:1.10,minionHp:1.08}},
+      {id:'anti_magic_shell',title:'Anti-Magic Shell',desc:'บอส DEF +20% และ HP +10%',effects:{bossDef:1.20,bossHp:1.10}},
+      {id:'curse_wave',title:'Curse Wave',desc:'ศัตรูทั้งทีม ATK +8% / SPD +8%',effects:{enemyAtk:1.08,enemySpd:1.08}},
+      {id:'executioner',title:'Executioner',desc:'บอส ATK +22%',effects:{bossAtk:1.22}},
+    ];
     const names = ['ปากทาง','โถงต้องสาป','ลานเครื่องสังเวย','ทางเดินเลือด','แท่นผู้คุม','โพรงวิญญาณ','บ่อเงา','ประตูเหล็กดำ','ซากบัลลังก์','รอยแยก'];
     const stages = [];
     for(let i=1;i<=maxStage;i++){
@@ -174,12 +190,16 @@ window.GameData = (() => {
         : `${chapter}-${idx+1} ${isBoss ? 'ผู้คุม' : names[idx]} ${area}`;
       const firstGold = Math.round(95 + i*24 + Math.pow(i,1.18)*10 + (isBoss?i*38:0));
       const repeatGold = Math.round(34 + i*10 + Math.pow(i,1.09)*3 + (isBoss?i*8:0));
+      const modifier = modifierPool[(chapter + idx + Math.floor(i/25)) % modifierPool.length];
+      const bossSkill = isBoss ? bossSkillPool[(Math.floor(i/5)-1) % bossSkillPool.length] : null;
       stages.push({
         id:i,
         chapter,
         title,
         area,
         isBoss,
+        modifier,
+        bossSkill,
         enemyCount,
         power,
         enemyScale,
@@ -205,6 +225,39 @@ window.GameData = (() => {
     {id:'gacha3',title:'เปิดกาชา 3 ครั้ง',desc:'ใช้ Ticket หรือ Gem เปิดกาชา',need:3,field:'gachas',reward:{gold:300,dust:45,gems:25}},
     {id:'upgrade8',title:'อัปเกรด 8 ครั้ง',desc:'อัปเลเวลหรืออัปดาวตัวละคร',need:8,field:'upgrades',reward:{gold:420,gems:30,dust:70}},
     {id:'boss1',title:'ล้มผู้คุมประตู 1 ครั้ง',desc:'ชนะด่านบอสที่ลงท้ายด้วย 5 หรือ 10',need:1,field:'bossWins',reward:{gems:75,tickets:1,dust:90}},
+  ];
+
+
+  const achievements = [
+    {id:'stage10',title:'ผ่านด่าน 10',desc:'เคลียร์ด่าน 10 ครั้งแรก',check:'stage',need:10,reward:{gems:80,tickets:1,dust:120}},
+    {id:'stage50',title:'ผ่านด่าน 50',desc:'เริ่มเข้าสู่โซนฟาร์มจริง',check:'stage',need:50,reward:{gems:220,tickets:2,dust:380}},
+    {id:'stage100',title:'ผ่านด่าน 100',desc:'ชนะผู้คุมร้อยชั้น',check:'stage',need:100,reward:{gems:500,tickets:5,dust:900}},
+    {id:'win100',title:'ชนะรวม 100 ครั้ง',desc:'ฟาร์มชนะสะสม',check:'wins',need:100,reward:{gold:18000,gems:180,tickets:2}},
+    {id:'fusion10',title:'ผสมปีศาจ 10 ครั้ง',desc:'ใช้ระบบ Fusion สะสม',check:'fusions',need:10,reward:{dust:700,gems:120,tickets:1}},
+    {id:'collect20',title:'สะสมปีศาจ 20 ตัว',desc:'มีปีศาจใน Codex อย่างน้อย 20 ตัว',check:'codexTotal',need:20,reward:{gems:180,tickets:2,dust:300}},
+    {id:'legend1',title:'ได้ Legendary ตัวแรก',desc:'มีปีศาจระดับ Legendary อย่างน้อย 1 ตัว',check:'rarity',rarity:'Legendary',need:1,reward:{gems:250,tickets:3}},
+    {id:'mythic1',title:'ได้ Mythic ตัวแรก',desc:'มีปีศาจระดับ Mythic อย่างน้อย 1 ตัว',check:'rarity',rarity:'Mythic',need:1,reward:{gems:600,tickets:5,dust:1200}},
+    {id:'ssr1',title:'พบ SSR ตัวแรก',desc:'ได้ปีศาจ SSR ระดับลับ',check:'rarity',rarity:'SSR',need:1,reward:{gems:5000,tickets:25,dust:8000}},
+    {id:'rebirth1',title:'Rebirth ครั้งแรก',desc:'กด Rebirth ให้ปีศาจตัวแรก',check:'rebirths',need:1,reward:{gold:30000,dust:1000,gems:200}},
+    {id:'rebirth10',title:'Rebirth รวม 10 ครั้ง',desc:'วนเกิดใหม่เพื่อไต่ด่านลึก',check:'rebirths',need:10,reward:{gold:120000,dust:4200,gems:700,tickets:5}},
+  ];
+
+  const shopItems = [
+    {id:'ticket_pack',title:'Ticket Pack',desc:'ซื้อ Ticket 5 ใบ ใช้เปิดกาชา',cost:{gems:450},kind:'resource',reward:{tickets:5}},
+    {id:'dust_cache',title:'Dust Cache',desc:'เปลี่ยน Gold เป็น Dust สำหรับ Fusion/Rebirth',cost:{gold:6000},kind:'resource',reward:{dust:520}},
+    {id:'gold_cache',title:'Gold Cache',desc:'เปลี่ยน Gem เป็น Gold สำหรับอัปเลเวล',cost:{gems:120},kind:'resource',reward:{gold:16000}},
+    {id:'random_shards',title:'Random Shard Box',desc:'สุ่ม Shard ให้ปีศาจที่มีอยู่ 1 ตัว',cost:{dust:380},kind:'shard',amount:22},
+    {id:'gear_box',title:'Abyss Gear Box',desc:'สุ่มอุปกรณ์ตามด่านสูงสุดที่เคลียร์',cost:{gems:160},kind:'gear'},
+    {id:'rebirth_supply',title:'Rebirth Supply',desc:'ชุดทรัพยากรสำหรับเตรียม Rebirth',cost:{gems:380},kind:'resource',reward:{gold:42000,dust:900}},
+  ];
+
+  const codexRewards = [
+    {id:'codex_common10',title:'Common 10 ตัว',rarity:'Common',need:10,reward:{gold:8000,dust:250}},
+    {id:'codex_rare10',title:'Rare 10 ตัว',rarity:'Rare',need:10,reward:{gems:160,tickets:1,dust:320}},
+    {id:'codex_epic5',title:'Epic 5 ตัว',rarity:'Epic',need:5,reward:{gems:260,tickets:2,dust:600}},
+    {id:'codex_legend3',title:'Legendary 3 ตัว',rarity:'Legendary',need:3,reward:{gems:520,tickets:4,dust:1200}},
+    {id:'codex_mythic2',title:'Mythic 2 ตัว',rarity:'Mythic',need:2,reward:{gems:1000,tickets:8,dust:2600}},
+    {id:'codex_ssr1',title:'SSR 1 ตัว',rarity:'SSR',need:1,reward:{gems:6000,tickets:30,dust:10000}},
   ];
 
   // V9: ตำรา Fusion แบบระบุคู่ ช่วยให้ผสมได้มากขึ้นและเดาทางได้
@@ -273,5 +326,5 @@ window.GameData = (() => {
     {id:'f60',from:['blood_moon_drake','abyss_seraph'],result:'celestial_sword',title:'คราสเลือดตัดปีกอเวจี',note:'สูตรแลก Mythic เป็นตัวล้วงหลังระดับสูง'},
   ];
 
-  return { rarities, elements, roles, heroes, enemyTemplates, bossTemplates, equipmentTypes, equipmentRarities, stages:buildStages(), dailyQuests, fusionRecipes };
+  return { rarities, elements, roles, heroes, enemyTemplates, bossTemplates, equipmentTypes, equipmentRarities, stages:buildStages(), dailyQuests, achievements, shopItems, codexRewards, fusionRecipes };
 })();

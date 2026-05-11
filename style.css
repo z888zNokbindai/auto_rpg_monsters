@@ -1288,3 +1288,27 @@ body{background:linear-gradient(180deg,#080a10,#0b0f18 45%,#07090f)!important;co
   .preset-grid{grid-template-columns:1fr!important;}
 }
 @media(max-width:380px){.sheet-actions{grid-template-columns:1fr}.compact-monster-card{grid-template-columns:36px minmax(0,1fr);}.compact-power{grid-column:1/-1;text-align:left;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.04);border-radius:9px;padding:5px 8px}.compact-power small,.compact-power b{display:inline}}
+
+/* V36 Progression UI */
+.dashboard-panel{border:1px solid rgba(245,158,11,.28);background:linear-gradient(180deg,rgba(120,53,15,.20),rgba(17,24,39,.92));}
+.goal-list{display:grid;gap:8px;margin:8px 0 10px;}
+.goal-item{display:grid;grid-template-columns:32px 1fr;gap:10px;align-items:center;padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(0,0,0,.18);}
+.goal-item b{display:grid;place-items:center;width:28px;height:28px;border-radius:999px;background:rgba(245,158,11,.22);color:#fbbf24;}
+.stage-warn{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:#d1d5db;font-size:.92rem;}
+.tag{display:inline-flex;align-items:center;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:4px 8px;background:rgba(255,255,255,.06);font-size:.82rem;}
+.tag.warn{border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.12);color:#fde68a;}
+.tag.danger{border-color:rgba(248,113,113,.35);background:rgba(127,29,29,.22);color:#fecaca;}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
+.shop-card{display:grid;gap:8px;padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.10);background:rgba(15,23,42,.76);}
+.shop-card b{font-size:1rem;color:#f8fafc}.shop-card small{display:block;color:#94a3b8;margin-top:4px;line-height:1.35}.shop-cost{font-size:.88rem;color:#cbd5e1;background:rgba(0,0,0,.18);border-radius:10px;padding:6px 8px;}
+.achievements-panel .quest,.codex-rewards-panel .quest{border-left:4px solid rgba(148,163,184,.4);}
+.achievements-panel .quest.done,.codex-rewards-panel .quest.done{border-left-color:#fbbf24;background:rgba(245,158,11,.10);}
+.farm-stop-row{justify-content:flex-start;overflow-x:auto;padding-bottom:4px;}
+.stage-card .stage-info small+small{color:#fbbf24;margin-top:2px;}
+.shop-screen .page-title h2{color:#fde68a;}
+@media (max-width: 680px){
+  .shop-grid{grid-template-columns:1fr;}
+  .goal-item{grid-template-columns:28px 1fr;padding:9px;}
+  .stage-warn{font-size:.84rem;}
+  .tag{font-size:.76rem;padding:3px 7px;}
+}

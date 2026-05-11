@@ -83,7 +83,7 @@ window.UI = (() => {
         <div class="brand-row">
           <div class="logo">
             <div class="logo-mark">🩸</div>
-            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V34</small></div>
+            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V36</small></div>
           </div>
           <button class="btn small ghost" data-action="save">Save</button>
         </div>
@@ -99,7 +99,7 @@ window.UI = (() => {
 
   function nav(){
     const items = [
-      ['home','🏚️','ฐาน'],['battle','⚔️','ลุย'],['team','🛡️','ทีม'],['fusion','🧬','ผสม'],['gacha','🔮','อัญเชิญ'],['heroes','📦','คลัง'],['codex','📖','ตำรา'],['manual','📜','คู่มือ']
+      ['home','🏚️','ฐาน'],['battle','⚔️','ลุย'],['team','🛡️','ทีม'],['fusion','🧬','ผสม'],['gacha','🔮','อัญเชิญ'],['shop','🛒','ร้าน'],['heroes','📦','คลัง'],['codex','📖','ตำรา'],['manual','📜','คู่มือ']
     ];
     return `<nav class="bottom-nav">${items.map(([id,ic,tx])=>`<button class="nav-btn ${currentScreen()===id?'active':''}" data-screen="${id}"><i>${ic}</i><span>${tx}</span></button>`).join('')}</nav>`;
   }
@@ -290,6 +290,88 @@ window.UI = (() => {
     </div>`;
   }
 
+
+  function dashboardGoals(){
+    const goals = S().nextGoal ? S().nextGoal() : [];
+    const selected = S().selectedStage();
+    const mod = selected.modifier;
+    const boss = selected.bossSkill;
+    return `<section class="panel dashboard-panel">
+      <div class="section-title"><h3>เป้าหมายตอนนี้</h3><small>ระบบแนะนำ V36</small></div>
+      <div class="goal-list">${goals.map((g,i)=>`<div class="goal-item"><b>${i+1}</b><span>${h(g)}</span></div>`).join('')}</div>
+      <div class="stage-warn">
+        <b>ด่านปัจจุบัน:</b> ${h(selected.title)}
+        ${mod && mod.id !== 'none' ? `<span class="tag warn">${h(mod.title)}: ${h(mod.desc)}</span>` : `<span class="tag">ปกติ</span>`}
+        ${boss ? `<span class="tag danger">Boss: ${h(boss.title)}</span>` : ''}
+      </div>
+      <div class="grid2" style="margin-top:10px">
+        <button class="btn primary" data-action="startBattle">สู้ด่านนี้</button>
+        <button class="btn amber" data-action="farmRepeat">ฟาร์มตามเงื่อนไข</button>
+        <button class="btn ghost" data-screen="shop">เปิดร้านค้า</button>
+        <button class="btn ghost" data-screen="codex">รับ Codex Reward</button>
+      </div>
+    </section>`;
+  }
+
+  function achievementsPanel(limit=6){
+    const rows = (D().achievements || []).map(a=>{
+      const p = S().achievementProgress(a);
+      const done = p >= a.need;
+      const claimed = S().state.achievements?.claimed?.[a.id];
+      return {a,p,done,claimed};
+    }).sort((x,y)=>(x.claimed-y.claimed) || (y.done-x.done) || ((y.p/y.a.need)-(x.p/x.a.need))).slice(0,limit);
+    return `<section class="panel achievements-panel">
+      <div class="section-title"><h3>Achievement</h3><small>เป้าหมายระยะยาว</small></div>
+      <div class="stack">${rows.map(({a,p,done,claimed})=>`<div class="quest achievement ${done&&!claimed?'done':''}">
+        <div><b>${h(a.title)}</b><small>${h(a.desc)} — ${Math.min(p,a.need)}/${a.need} | ${S().resourceText(a.reward)}</small></div>
+        <button class="btn small ${done&&!claimed?'primary':'ghost'}" data-action="claimAchievement" data-id="${a.id}" ${done&&!claimed?'':'disabled'}>${claimed?'รับแล้ว':'รับ'}</button>
+      </div>`).join('')}</div>
+      <button class="btn ghost wide" data-screen="manual">ดูวิธีเล่น / เป้าหมายทั้งหมด</button>
+    </section>`;
+  }
+
+  function codexRewardsPanel(){
+    const rows = (D().codexRewards || []).map(r=>{
+      const p = S().codexRewardProgress(r);
+      const done = p >= r.need;
+      const claimed = S().state.codexRewards?.claimed?.[r.id];
+      return `<div class="quest codex-reward ${done&&!claimed?'done':''}">
+        <div><b>${h(r.title)}</b><small>${p}/${r.need} ${h(r.rarity)} | ${S().resourceText(r.reward)}</small></div>
+        <button class="btn small ${done&&!claimed?'primary':'ghost'}" data-action="claimCodexReward" data-id="${r.id}" ${done&&!claimed?'':'disabled'}>${claimed?'รับแล้ว':'รับ'}</button>
+      </div>`;
+    }).join('');
+    return `<section class="panel codex-rewards-panel"><div class="section-title"><h3>Codex Reward</h3><small>สะสมครบรับของ</small></div><div class="stack">${rows}</div></section>`;
+  }
+
+  function autoFarmSettingsPanel(){
+    const cur = S().state.settings?.farmStop || 'lose';
+    const opts = [
+      ['lose','จนกว่าแพ้'],['ticket','หยุดเมื่อได้ Ticket'],['levelcap','หยุดเมื่อทีมมีตัว Lv.100'],['raredrop','หยุดเมื่อดรอป Epic+']
+    ];
+    return `<section class="panel farm-setting-panel">
+      <div class="section-title"><h3>Auto Farm Settings</h3><small>ใช้กับปุ่มฟาร์มจนแพ้/ฟาร์มตามเงื่อนไข</small></div>
+      <div class="speed-tune-row farm-stop-row">${opts.map(([v,label])=>`<button class="chip-btn ${cur===v?'active':''}" data-action="setFarmStop" data-value="${v}">${label}</button>`).join('')}</div>
+      <p class="muted tip-line">ถ้าเลือกเงื่อนไขอื่น ระบบยังหยุดทันทีเมื่อแพ้อยู่เสมอ</p>
+    </section>`;
+  }
+
+  function shopScreen(){
+    const items = D().shopItems || [];
+    return `<div class="screen shop-screen">
+      <div class="page-title"><div><h2>ร้านค้าเถ้ากระดูก</h2><p>ใช้ทรัพยากรที่ฟาร์มได้แปลงเป็น Ticket, Dust, Gold, Shard หรือกล่องอุปกรณ์</p></div></div>
+      <section class="panel"><div class="section-title"><h3>สินค้า</h3><small>${items.length} รายการ</small></div>
+        <div class="shop-grid">${items.map(item=>`<div class="shop-card">
+          <div><b>${h(item.title)}</b><small>${h(item.desc)}</small></div>
+          <div class="shop-cost">จ่าย: ${S().resourceText(item.cost).replace(/\+/g,'') || '-'}</div>
+          <div class="shop-cost">ได้: ${item.reward ? S().resourceText(item.reward) : item.kind==='shard' ? `Shard สุ่ม +${item.amount}` : 'อุปกรณ์สุ่ม'}</div>
+          <button class="btn primary" data-action="shopBuy" data-id="${item.id}">ซื้อ</button>
+        </div>`).join('')}</div>
+      </section>
+      ${achievementsPanel(8)}
+      ${codexRewardsPanel()}
+    </div>`;
+  }
+
   function home(){
     const idle = S().idlePreview();
     const selected = S().selectedStage();
@@ -310,7 +392,10 @@ window.UI = (() => {
             <button class="btn ghost" data-screen="manual">คู่มือ</button>
           </div>
           ${speedControls()}
+          <p class="muted"><b>Modifier:</b> ${selected.modifier ? h(selected.modifier.title)+' — '+h(selected.modifier.desc) : 'ปกติ'} ${selected.bossSkill ? ' | <b>Boss Skill:</b> '+h(selected.bossSkill.title)+' — '+h(selected.bossSkill.desc) : ''}</p>
         </section>
+        ${autoFarmSettingsPanel()}
+        ${dashboardGoals()}
         ${starterPanel()}
         ${battleSummaryPanel()}
         <section class="panel">
@@ -318,7 +403,7 @@ window.UI = (() => {
           ${teamMini()}
           <div class="grid2" style="margin-top:10px">
             <button class="btn green" data-action="autoTeam">👥 จัดทีมอัตโนมัติ</button>
-            <button class="btn green" data-action="autoUpgrade">⬆️ อัปเกรดอัตโนมัติ</button>
+            <button class="btn green" data-action="autoUpgrade">⬆️ อัปเกรดทีมนี้</button>
           </div>
         </section>
         <section class="grid2">
@@ -332,6 +417,7 @@ window.UI = (() => {
           <button class="btn ${canIdle?'primary':'ghost'}" data-action="claimIdle" ${canIdle?'':'disabled'}>รับรางวัล Idle</button>
         </section>
         ${questShort()}
+        ${achievementsPanel(5)}
       </div>`;
   }
 
@@ -368,7 +454,9 @@ window.UI = (() => {
             <button class="btn green" data-action="autoBattle">🔁 ดันด่านจนแพ้</button>
           </div>
           ${speedControls()}
+          <p class="muted"><b>Modifier:</b> ${sel.modifier ? h(sel.modifier.title)+' — '+h(sel.modifier.desc) : 'ปกติ'} ${sel.bossSkill ? ' | <b>Boss Skill:</b> '+h(sel.bossSkill.title)+' — '+h(sel.bossSkill.desc) : ''}</p>
         </section>
+        ${autoFarmSettingsPanel()}
         ${battleSummaryPanel()}
         <section class="panel">
           <div class="section-title"><h3>Stage Map</h3><small>ปลดล็อกแล้ว ${S().state.campaign.unlocked}/${D().stages.length}</small></div>
@@ -386,7 +474,7 @@ window.UI = (() => {
     const active = st.id === s.campaign.selected;
     return `<button class="stage-card ${locked?'locked':''} ${cleared?'cleared':''} ${active?'active':''}" data-action="selectStage" data-id="${st.id}" ${locked?'disabled':''}>
       <div class="stage-num">${st.isBoss?'👑':st.id}</div>
-      <div class="stage-info"><b>${h(st.title)}</b><small>${h(st.area)} | Power ${fmt(st.power)} | ${cleared?'เคลียร์แล้ว':'ยังไม่เคลียร์'}</small></div>
+      <div class="stage-info"><b>${h(st.title)}</b><small>${h(st.area)} | Power ${fmt(st.power)} | ${cleared?'เคลียร์แล้ว':'ยังไม่เคลียร์'}</small><small>${st.modifier && st.modifier.id !== 'none' ? '⚠ '+h(st.modifier.title) : 'ปกติ'}${st.bossSkill ? ' | 👑 '+h(st.bossSkill.title) : ''}</small></div>
       <div class="stage-reward">${st.firstReward.tickets?'🎟️ ':''}${st.isBoss?'Boss':''}</div>
     </button>`;
   }
@@ -452,7 +540,7 @@ window.UI = (() => {
           </div>
           <div class="manager-actions compact-actions">
             <button class="btn green" data-action="autoTeam">👥 จัดทีมอัตโนมัติ</button>
-            <button class="btn green" data-action="autoUpgrade">⬆️ อัปทีม</button>
+            <button class="btn green" data-action="autoUpgrade">⬆️ อัปทีมนี้</button>
             <button class="btn ghost" data-action="equipBest">🎒 ใส่ของดีที่สุด</button>
             <button class="btn ghost" data-action="toggleInventory">${showInv?'ซ่อนอุปกรณ์':'ดูอุปกรณ์'}</button>
           </div>
@@ -674,14 +762,14 @@ window.UI = (() => {
     return `
       <div class="screen">
         <div class="page-title"><div><h2>แท่นอัญเชิญอเวจี</h2><p>Ticket ได้จากชนะทุก 7 ครั้ง, ผู้คุมประตู, เควสรายวัน</p></div></div>
-        <section class="gacha-door"><div><h3>☽</h3><p>Epic การันตีทุก 10 | Legendary ทุก 60</p></div></section>
+        <section class="gacha-door"><div><h3>☽</h3><p>Rare+ ทุก 10 | Epic+ ทุก 50 | Legendary+ ทุก 200 | SSR เป็นตัวลับ</p></div></section>
         <section class="panel">
           ${(S().state.starter?.freeRollsLeft||0)>0 ? `<button class="btn primary pulse wide" data-action="starterRecruit">🔮 สุ่มฟรีเริ่มต้น เหลือ ${S().state.starter.freeRollsLeft}/5</button><div class="hr"></div>` : ''}
           <div class="grid2">
             <button class="btn primary" data-action="gacha1">🔮 อัญเชิญ 1 ครั้ง</button>
             <button class="btn primary" data-action="gacha10">🔮 อัญเชิญ 10 ครั้ง</button>
           </div>
-          <p class="muted">ใช้ Ticket ก่อน ถ้า Ticket หมดใช้ 100 Gem / ครั้ง | Pity Epic ${S().state.gacha.epicPity}/10 | Legendary ${S().state.gacha.legendPity}/60</p>
+          <p class="muted">ใช้ Ticket ก่อน ถ้า Ticket หมดใช้ 100 Gem / ครั้ง | Pity Rare ${S().state.gacha.rarePity||0}/10 | Epic ${S().state.gacha.epicPity}/50 | Legendary ${S().state.gacha.legendPity}/200</p>
         </section>
         <section class="panel">
           <div class="section-title"><h3>ผลล่าสุด</h3><small>${results.length} รายการ</small></div>
@@ -828,6 +916,7 @@ window.UI = (() => {
     return `<div class="screen">
       <div class="page-title"><div><h2>Monster Codex</h2><p>สารบัญมอนสเตอร์ทั้งหมด ดูตัวที่เคยพบ สกิล บทบาท ธาตุ และสูตรผสมที่เกี่ยวข้อง ตอนนี้มีมอนสเตอร์และสายผสมเพิ่มขึ้น</p></div><b class="gold">${seenCount}/${D().heroes.length}</b></div>
       <section class="panel">${rosterControls()}</section>
+      ${codexRewardsPanel()}
       <section class="panel"><div class="section-title"><h3>มอนสเตอร์ทั้งหมด</h3><small>${heroes.length} รายการ</small></div><div class="stack">${heroes.map(codexCard).join('')}</div></section>
     </div>`;
   }
@@ -857,7 +946,7 @@ window.UI = (() => {
   function manualScreen(){
     return `
       <div class="screen manual-screen">
-        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V30 Tier SSR: สีเทียร์ชัดขึ้น, SSR ultra-rare, Max Lv.100 Rebirth, และ Battle UI มือถือปรับใหม่</p></div></div>
+        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V36 Progression: Mission, Achievement, Pity, Shop, Codex Reward, Stage Modifier และ Boss Skill</p></div></div>
         <section class="panel manual-hero">
           <div class="section-title"><h3>เป้าหมายใหม่</h3><small>Endless Loop ถึงด่าน 3000</small></div>
           <p class="muted">ด่านจะสร้างต่อเนื่องและยากขึ้นเรื่อย ๆ จนถึง <b class="gold">ด่าน 3000</b> ถ้าติดด่าน ให้ฟาร์มด่านที่ผ่านได้ อัปเลเวล เปิดกาชา ผสมมอนสเตอร์ และ Rebirth เพื่อเพิ่มพลังถาวร</p>
@@ -868,6 +957,17 @@ window.UI = (() => {
             <div><b>4</b><span>ผสมตัวสำรองเพื่อสร้างตัวระดับสูงกว่า</span></div>
             <div><b>5</b><span>เมื่อเลเวล 100 ให้ Rebirth แล้ววนฟาร์มใหม่</span></div>
           </div>
+        </section>
+        <section class="panel">
+          <div class="section-title"><h3>ระบบ V36 ที่เพิ่มมา</h3><small>ทำให้มีเป้าหมายเล่นต่อ</small></div>
+          <ul class="guide-list">
+            <li><b>Achievement:</b> ผ่านด่าน, สะสมปีศาจ, ผสม, Rebirth แล้วรับรางวัลระยะยาว</li>
+            <li><b>Pity Gacha:</b> Rare+ ทุก 10, Epic+ ทุก 50, Legendary+ ทุก 200 โรล ส่วน SSR ยังเป็นระดับลับ</li>
+            <li><b>Shop:</b> แปลง Gold/Gem/Dust เป็น Ticket, Dust, Gold, Shard หรืออุปกรณ์</li>
+            <li><b>Codex Reward:</b> สะสมปีศาจครบตาม Tier แล้วรับรางวัล</li>
+            <li><b>Stage Modifier:</b> ด่านบางด่านมีเงื่อนไขพิเศษ เช่น ศัตรูเร็วขึ้น/เลือดเยอะขึ้น</li>
+            <li><b>Boss Skill:</b> บอสทุก 5 ด่านมีออร่าเฉพาะ ทำให้ต้องฟาร์มหรือปรับทีมบ้าง</li>
+          </ul>
         </section>
         <section class="panel">
           <div class="section-title"><h3>Rebirth คืออะไร</h3><small>วนเกิดใหม่เพื่อไปด่านลึกขึ้น</small></div>
@@ -914,7 +1014,7 @@ window.UI = (() => {
           <ul class="guide-list">
             <li>ถ้าติดด่าน ให้เลือกด่านที่ชนะได้ แล้วกด <b>ฟาร์มด่านนี้ซ้ำ</b> เพื่อเก็บ Gold/Dust/อุปกรณ์ โดยไม่ข้ามไปด่านถัดไป</li>
             <li>ถ้าต้องการอัปตัวเดียว ให้เข้า <b>คลัง</b> → กด <b>เลือกอัป</b> → ใช้แผง <b>อัปเกรดเฉพาะตัวที่เลือก</b></li>
-            <li>กด <b>อัปเกรดอัตโนมัติ</b> เพื่อใช้ Gold/Dust กับตัวในทีมก่อน ถ้าไม่อยากเลือกเอง</li>
+            <li>กด <b>อัปเกรดทีมนี้</b> เพื่อใช้ Gold/Dust กับตัวในทีมปัจจุบันเท่านั้น ระบบจะไม่เปลี่ยนทีมให้เอง</li>
             <li>อุปกรณ์ดรอปจากด่าน ยิ่งด่านสูง/บอสยิ่งมีโอกาสดีขึ้น</li>
             <li>Ticket ได้จากชนะสะสมทุก 7 ครั้ง, บอส, และ Daily Quest</li>
             <li>บอสทุก 5 ด่านจะเป็นจุดเช็กพลัง ถ้าติดบอสให้ฟาร์ม/ผสม/อัปเกรดก่อน</li>
@@ -939,7 +1039,7 @@ window.UI = (() => {
           <div class="section-title"><h3>ระบบ Final ที่ควรรู้</h3><small>Quality of Life</small></div>
           <div class="guide-grid">
             <div class="guide-card"><b>Favorite / Lock</b><p>กด Favorite ที่การ์ดมอนสเตอร์เพื่อกันเอาไปผสมโดยไม่ตั้งใจ ตัวที่ล็อกจะไม่ถูก Auto Fusion และเลือกผสมไม่ได้</p></div>
-            <div class="guide-card"><b>Monster Codex</b><p>หน้า “ตำรา” รวมมอนสเตอร์ทั้งหมด ดูตัวที่เคยพบ สกิล ธาตุ บทบาท และสูตรผสมที่เกี่ยวข้อง V34 ปรับหน้าจัดการปีศาจให้สั้นลง ใช้เมนูสไลด์สำหรับคำสั่งหลัก ลดการเลื่อนยาว</p></div>
+            <div class="guide-card"><b>Monster Codex</b><p>หน้า “ตำรา” รวมมอนสเตอร์ทั้งหมด ดูตัวที่เคยพบ สกิล ธาตุ บทบาท และสูตรผสมที่เกี่ยวข้อง V35 แยกอัปเกรดอัตโนมัติออกจากจัดทีมอัตโนมัติแล้ว ปุ่มอัปเกรดจะไม่เปลี่ยนทีมที่จัดไว้</p></div>
             <div class="guide-card"><b>Filter / Sort</b><p>หน้า Team, คลัง และ Codex มีตัวกรองตามบทบาท ธาตุ ระดับ และ Favorite พร้อมเรียงตาม Power, Level, Rebirth หรือ Rarity</p></div>
             <div class="guide-card"><b>Target Upgrade</b><p>หน้า คลัง มีปุ่ม เลือกอัป บนการ์ดปีศาจทุกตัว แล้วใช้แผงใหญ่ด้านบนเพื่ออัป Lv +1, +10, สูงสุดเท่าที่จ่ายไหว, อัปดาว หรือ Rebirth เฉพาะตัวนั้น</p></div>
             <div class="guide-card"><b>Team Preset</b><p>บันทึกทีมได้ 3 ชุด เหมาะสำหรับทีมฟาร์ม ทีมบอส และทีมทดลอง สลับได้จากหน้า ทีม หรือ คลัง</p></div>
@@ -981,7 +1081,7 @@ window.UI = (() => {
 
   function render(){
     const screen = currentScreen();
-    const map = {home, battle:battleScreen, team:teamScreen, fusion:fusionScreen, gacha:gachaScreen, heroes:heroesScreen, codex:codexScreen, manual:manualScreen};
+    const map = {home, battle:battleScreen, team:teamScreen, fusion:fusionScreen, gacha:gachaScreen, shop:shopScreen, heroes:heroesScreen, codex:codexScreen, manual:manualScreen};
     app().innerHTML = hud() + (map[screen]||home)() + nav() + monsterActionSheet();
     bind();
     syncBattleOverlayMode();
@@ -1002,7 +1102,7 @@ window.UI = (() => {
       case 'save': S().save(); toast('บันทึกเกมแล้ว'); break;
       case 'setSpeed': { const v=Number(data.speedValue || data.speed || 1); S().state.settings.battleSpeed=v; battleSpeed=v; S().save(); toast(v===20?'เปิดข้ามไว x20 แล้ว':v===50?'เปิดฟาร์ม x50 แล้ว':`ตั้งความเร็วต่อสู้ ${v}x แล้ว`); render(); break; }
       case 'autoTeam': S().autoTeam(); toast('จัดทีมอัตโนมัติแล้ว'); render(); break;
-      case 'autoUpgrade': { const c=S().autoUpgrade(); toast(c?`อัปเกรด/ใส่ของ ${c} ครั้ง`:'ยังอัปเกรดไม่ได้ ทรัพยากรไม่พอ'); render(); break; }
+      case 'autoUpgrade': { const c=S().autoUpgrade(); toast(c?`อัปเกรดทีมปัจจุบัน ${c} ครั้ง`:'ยังอัปเกรดไม่ได้ ต้องมีตัวในทีม/ทรัพยากรไม่พอ'); render(); break; }
       case 'equipBest': { const c=S().equipBest(); toast(c?`ใส่อุปกรณ์ ${c} ช่องให้ทีม/คลัง`:'ของที่ใส่อยู่ดีที่สุดแล้ว'); render(); break; }
       case 'autoSellLow': { const r=S().autoSellLow('Rare'); toast(r.msg); render(); break; }
       case 'autoFusionLow3': { const r=S().autoFusionLow(3); toast(r.msg); render(); break; }
@@ -1045,6 +1145,10 @@ window.UI = (() => {
       case 'clearSlot': S().state.team[Number(data.slot)] = null; S().save(); render(); break;
       case 'claimIdle': { const r=S().claimIdle(); toast(r.ok?`รับ ${S().resourceText(r.preview.reward)}`:r.msg); render(); break; }
       case 'claimQuest': { const r=S().questClaim(data.id); toast(r.ok?`รับ ${S().resourceText(r.reward)}`:r.msg); render(); break; }
+      case 'claimAchievement': { const r=S().achievementClaim(data.id); toast(r.msg || (r.ok?'รับ Achievement แล้ว':'ยังรับไม่ได้')); render(); break; }
+      case 'claimCodexReward': { const r=S().codexRewardClaim(data.id); toast(r.msg || (r.ok?'รับ Codex Reward แล้ว':'ยังรับไม่ได้')); render(); break; }
+      case 'shopBuy': { const r=S().shopPurchase(data.id); toast(r.msg); render(); break; }
+      case 'setFarmStop': S().state.settings.farmStop = data.value || 'lose'; S().save(); toast('ตั้งค่า Auto Farm แล้ว'); render(); break;
       case 'exportSave': {
         const box = document.getElementById('saveExportBox');
         if(box){ box.value = S().exportSaveText(); box.focus(); box.select(); }
@@ -1100,6 +1204,19 @@ window.UI = (() => {
     toast(r.ok?`อัญเชิญ ${count} ครั้งแล้ว`:r.msg);
     if(r.ok) S().state.screen='gacha';
     render();
+  }
+
+
+  function shouldStopFarm(before,result,runs){
+    const mode = S().state.settings?.farmStop || 'lose';
+    if(mode === 'ticket' && S().state.resources.tickets > (before.tickets||0)) return 'ได้ Ticket แล้ว';
+    if(mode === 'levelcap'){
+      const max = S().maxHeroLevel();
+      const found = S().state.team.filter(Boolean).find(id=>S().state.roster[id]?.level >= max);
+      if(found) return `${S().heroDef(found).name} ถึง Lv.${max} แล้ว`;
+    }
+    if(mode === 'raredrop' && result?.item && ['Epic','Legendary','Mythic','SSR'].includes(result.item.rarity)) return `ดรอป ${result.item.rarity} แล้ว`;
+    return '';
   }
 
   async function autoBattleUntilLose(){
@@ -1159,6 +1276,7 @@ window.UI = (() => {
     try{
       while(farmRepeatRun && runs < limit){
         S().selectStage(fixedStageId);
+        const before = {tickets:S().state.resources.tickets};
         const sim = window.BattleSim.simulate(fixedStageId);
         await playBattle(sim);
         const result = S().completeStage(sim.stage.id, sim.win, {stay:true});
@@ -1169,6 +1287,8 @@ window.UI = (() => {
           break;
         }
         runs++;
+        const stopWhy = shouldStopFarm(before,result,runs);
+        if(stopWhy){ toast(`ฟาร์มหยุด: ${stopWhy} | ฟาร์มสำเร็จ ${runs} รอบ`); break; }
         lastRewardText = S().resourceText(result.reward);
         if(result.item) lastRewardText += ` | ได้ ${result.item.name}${D().equipmentTypes[result.item.type].label}`;
         render();
@@ -1199,6 +1319,7 @@ window.UI = (() => {
     try{
       while(farmRepeatRun){
         S().selectStage(fixedStageId);
+        const before = {tickets:S().state.resources.tickets};
         const sim = window.BattleSim.simulate(fixedStageId);
         await playBattle(sim);
         const result = S().completeStage(sim.stage.id, sim.win, {stay:true});
@@ -1209,6 +1330,8 @@ window.UI = (() => {
           break;
         }
         runs++;
+        const stopWhy = shouldStopFarm(before,result,runs);
+        if(stopWhy){ toast(`ฟาร์มหยุด: ${stopWhy} | ฟาร์มสำเร็จ ${runs} รอบ`); break; }
         lastRewardText = S().resourceText(result.reward);
         if(result.item) lastRewardText += ` | ได้ ${result.item.name}${D().equipmentTypes[result.item.type].label}`;
         render();
