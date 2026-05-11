@@ -13,6 +13,7 @@ window.UI = (() => {
     return String(str ?? '').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   }
   function fmt(n){ return S().fmt(n||0); }
+  function rarityBadge(r){ return `<span class="tier-badge rarity-${h(r)}">${h(r)}</span>`; }
   function toast(msg){
     const host = document.getElementById('toastHost');
     const el = document.createElement('div');
@@ -82,7 +83,7 @@ window.UI = (() => {
         <div class="brand-row">
           <div class="logo">
             <div class="logo-mark">🩸</div>
-            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V28</small></div>
+            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V30</small></div>
           </div>
           <button class="btn small ghost" data-action="save">Save</button>
         </div>
@@ -108,7 +109,7 @@ window.UI = (() => {
       const id = S().state.team[i];
       if(!id) return `<div class="mini-unit mini-empty">+</div>`;
       const def = S().heroDef(id), st = S().heroStats(id), inst = S().state.roster[id];
-      return `<div class="mini-unit"><div class="avatar">${def.icon}</div><small>${h(def.name)}</small><small>Lv.${inst.level} ★${inst.stars}</small><small>HP ${fmt(st.hp)} / ATK ${fmt(st.atk)}</small></div>`;
+      return `<div class="mini-unit rarity-${def.rarity}"><div class="avatar">${def.icon}</div><small>${rarityBadge(def.rarity)} ${h(def.name)}</small><small>Lv.${inst.level} ★${inst.stars}</small><small>HP ${fmt(st.hp)} / ATK ${fmt(st.atk)}</small></div>`;
     }).join('')}</div>`;
   }
 
@@ -245,7 +246,7 @@ window.UI = (() => {
   function speedControls(){
     const current = Number(S().state.settings?.battleSpeed || 1);
     const speeds = [
-      [0.75,'อ่านช้า'],[1,'ปกติ'],[2,'เร็ว'],[4,'ฟาร์ม x4'],[8,'ฟาร์ม x8'],[12,'ฟาร์ม x12'],[20,'ข้ามไว x20']
+      [0.75,'อ่านช้า'],[1,'ปกติ'],[2,'เร็ว'],[4,'ฟาร์ม x4'],[8,'ฟาร์ม x8'],[12,'ฟาร์ม x12'],[20,'ข้ามไว x20'],[50,'ฟาร์ม x50']
     ];
     return `<div class="speed-tune">
       <div><b>ความเร็วต่อสู้</b><small>ใช้ตอนฟาร์มได้ ไม่ต้องรอเปิดหน้า Battle</small></div>
@@ -382,7 +383,7 @@ window.UI = (() => {
   function slotCard(id,slot){
     if(!id) return `<button class="slot-card" data-action="clearSlot" data-slot="${slot}">ว่าง</button>`;
     const d=S().heroDef(id), i=S().state.roster[id], st=S().heroStats(id);
-    return `<button class="slot-card filled" data-action="clearSlot" data-slot="${slot}"><div><div class="avatar">${d.icon}</div><b>${S().isFavorite(id)?'🔒 ':''}${h(d.name)}</b><small>Lv.${i.level} R+${i.rebirth||0} ★${i.stars}</small><small>HP ${fmt(st.hp)} / ATK ${fmt(st.atk)}</small></div></button>`;
+    return `<button class="slot-card filled rarity-${d.rarity}" data-action="clearSlot" data-slot="${slot}"><div><div class="avatar">${d.icon}</div><b>${S().isFavorite(id)?'🔒 ':''}${h(d.name)}</b>${rarityBadge(d.rarity)}<small>Lv.${i.level} R+${i.rebirth||0} ★${i.stars}</small><small>HP ${fmt(st.hp)} / ATK ${fmt(st.atk)}</small></div></button>`;
   }
 
   function heroesScreen(){
@@ -444,7 +445,7 @@ window.UI = (() => {
       <div class="upgrade-focus-card rarity-${def.rarity}">
         <div class="unit-icon big">${def.icon}</div>
         <div class="upgrade-focus-info">
-          <div class="monster-name"><b>${fav?'🔒 ':''}${h(def.name)}</b> ${inTeam?'<span class="tag good">ทีม</span>':''}</div>
+          <div class="monster-name"><b>${fav?'🔒 ':''}${h(def.name)}</b> ${rarityBadge(def.rarity)} ${inTeam?'<span class="tag good">ทีม</span>':''}</div>
           <div class="unit-meta">${role.icon} ${role.label} | ${elem.icon} ${elem.label} | ${def.rarity} | Lv.${inst.level}/${S().maxHeroLevel()} | ★${inst.stars} | R+${inst.rebirth||0}</div>
           ${statGrid(st)}
           <div class="unit-meta"><b>${h(def.skill)}</b> — ${h(def.skillDesc)}</div>
@@ -482,7 +483,7 @@ window.UI = (() => {
       <div class="monster-main">
         <div class="unit-icon">${def.icon}</div>
         <div class="monster-info">
-          <div class="monster-name"><b>${fav?'🔒 ':''}${h(def.name)}</b> ${inTeam?'<span class="tag good">ทีม</span>':''}</div>
+          <div class="monster-name"><b>${fav?'🔒 ':''}${h(def.name)}</b> ${rarityBadge(def.rarity)} ${inTeam?'<span class="tag good">ทีม</span>':''}</div>
           <div class="unit-meta">${role.icon} ${role.label} | ${elem.icon} ${elem.label} | ${def.rarity} | Lv.${inst.level} ★${inst.stars} R+${inst.rebirth||0}</div>
           ${statGrid(st)}
           <div class="unit-meta skill-one-line"><b>${h(def.skill)}</b> — ${h(def.skillDesc)}</div>
@@ -517,7 +518,7 @@ window.UI = (() => {
       <div class="unit-top">
         <div class="unit-icon">${def.icon}</div>
         <div>
-          <div class="unit-name"><span class="rarity-text">${h(def.name)}</span> ${inTeam?'⭐':''} ${fav?'🔒':''}</div>
+          <div class="unit-name"><span class="rarity-text">${h(def.name)}</span> ${rarityBadge(def.rarity)} ${inTeam?'⭐':''} ${fav?'🔒':''}</div>
           <div class="unit-meta">${role.icon} ${role.label} | ${elem.icon} ${elem.label} | ${def.rarity}</div>
           <div class="unit-meta">Lv.${inst.level} / ${S().maxHeroLevel()} | Rebirth +${inst.rebirth||0} | ★${inst.stars} | Shard ${inst.shards}/${needShard}</div>
         </div>
@@ -580,7 +581,7 @@ window.UI = (() => {
   function gachaResultRow(r){
     const hero = r.hero;
     const st = S().state.roster[hero.id] ? S().heroStats(hero.id) : null;
-    return `<div class="reward-row rarity-${hero.rarity}"><div class="big">${hero.icon}</div><div><b class="rarity-text">${h(hero.name)}</b><small>${hero.rarity} | ${r.type==='new'?'ตัวละครใหม่':'ตัวซ้ำ → Shard +'+r.amount}</small>${statGrid(st) || baseStatGrid(hero)}</div></div>`;
+    return `<div class="reward-row rarity-${hero.rarity}"><div class="big">${hero.icon}</div><div><b class="rarity-text">${h(hero.name)}</b> ${rarityBadge(hero.rarity)}<small>${hero.rarity} | ${r.type==='new'?'ตัวละครใหม่':'ตัวซ้ำ → Shard +'+r.amount}</small>${statGrid(st) || baseStatGrid(hero)}</div></div>`;
   }
 
 
@@ -623,7 +624,7 @@ window.UI = (() => {
   function fusionSlot(id,label){
     if(!id) return `<div class="fusion-slot empty-slot"><small>${label}</small><b>ยังไม่เลือก</b></div>`;
     const d = S().heroDef(id), i = S().state.roster[id], st=S().heroStats(id);
-    return `<div class="fusion-slot rarity-${d.rarity}"><div class="unit-icon">${d.icon}</div><div><small>${label}</small><b class="rarity-text">${h(d.name)}</b><span>Lv.${i.level} ★${i.stars} | ${d.rarity}</span>${statGrid(st)}</div></div>`;
+    return `<div class="fusion-slot rarity-${d.rarity}"><div class="unit-icon">${d.icon}</div><div><small>${label}</small><b class="rarity-text">${h(d.name)}</b> ${rarityBadge(d.rarity)}<span>Lv.${i.level} ★${i.stars} | ${d.rarity}</span>${statGrid(st)}</div></div>`;
   }
 
   function fusionPreviewHtml(p){
@@ -652,7 +653,7 @@ window.UI = (() => {
     const r = S().heroDef(last.result);
     if(!r) return '';
     return `<section class="panel"><div class="section-title"><h3>ผลผสมล่าสุด</h3><small>${new Date(last.at).toLocaleString('th-TH')}</small></div>
-      <div class="reward-row rarity-${r.rarity}"><div class="big">${r.icon}</div><div><b class="rarity-text">${h(r.name)}</b><small>${last.gain?.type==='new'?'มอนสเตอร์ใหม่':'ตัวซ้ำ → Shard +' + last.gain?.amount}</small></div></div>
+      <div class="reward-row rarity-${r.rarity}"><div class="big">${r.icon}</div><div><b class="rarity-text">${h(r.name)}</b> ${rarityBadge(r.rarity)}<small>${last.gain?.type==='new'?'มอนสเตอร์ใหม่':'ตัวซ้ำ → Shard +' + last.gain?.amount}</small></div></div>
     </section>`;
   }
 
@@ -730,7 +731,7 @@ window.UI = (() => {
       <div class="rarity-line"></div>
       <div class="unit-icon">${seen?def.icon:'?'}</div>
       <div>
-        <div class="unit-name"><span class="rarity-text">${seen?h(def.name):'ยังไม่พบ'}</span> ${S().isFavorite(def.id)?'★':''}</div>
+        <div class="unit-name"><span class="rarity-text">${seen?h(def.name):'ยังไม่พบ'}</span> ${seen?rarityBadge(def.rarity):''} ${S().isFavorite(def.id)?'★':''}</div>
         <div class="unit-meta">${role.icon} ${role.label} | ${elem.icon} ${elem.label} | ${def.rarity}${inst?` | Lv.${inst.level} R+${inst.rebirth||0} ★${inst.stars}`:''}</div>
         ${seen ? `${st?statGrid(st):baseStatGrid(def)}<div class="unit-meta"><b>${h(def.skill)}</b> — ${h(def.skillDesc)}</div><div class="unit-meta"><b>สูตร:</b> ${h(recipeText)}</div>` : `<div class="unit-meta">เปิดกาชา, ผสม, หรือฟาร์มเพื่อค้นพบมอนสเตอร์นี้</div>`}
       </div>
@@ -740,22 +741,22 @@ window.UI = (() => {
   function manualScreen(){
     return `
       <div class="screen manual-screen">
-        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V28 Mini Battle: กดปุ่มย่อเพื่อเก็บไฟต์เป็นกล่องเล็ก แล้วไปดูหน้าอื่นได้</p></div></div>
+        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V30 Tier SSR: สีเทียร์ชัดขึ้น, SSR ultra-rare, Max Lv.100 Rebirth, และ Battle UI มือถือปรับใหม่</p></div></div>
         <section class="panel manual-hero">
           <div class="section-title"><h3>เป้าหมายใหม่</h3><small>Endless Loop ถึงด่าน 3000</small></div>
           <p class="muted">ด่านจะสร้างต่อเนื่องและยากขึ้นเรื่อย ๆ จนถึง <b class="gold">ด่าน 3000</b> ถ้าติดด่าน ให้ฟาร์มด่านที่ผ่านได้ อัปเลเวล เปิดกาชา ผสมมอนสเตอร์ และ Rebirth เพื่อเพิ่มพลังถาวร</p>
           <div class="manual-steps">
             <div><b>1</b><span>สุ่มฟรีให้ครบ 2 ตัว แล้วจัดทีมเริ่มต้น</span></div>
             <div><b>2</b><span>ฟาร์ม Gold/Dust จากด่านล่าสุดที่ชนะได้</span></div>
-            <div><b>3</b><span>อัปเลเวลมอนสเตอร์ไปเรื่อย ๆ สูงสุด 1000</span></div>
+            <div><b>3</b><span>อัปเลเวลมอนสเตอร์ไปเรื่อย ๆ สูงสุด 100</span></div>
             <div><b>4</b><span>ผสมตัวสำรองเพื่อสร้างตัวระดับสูงกว่า</span></div>
-            <div><b>5</b><span>เมื่อเลเวล 1000 ให้ Rebirth แล้ววนฟาร์มใหม่</span></div>
+            <div><b>5</b><span>เมื่อเลเวล 100 ให้ Rebirth แล้ววนฟาร์มใหม่</span></div>
           </div>
         </section>
         <section class="panel">
           <div class="section-title"><h3>Rebirth คืออะไร</h3><small>วนเกิดใหม่เพื่อไปด่านลึกขึ้น</small></div>
           <ul class="guide-list">
-            <li>มอนสเตอร์ที่เลเวล <b>1000</b> จะกด Rebirth ได้ในหน้า <b>คลัง</b></li>
+            <li>มอนสเตอร์ที่เลเวล <b>100</b> จะกด Rebirth ได้ในหน้า <b>คลัง</b></li>
             <li>Rebirth จะรีเซ็ตเลเวลกลับเป็น 1 แต่เพิ่มสแต็ก <b>Rebirth +1</b></li>
             <li>แต่ละสแต็กเพิ่ม HP / ATK / DEF ถาวร และยิ่งสแต็กสูง โบนัสรวมยิ่งดีขึ้น</li>
             <li>อุปกรณ์ ดาว และ Shard ยังอยู่ ไม่หาย</li>
@@ -789,7 +790,7 @@ window.UI = (() => {
             <div class="guide-card"><b>Shard</b><p>ได้จากการเปิดกาชาหรือผสมแล้วได้มอนสเตอร์ซ้ำ Shard ผูกกับมอนสเตอร์ตัวนั้น ใช้สำหรับอัปดาว</p></div>
             <div class="guide-card"><b>Equipment</b><p>ดรอปจากการชนะด่าน ยิ่งด่านสูงหรือเป็นบอส โอกาสได้ของระดับสูงยิ่งดี ใช้เพิ่ม HP / ATK / DEF / SPD</p></div>
             <div class="guide-card"><b>Level</b><p>เกมนี้ไม่มี EXP แยกต่างหาก การเพิ่มเลเวลใช้ Gold โดยตรง ถ้าติดด่านให้ฟาร์ม Gold แล้วอัปเลเวลตัวหลัก</p></div>
-            <div class="guide-card"><b>Rebirth Stack</b><p>ได้จากมอนสเตอร์ Lv.1000 แล้วกด Rebirth ในหน้าคลัง สแต็กนี้เพิ่มค่าสเตตัสถาวรและใช้ไต่ด่านลึกขึ้น</p></div>
+            <div class="guide-card"><b>Rebirth Stack</b><p>ได้จากมอนสเตอร์ Lv.100 แล้วกด Rebirth ในหน้าคลัง สแต็กนี้เพิ่มค่าสเตตัสถาวรและใช้ไต่ด่านลึกขึ้น</p></div>
           </div>
         </section>
         <section class="panel">
@@ -880,7 +881,7 @@ window.UI = (() => {
     if(battleRunning && !safeWhileBattle.has(action)) return toast('กำลังต่อสู้อยู่: ดูหน้าอื่นได้ แต่ยังแก้ทีม/อัปเกรด/ผสมไม่ได้จนจบไฟต์');
     switch(action){
       case 'save': S().save(); toast('บันทึกเกมแล้ว'); break;
-      case 'setSpeed': { const v=Number(data.speedValue || data.speed || 1); S().state.settings.battleSpeed=v; battleSpeed=v; S().save(); toast(v===20?'เปิดข้ามไว x20 แล้ว':`ตั้งความเร็วต่อสู้ ${v}x แล้ว`); render(); break; }
+      case 'setSpeed': { const v=Number(data.speedValue || data.speed || 1); S().state.settings.battleSpeed=v; battleSpeed=v; S().save(); toast(v===20?'เปิดข้ามไว x20 แล้ว':v===50?'เปิดฟาร์ม x50 แล้ว':`ตั้งความเร็วต่อสู้ ${v}x แล้ว`); render(); break; }
       case 'autoTeam': S().autoTeam(); toast('จัดทีมอัตโนมัติแล้ว'); render(); break;
       case 'autoUpgrade': { const c=S().autoUpgrade(); toast(c?`อัปเกรด/ใส่ของ ${c} ครั้ง`:'ยังอัปเกรดไม่ได้ ทรัพยากรไม่พอ'); render(); break; }
       case 'equipBest': { const c=S().equipBest(); toast(c?`ใส่อุปกรณ์ ${c} ช่องให้ทีม/คลัง`:'ของที่ใส่อยู่ดีที่สุดแล้ว'); render(); break; }
@@ -1114,8 +1115,8 @@ window.UI = (() => {
 
   function unitHtml(u){
     const hpPct = Math.max(0,Math.round(u.hp/u.maxHp*100));
-    return `<div class="combat-unit ${u.dead?'dead':''}" data-cuid="${u.uid}">
-      <div class="cu-icon">${u.icon}</div><div class="cu-name">${h(u.name)}</div><div class="cu-tags">${D().elements[u.element]?.icon||''} ${u.stun?'💫':''}${u.poison?'☠️':''}${u.burn?'🔥':''}</div>
+    return `<div class="combat-unit rarity-${u.rarity || (u.side==='enemy'?'Enemy':'Common')} ${u.dead?'dead':''}" data-cuid="${u.uid}">
+      <div class="cu-icon">${u.icon}</div><div class="cu-name">${h(u.name)} ${u.rarity&&u.rarity!=='Enemy'?rarityBadge(u.rarity):''}</div><div class="cu-tags">${D().elements[u.element]?.icon||''} ${u.stun?'💫':''}${u.poison?'☠️':''}${u.burn?'🔥':''}</div>
       <div class="bar"><i style="width:${hpPct}%"></i></div>
       <div class="bar energy"><i style="width:${Math.round(u.energy||0)}%"></i></div>
       <div class="cu-hp">${Math.max(0,u.hp)}/${u.maxHp}</div>

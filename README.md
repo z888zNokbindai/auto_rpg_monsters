@@ -1,29 +1,25 @@
-# Abyss Grimoire V29 Readable Theme
+# Abyss Grimoire V30 Tier SSR
 
 Dark Fantasy Text RPG / Auto Battle / Gacha / Fusion / Rebirth
 
-## V29 ปรับอะไร
+## V30 เพิ่มอะไร
 
-- ปรับธีมให้อ่านง่ายขึ้นทั้งมือถือและคอม
-- ลดพื้นหลังรกและ gradient ที่ทำให้ลายตา
-- เพิ่ม contrast ของตัวหนังสือ การ์ด ปุ่ม และ Battle Log
-- ปรับปุ่มเมนูล่างบนมือถือให้ใหญ่ขึ้นและแบ่ง 2 แถว
-- ปรับหน้าต่อสู้บนมือถือให้ UI ไม่ซ้อนและอ่านเหตุการณ์ชัดขึ้น
-- ปรับ Monster Manager / Fusion / Codex ให้เป็นการ์ดเรียบกว่าเดิม
-- ยังคงระบบจาก V28 ครบ: Mini Battle, Background Battle, Monster Manager, Target Upgrade, Fusion, Codex, PWA, Export/Import Save
+- สี Tier ชัดขึ้นทุกหน้าที่มีปีศาจ: Team, คลัง, Fusion, Codex, Gacha, Battle
+- เพิ่มปีศาจระดับ SSR 5 ตัว
+- SSR มีโอกาสออกกาชา 0.000001 ตามที่ตั้งไว้
+- ปรับ Max Level เหลือ 100
+- Rebirth ได้เมื่อ Lv.100
+- เพิ่มปุ่มสปีด x50
+- แก้ Battle UI บนมือถือที่ซ้อนกัน โดยให้ Battle เต็มจอเลื่อนได้และลดขนาดส่วนที่ชนกัน
 
 ## วิธีรัน
 
-แตก ZIP แล้วเปิดไฟล์นี้ได้เลย:
+เปิด `index.html` ได้เลย
 
-```text
-index.html
-```
-
-หรือรันเป็น local server:
+หรือรันแบบ local server:
 
 ```bash
-cd text_auto_gacha_v29_readable_theme
+cd text_auto_gacha_v30_final
 python -m http.server 8000
 ```
 
@@ -33,15 +29,16 @@ python -m http.server 8000
 http://localhost:8000
 ```
 
-## วิธีเล่นสั้น ๆ
+## วิธีเล่นย่อ
 
-1. ใช้สุ่มฟรีต้นเกมให้ครบ
-2. เข้า คลัง/จัดการปีศาจ แล้วจัดทีม 5 ตัว
-3. อัปเกรดตัวหลักที่อยากใช้
-4. เข้า ลุย แล้วกด สู้ หรือ ฟาร์มด่านนี้ซ้ำ
-5. ใช้ Fusion เพื่อผสมปีศาจให้เก่งขึ้น
-6. เมื่อมอนสเตอร์ Lv.1000 แล้วใช้ Rebirth เพื่อเพิ่มสเตตัสถาวร
+1. เริ่มเกมจะได้ปีศาจสุ่ม 1 ตัว
+2. กดสุ่มฟรีช่วงต้นเกมให้ครบ
+3. จัดทีม 5 ตัว
+4. ฟาร์มด่านเพื่อหา Gold / Dust / Ticket / Gear
+5. ผสมปีศาจเพื่อปลดตัวใหม่
+6. เมื่อปีศาจ Lv.100 แล้วกด Rebirth เพื่อเพิ่มสแต็กถาวร
+7. ใช้สปีด x20 หรือ x50 สำหรับฟาร์มไว
 
-## หมายเหตุ
+## เซฟ
 
-V29 ใช้ระบบเซฟเดิมจาก V28/V27 ต่อได้ตามระบบ migration เดิมในเกม
+เซฟอยู่ใน Browser localStorage และ Export/Import ได้ในหน้า คู่มือ

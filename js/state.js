@@ -1,6 +1,6 @@
 window.GameState = (() => {
-  const KEY = 'abyss_grimoire_v26_save';
-  const OLD_KEYS = ['abyss_grimoire_v25_save','abyss_grimoire_v24_save','abyss_grimoire_v23_save','abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
+  const KEY = 'abyss_grimoire_v30_save';
+  const OLD_KEYS = ['abyss_grimoire_v29_save','abyss_grimoire_v28_save','abyss_grimoire_v27_save','abyss_grimoire_v26_save','abyss_grimoire_v25_save','abyss_grimoire_v24_save','abyss_grimoire_v23_save','abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
   const G = () => window.GameData;
   let state = null;
 
@@ -20,7 +20,7 @@ window.GameState = (() => {
     const starterPool = G().heroes.filter(h => ['Common','Rare'].includes(h.rarity));
     const starter = starterPool[Math.floor(Math.random() * starterPool.length)] || G().heroes[0];
     const s = {
-      version:25,
+      version:30,
       screen:'home',
       resources:{gold:420,gems:180,tickets:1,dust:60},
       campaign:{selected:1,unlocked:1,highestCleared:0,clears:{}},
@@ -52,7 +52,7 @@ window.GameState = (() => {
 
   function normalize(){
     const oldVersion = Number(state.version || 0);
-    if(!state.version || state.version < 25){ state.version = Math.max(25, Number(state.version || 0)); }
+    if(!state.version || state.version < 30){ state.version = Math.max(30, Number(state.version || 0)); }
     if(oldVersion < 12){
       state.settings ||= {};
       state.settings.battleSpeed = 1;
@@ -66,8 +66,8 @@ window.GameState = (() => {
     if(oldVersion < 16){
       state.version = 16;
     }
-    if(Number(state.version || 0) < 25){
-      state.version = 25;
+    if(Number(state.version || 0) < 30){
+      state.version = 30;
     }
     state.resources ||= {gold:0,gems:0,tickets:0,dust:0};
     state.campaign ||= {selected:1,unlocked:1,highestCleared:0,clears:{}};
@@ -101,7 +101,7 @@ window.GameState = (() => {
       state.starter.freeRollsLeft = Math.max(Number(state.starter.freeRollsLeft||0), Math.max(0, 5 - usedFree));
     }
     Object.values(state.roster || {}).forEach(inst=>{
-      inst.level = Math.max(1, Math.min(1000, Number(inst.level || 1)));
+      inst.level = Math.max(1, Math.min(maxHeroLevel(), Number(inst.level || 1))); // V30 max Lv.100
       inst.stars = Math.max(1, Math.min(6, Number(inst.stars || 1)));
       inst.rebirth = Math.max(0, Number(inst.rebirth || 0));
       inst.shards = Math.max(0, Number(inst.shards || 0));
@@ -160,7 +160,7 @@ window.GameState = (() => {
     normalize();
     const payload = {
       game:'Abyss Grimoire',
-      version:25,
+      version:30,
       exportedAt:new Date().toISOString(),
       save:state
     };
@@ -184,7 +184,7 @@ window.GameState = (() => {
       }
       state = incoming;
       backupNow();
-      state.version = 25;
+      state.version = 30;
       normalize();
       save();
       return {ok:true,msg:'นำเข้าเซฟสำเร็จ'};
@@ -256,7 +256,7 @@ window.GameState = (() => {
   }
 
   function maxHeroLevel(){
-    return 1000;
+    return 100;
   }
 
   function levelCost(inst){
@@ -267,8 +267,8 @@ window.GameState = (() => {
   function rebirthCost(inst){
     const r = Number(inst.rebirth || 0);
     return {
-      gold: Math.round(180000 + Math.pow(r+1,1.7)*75000 + r*150000),
-      dust: Math.round(2500 + Math.pow(r+1,1.5)*850 + r*1400),
+      gold: Math.round(35000 + Math.pow(r+1,1.7)*18000 + r*42000),
+      dust: Math.round(650 + Math.pow(r+1,1.5)*260 + r*520),
     };
   }
   function starCost(inst){ return inst.stars * 60; }
@@ -317,7 +317,7 @@ window.GameState = (() => {
 
   function weightedHeroRoll(force=''){
     let pool = G().heroes;
-    if(force === 'Epic') pool = pool.filter(h=>['Epic','Legendary','Mythic'].includes(h.rarity));
+    if(force === 'Epic') pool = pool.filter(h=>['Epic','Legendary','Mythic'].includes(h.rarity)); // SSR ไม่เข้า pity เพื่อให้ ultra-rare จริง
     if(force === 'Legendary') pool = pool.filter(h=>['Legendary','Mythic'].includes(h.rarity));
     const weighted = [];
     pool.forEach(h=>{
@@ -347,8 +347,8 @@ window.GameState = (() => {
       if(state.gacha.legendPity >= 60){ force='Legendary'; state.gacha.legendPity = 0; }
       else if(state.gacha.epicPity >= 10){ force='Epic'; state.gacha.epicPity = 0; }
       const h = weightedHeroRoll(force);
-      if(['Epic','Legendary','Mythic'].includes(h.rarity)) state.gacha.epicPity = 0;
-      if(['Legendary','Mythic'].includes(h.rarity)) state.gacha.legendPity = 0;
+      if(['Epic','Legendary','Mythic','SSR'].includes(h.rarity)) state.gacha.epicPity = 0;
+      if(['Legendary','Mythic','SSR'].includes(h.rarity)) state.gacha.legendPity = 0;
       results.push(addHero(h.id));
     }
     state.gacha.lastResults = results;
@@ -561,8 +561,8 @@ window.GameState = (() => {
   }
 
 
-  function rarityRank(r){ return {Common:0,Rare:1,Epic:2,Legendary:3,Mythic:4}[r] ?? 0; }
-  function rankRarity(rank){ return ['Common','Rare','Epic','Legendary','Mythic'][Math.max(0,Math.min(4,rank))]; }
+  function rarityRank(r){ return {Common:0,Rare:1,Epic:2,Legendary:3,Mythic:4,SSR:5}[r] ?? 0; }
+  function rankRarity(rank){ return ['Common','Rare','Epic','Legendary','Mythic','SSR'][Math.max(0,Math.min(5,rank))]; }
 
   function fusionElement(a,b){
     if(a===b) return a;

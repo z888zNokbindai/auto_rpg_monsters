@@ -5,6 +5,7 @@ window.GameData = (() => {
     Epic: { label: 'Epic', mult: 1.38, shard: 18, rate: 9 },
     Legendary: { label: 'Legendary', mult: 1.68, shard: 30, rate: 2.7 },
     Mythic: { label: 'Mythic', mult: 2.05, shard: 50, rate: 0.3 },
+    SSR: { label: 'SSR', mult: 3.20, shard: 120, rate: 0.000001 },
   };
 
   const elements = {
@@ -106,6 +107,13 @@ window.GameData = (() => {
 
     {id:'blood_moon_drake',name:'เดรกจันทร์โลหิต',icon:'🐉',rarity:'Mythic',element:'Dark',role:'Mage',target:'all',skill:'คราสเลือดกลืนฟ้า',skillDesc:'โจมตีหมู่หนัก ลด Energy และทำให้ศัตรูเสียจังหวะ Press Turn',base:{hp:1040,atk:285,def:92,spd:118},ai:'void'},
     {id:'mother_of_ash',name:'มารดาแห่งเถ้า',icon:'👁️',rarity:'Mythic',element:'Fire',role:'Support',target:'ally_low',skill:'กำเนิดใหม่ในเถ้าดำ',skillDesc:'ฮีลทีมระดับสูง เติม Energy และช่วยทีมยืนฟาร์มบอส',base:{hp:980,atk:220,def:95,spd:120},ai:'legend_heal'},
+
+    // V30: SSR ultra-rare demons. อัตราออกกาชาใช้ weight 0.000001 ตามที่กำหนด
+    {id:'ssr_void_saint',name:'นักบุญสุญญะสีเลือด',icon:'🩸',rarity:'SSR',element:'Dark',role:'Mage',target:'all',skill:'บทสวดลบจักรวาล',skillDesc:'โจมตีศัตรูทั้งหมดอย่างรุนแรง ลด Energy และมีโอกาสทำให้ศัตรูพลาด Press Turn',base:{hp:1280,atk:390,def:118,spd:132},ai:'void'},
+    {id:'ssr_golden_reaper',name:'ยมทูตมงกุฎทอง',icon:'👑',rarity:'SSR',element:'Light',role:'Assassin',target:'back',skill:'เคียวตัดชะตา',skillDesc:'ล้วงแถวหลัง ถ้าสังหารได้จะโจมตีต่อและเติม Energy ให้ตัวเอง',base:{hp:1080,atk:430,def:92,spd:166},ai:'execute'},
+    {id:'ssr_abyssal_mother',name:'มารดาอเวจีไร้ตา',icon:'🕷️',rarity:'SSR',element:'Nature',role:'Support',target:'ally_low',skill:'ครรภ์เกิดใหม่',skillDesc:'ฮีลทีมหนักมาก เติม Energy และเพิ่ม DEF ให้ทั้งทีม เหมาะฟาร์มบอสยาว',base:{hp:1420,atk:300,def:134,spd:124},ai:'legend_heal'},
+    {id:'ssr_inferno_leviathan',name:'เลวีอาธานเพลิงคราม',icon:'🐲',rarity:'SSR',element:'Fire',role:'Tank',target:'front',skill:'ทะเลไฟคราม',skillDesc:'แทงค์ SSR สร้างโล่ทีม รับดาเมจแทน และเผาศัตรูที่โจมตี',base:{hp:1780,atk:260,def:188,spd:92},ai:'guard'},
+    {id:'ssr_mirror_empress',name:'จักรพรรดินีกระจกจันทร์',icon:'🪞',rarity:'SSR',element:'Water',role:'Debuffer',target:'all',skill:'พระจันทร์สะท้อนบาป',skillDesc:'โจมตีหมู่ ลด ATK/SPD ศัตรู และทำให้ทีมมีโอกาสรอดจากดาเมจหนัก',base:{hp:1320,atk:340,def:126,spd:140},ai:'curse'},
   ];
 
   const enemyTemplates = [
