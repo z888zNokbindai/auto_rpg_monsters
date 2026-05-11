@@ -1,6 +1,6 @@
 window.GameState = (() => {
-  const KEY = 'abyss_grimoire_v22_save';
-  const OLD_KEYS = ['abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
+  const KEY = 'abyss_grimoire_v23_save';
+  const OLD_KEYS = ['abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
   const G = () => window.GameData;
   let state = null;
 
@@ -20,9 +20,9 @@ window.GameState = (() => {
     const starterPool = G().heroes.filter(h => ['Common','Rare'].includes(h.rarity));
     const starter = starterPool[Math.floor(Math.random() * starterPool.length)] || G().heroes[0];
     const s = {
-      version:22,
+      version:23,
       screen:'home',
-      resources:{gold:260,gems:120,tickets:0,dust:35},
+      resources:{gold:420,gems:180,tickets:1,dust:60},
       campaign:{selected:1,unlocked:1,highestCleared:0,clears:{}},
       roster:{},
       team:[starter.id,null,null,null,null],
@@ -36,7 +36,7 @@ window.GameState = (() => {
       codex:{seen:{}},
       lastBattle:null,
       fusion:{selected:[],last:null},
-      starter:{freeRollsLeft:2,firstHero:starter.id,history:[starter.id]},
+      starter:{freeRollsLeft:5,firstHero:starter.id,history:[starter.id]},
       flags:{seenIntro:false}
     };
     s.roster[starter.id] = {id:starter.id,level:1,stars:1,rebirth:0,shards:0,equipped:{weapon:null,armor:null,charm:null,boots:null}};
@@ -52,7 +52,7 @@ window.GameState = (() => {
 
   function normalize(){
     const oldVersion = Number(state.version || 0);
-    if(!state.version || state.version < 22){ state.version = Math.max(22, Number(state.version || 0)); }
+    if(!state.version || state.version < 23){ state.version = Math.max(23, Number(state.version || 0)); }
     if(oldVersion < 12){
       state.settings ||= {};
       state.settings.battleSpeed = 1;
@@ -66,8 +66,8 @@ window.GameState = (() => {
     if(oldVersion < 16){
       state.version = 16;
     }
-    if(Number(state.version || 0) < 22){
-      state.version = 22;
+    if(Number(state.version || 0) < 23){
+      state.version = 23;
     }
     state.resources ||= {gold:0,gems:0,tickets:0,dust:0};
     state.campaign ||= {selected:1,unlocked:1,highestCleared:0,clears:{}};
@@ -90,6 +90,10 @@ window.GameState = (() => {
     state.lastBattle ||= null;
     state.fusion ||= {selected:[],last:null};
     state.starter ||= {freeRollsLeft:0,firstHero:null,history:[]};
+    if(oldVersion < 23 && state.starter && Array.isArray(state.starter.history)){
+      const usedFree = Math.max(0, state.starter.history.length - 1);
+      state.starter.freeRollsLeft = Math.max(Number(state.starter.freeRollsLeft||0), Math.max(0, 5 - usedFree));
+    }
     Object.values(state.roster || {}).forEach(inst=>{
       inst.level = Math.max(1, Math.min(1000, Number(inst.level || 1)));
       inst.stars = Math.max(1, Math.min(6, Number(inst.stars || 1)));
@@ -150,7 +154,7 @@ window.GameState = (() => {
     normalize();
     const payload = {
       game:'Abyss Grimoire',
-      version:22,
+      version:23,
       exportedAt:new Date().toISOString(),
       save:state
     };

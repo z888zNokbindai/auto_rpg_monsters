@@ -43,7 +43,7 @@ window.UI = (() => {
         <div class="brand-row">
           <div class="logo">
             <div class="logo-mark">🩸</div>
-            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V21 Scroll Fix</small></div>
+            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V23</small></div>
           </div>
           <button class="btn small ghost" data-action="save">Save</button>
         </div>
@@ -163,13 +163,24 @@ window.UI = (() => {
     if(left <= 0) return '';
     const first = S().heroDef(S().state.starter?.firstHero);
     return `<section class="panel starter-panel">
-      <div class="section-title"><h3>พิธีเริ่มต้น</h3><small>สุ่มฟรีเหลือ ${left}/2</small></div>
-      <p class="muted">เริ่มเกมด้วยมอนสเตอร์สุ่ม 1 ตัว${first?` คือ <b class="gold">${h(first.name)}</b>`:''} แล้วสุ่มเพิ่มฟรีได้อีก 2 ตัวเพื่อจัดทีมเริ่มต้น</p>
+      <div class="section-title"><h3>พิธีเริ่มต้น</h3><small>สุ่มฟรีเหลือ ${left}/5</small></div>
+      <p class="muted">เริ่มเกมด้วยมอนสเตอร์สุ่ม 1 ตัว${first?` คือ <b class="gold">${h(first.name)}</b>`:''} แล้วสุ่มเพิ่มฟรีได้อีก 5 ตัวเพื่อเลือกทีมเริ่มต้นได้หลากหลายขึ้น</p>
       <div class="grid2">
         <button class="btn primary pulse" data-action="starterRecruit">🔮 สุ่มฟรี 1 ตัว</button>
-        <button class="btn ghost" data-screen="team">ดูทีมตอนนี้</button>
+        <button class="btn ghost" data-screen="team">ดู/จัดทีม</button>
       </div>
     </section>`;
+  }
+
+  function speedControls(){
+    const current = Number(S().state.settings?.battleSpeed || 1);
+    const speeds = [
+      [0.75,'อ่านช้า'],[1,'ปกติ'],[2,'เร็ว'],[4,'ฟาร์ม x4'],[8,'ฟาร์ม x8'],[12,'ฟาร์ม x12'],[20,'ข้ามไว x20']
+    ];
+    return `<div class="speed-tune">
+      <div><b>ความเร็วต่อสู้</b><small>ใช้ตอนฟาร์มได้ ไม่ต้องรอเปิดหน้า Battle</small></div>
+      <div class="speed-tune-row">${speeds.map(([v,label])=>`<button class="chip-btn ${current===v?'active':''} ${v>=4?'farm-speed':''}" data-action="setSpeed" data-speed-value="${v}">${label}</button>`).join('')}</div>
+    </div>`;
   }
 
   function home(){
@@ -191,6 +202,7 @@ window.UI = (() => {
             <button class="btn ghost" data-screen="battle">เลือกด่าน</button>
             <button class="btn ghost" data-screen="manual">คู่มือ</button>
           </div>
+          ${speedControls()}
         </section>
         ${starterPanel()}
         ${battleSummaryPanel()}
@@ -248,6 +260,7 @@ window.UI = (() => {
             <button class="btn amber" data-action="farmRepeat50">ฟาร์ม 50 รอบ</button>
             <button class="btn green" data-action="autoBattle">🔁 ดันด่านจนแพ้</button>
           </div>
+          ${speedControls()}
         </section>
         ${battleSummaryPanel()}
         <section class="panel">
@@ -381,7 +394,7 @@ window.UI = (() => {
         <div class="page-title"><div><h2>แท่นอัญเชิญอเวจี</h2><p>Ticket ได้จากชนะทุก 7 ครั้ง, ผู้คุมประตู, เควสรายวัน</p></div></div>
         <section class="gacha-door"><div><h3>☽</h3><p>Epic การันตีทุก 10 | Legendary ทุก 60</p></div></section>
         <section class="panel">
-          ${(S().state.starter?.freeRollsLeft||0)>0 ? `<button class="btn primary pulse wide" data-action="starterRecruit">🔮 สุ่มฟรีเริ่มต้น เหลือ ${S().state.starter.freeRollsLeft}/2</button><div class="hr"></div>` : ''}
+          ${(S().state.starter?.freeRollsLeft||0)>0 ? `<button class="btn primary pulse wide" data-action="starterRecruit">🔮 สุ่มฟรีเริ่มต้น เหลือ ${S().state.starter.freeRollsLeft}/5</button><div class="hr"></div>` : ''}
           <div class="grid2">
             <button class="btn primary" data-action="gacha1">🔮 อัญเชิญ 1 ครั้ง</button>
             <button class="btn primary" data-action="gacha10">🔮 อัญเชิญ 10 ครั้ง</button>
@@ -695,6 +708,7 @@ window.UI = (() => {
     if(battleRunning && !['speed','stopAuto'].includes(action)) return toast('กำลังต่อสู้อยู่ ต้องรอให้จบก่อน');
     switch(action){
       case 'save': S().save(); toast('บันทึกเกมแล้ว'); break;
+      case 'setSpeed': { const v=Number(data.speedValue || data.speed || 1); S().state.settings.battleSpeed=v; S().save(); toast(`ตั้งความเร็วต่อสู้ ${v}x แล้ว`); render(); break; }
       case 'autoTeam': S().autoTeam(); toast('จัดทีมอัตโนมัติแล้ว'); render(); break;
       case 'autoUpgrade': { const c=S().autoUpgrade(); toast(c?`อัปเกรด/ใส่ของ ${c} ครั้ง`:'ยังอัปเกรดไม่ได้ ทรัพยากรไม่พอ'); render(); break; }
       case 'equipBest': { const c=S().equipBest(); toast(c?`ใส่อุปกรณ์ ${c} ช่องให้ทีม/คลัง`:'ของที่ใส่อยู่ดีที่สุดแล้ว'); render(); break; }
@@ -768,8 +782,7 @@ window.UI = (() => {
     const r = S().starterRecruit();
     if(r.ok){
       const hero = r.result.hero;
-      toast(`อัญเชิญฟรีได้ ${hero.name} เหลือ ${r.left}/2`);
-      S().state.screen = 'team';
+      toast(`อัญเชิญฟรีได้ ${hero.name} เหลือ ${r.left}/5`);
     } else toast(r.msg);
     render();
   }
