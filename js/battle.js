@@ -122,7 +122,7 @@ window.BattleSim = (() => {
     function mini(u){
       return {
         uid:u.uid,name:u.name,icon:u.icon,side:u.side,hp:u.hp,maxHp:u.maxHp,energy:u.energy,
-        role:u.role,element:u.element,rarity:u.rarity,dead:u.hp<=0,poison:u.poison,burn:u.burn,stun:u.stun,guard:u.guard
+        role:u.role,element:u.element,rarity:u.rarity,level:u.level,stars:u.stars,atk:u.atk,def:u.def,spd:u.spd,dead:u.hp<=0,poison:u.poison,burn:u.burn,stun:u.stun,guard:u.guard
       };
     }
     return {allies:allies.map(mini), enemies:enemies.map(mini), ...extra};

@@ -1,6 +1,6 @@
 window.GameState = (() => {
-  const KEY = 'abyss_grimoire_v36_save';
-  const OLD_KEYS = ['abyss_grimoire_v35_save','abyss_grimoire_v34_save','abyss_grimoire_v33_save','abyss_grimoire_v32_save','abyss_grimoire_v31_save','abyss_grimoire_v30_save','abyss_grimoire_v28_save','abyss_grimoire_v27_save','abyss_grimoire_v26_save','abyss_grimoire_v25_save','abyss_grimoire_v24_save','abyss_grimoire_v23_save','abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
+  const KEY = 'abyss_grimoire_v37_save';
+  const OLD_KEYS = ['abyss_grimoire_v36_save','abyss_grimoire_v35_save','abyss_grimoire_v34_save','abyss_grimoire_v33_save','abyss_grimoire_v32_save','abyss_grimoire_v31_save','abyss_grimoire_v30_save','abyss_grimoire_v28_save','abyss_grimoire_v27_save','abyss_grimoire_v26_save','abyss_grimoire_v25_save','abyss_grimoire_v24_save','abyss_grimoire_v23_save','abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
   const G = () => window.GameData;
   let state = null;
 
@@ -20,7 +20,7 @@ window.GameState = (() => {
     const starterPool = G().heroes.filter(h => ['Common','Rare'].includes(h.rarity));
     const starter = starterPool[Math.floor(Math.random() * starterPool.length)] || G().heroes[0];
     const s = {
-      version:36,
+      version:37,
       screen:'home',
       resources:{gold:420,gems:180,tickets:1,dust:60},
       campaign:{selected:1,unlocked:1,highestCleared:0,clears:{}},
@@ -43,7 +43,7 @@ window.GameState = (() => {
       starter:{freeRollsLeft:5,firstHero:starter.id,history:[starter.id]},
       flags:{seenIntro:false}
     };
-    s.roster[starter.id] = {id:starter.id,level:1,stars:1,rebirth:0,shards:0,equipped:{weapon:null,armor:null,charm:null,boots:null}};
+    s.roster[starter.id] = {id:starter.id,level:1,exp:0,stars:1,rebirth:0,shards:0,equipped:{weapon:null,armor:null,charm:null,boots:null}};
     s.codex.seen[starter.id] = Date.now();
     return s;
   }
@@ -120,6 +120,8 @@ window.GameState = (() => {
     }
     Object.values(state.roster || {}).forEach(inst=>{
       inst.level = Math.max(1, Math.min(maxHeroLevel(), Number(inst.level || 1))); // V35 max Lv.100
+      inst.exp = Math.max(0, Number(inst.exp || 0));
+      if(inst.level >= maxHeroLevel()) inst.exp = 0;
       inst.stars = Math.max(1, Math.min(6, Number(inst.stars || 1)));
       inst.rebirth = Math.max(0, Number(inst.rebirth || 0));
       inst.shards = Math.max(0, Number(inst.shards || 0));
@@ -127,7 +129,7 @@ window.GameState = (() => {
     });
     state.team = (state.team||[]).slice(0,5); while(state.team.length<5) state.team.push(null);
     state.team = state.team.map(id => state.roster && state.roster[id] ? id : null);
-    state.version = 36;
+    state.version = 37;
     state.fusion.selected = (state.fusion.selected||[]).filter(id=>state.roster && state.roster[id] && !state.team.includes(id) && !state.favorites[id]);
     ensureDaily();
   }
@@ -179,7 +181,7 @@ window.GameState = (() => {
     normalize();
     const payload = {
       game:'Abyss Grimoire',
-      version:36,
+      version:37,
       exportedAt:new Date().toISOString(),
       save:state
     };
@@ -203,7 +205,7 @@ window.GameState = (() => {
       }
       state = incoming;
       backupNow();
-      state.version = 36;
+      state.version = 37;
       normalize();
       save();
       return {ok:true,msg:'นำเข้าเซฟสำเร็จ'};
@@ -278,6 +280,42 @@ window.GameState = (() => {
     return 100;
   }
 
+  function expToNext(inst){
+    const lv = Number(inst?.level || 1);
+    const rb = Number(inst?.rebirth || 0);
+    if(lv >= maxHeroLevel()) return 0;
+    // EXP จากการสู้ ใช้คู่กับ Gold Upgrade: ฟาร์มก็เลเวลขึ้นได้เอง แต่การกดอัปยังเร็วกว่า
+    return Math.round((90 + lv*38 + Math.pow(lv,1.34)*15) * (1 + rb*0.12));
+  }
+
+  function battleExpForStage(stageId, isBoss=false){
+    const id = Math.max(1, Number(stageId || 1));
+    const base = 45 + id*10 + Math.pow(id,1.08)*5;
+    return Math.round(base * (isBoss ? 1.75 : 1));
+  }
+
+  function grantTeamExp(stageId, isBoss=false){
+    const exp = battleExpForStage(stageId, isBoss);
+    const details = [];
+    for(const id of (state.team || []).filter(Boolean)){
+      const inst = state.roster[id];
+      const def = heroDef(id);
+      if(!inst || !def || inst.level >= maxHeroLevel()) continue;
+      let leveled = 0;
+      inst.exp = Number(inst.exp || 0) + exp;
+      while(inst.level < maxHeroLevel()){
+        const need = expToNext(inst);
+        if(need <= 0 || inst.exp < need) break;
+        inst.exp -= need;
+        inst.level++;
+        leveled++;
+      }
+      if(inst.level >= maxHeroLevel()) inst.exp = 0;
+      details.push({id,name:def.name,exp,leveled,level:inst.level});
+    }
+    return {exp,details,leveled:details.reduce((n,x)=>n+x.leveled,0)};
+  }
+
   function levelCost(inst){
     const rebirth = Number(inst.rebirth || 0);
     return Math.round((130 + inst.level*55 + Math.pow(inst.level,1.45)*12) * (1 + rebirth*0.18));
@@ -302,7 +340,7 @@ window.GameState = (() => {
       state.roster[id].shards += shardGain;
       return {type:'shards',hero:def,amount:shardGain};
     }
-    state.roster[id] = {id,level:1,stars:1,rebirth:0,shards:0,equipped:{weapon:null,armor:null,charm:null,boots:null}};
+    state.roster[id] = {id,level:1,exp:0,stars:1,rebirth:0,shards:0,equipped:{weapon:null,armor:null,charm:null,boots:null}};
     state.codex.seen[id] = state.codex.seen[id] || Date.now();
     return {type:'new',hero:def,amount:0};
   }
@@ -517,6 +555,7 @@ window.GameState = (() => {
     state.resources.gold -= cost.gold;
     state.resources.dust -= cost.dust;
     inst.level = 1;
+    inst.exp = 0;
     inst.rebirth = Number(inst.rebirth || 0) + 1;
     state.daily.upgrades++;
     state.stats.totalUpgrades++;
@@ -872,7 +911,7 @@ window.GameState = (() => {
       state.roster[result.id].shards += amount;
       gain = {type:'shards',amount};
     } else {
-      state.roster[result.id] = {id:result.id,level:Math.min(maxHeroLevel(), Math.max(1,avgLevel+1)),stars:1,rebirth:0,shards:0,equipped:{weapon:null,armor:null,charm:null,boots:null}};
+      state.roster[result.id] = {id:result.id,level:Math.min(maxHeroLevel(), Math.max(1,avgLevel+1)),exp:0,stars:1,rebirth:0,shards:0,equipped:{weapon:null,armor:null,charm:null,boots:null}};
       state.codex ||= {seen:{}}; state.codex.seen ||= {}; state.codex.seen[result.id] = state.codex.seen[result.id] || Date.now();
       gain = {type:'new',amount:0};
     }
@@ -919,7 +958,7 @@ window.GameState = (() => {
     state.favorites ||= {};
     if(state.favorites[id]) delete state.favorites[id];
     else state.favorites[id] = Date.now();
-    state.version = 36;
+    state.version = 37;
     state.fusion.selected = (state.fusion.selected||[]).filter(x=>!state.favorites[x]);
     save();
     return {ok:true,locked:!!state.favorites[id]};
@@ -979,9 +1018,10 @@ window.GameState = (() => {
       item = randomEquipment(stageId, st.isBoss);
       state.inventory.push(item);
     }
+    const expReward = grantTeamExp(stageId, st.isBoss);
     applyRewards(reward);
     save();
-    return {reward,first,item};
+    return {reward,first,item,exp:expReward};
   }
 
   function idlePreview(){
@@ -1129,7 +1169,7 @@ window.GameState = (() => {
 
   return {
     get state(){ return state; }, load, save, reset, exportSaveText, importSaveText, fmt, todayKey,
-    heroDef, stageDef, rarityDef, heroStats, teamPower, maxHeroLevel, levelCost, rebirthCost, rebirthHero, starCost, shardsNeeded,
+    heroDef, stageDef, rarityDef, heroStats, teamPower, maxHeroLevel, expToNext, battleExpForStage, levelCost, rebirthCost, rebirthHero, starCost, shardsNeeded,
     addHero, starterRecruit, gacha, autoTeam, levelUp, levelUpMany, upgradeOneHero, setSelectedHero, starUp, autoUpgrade, equipBest, autoSellLow, autoFusionLow, saveTeamPreset, loadTeamPreset, teamPresetPower,
     isFavorite, toggleFavorite, codexSeen, setLastBattle, backupNow, exportBackupText,
     fusionPreview, toggleFusion, clearFusion, doFusion, autoFusion, rarityRank,

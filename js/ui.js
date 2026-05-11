@@ -38,20 +38,18 @@ window.UI = (() => {
     const overlay = document.getElementById('battleOverlay');
     if(!overlay) return;
     const isDock = battleRunning && currentScreen() !== 'battle';
-    const isExpandedDock = isDock && battleWidgetExpanded;
-    const isCollapsedDock = isDock && !battleWidgetExpanded;
     overlay.classList.toggle('dock-mode', isDock);
-    overlay.classList.toggle('expanded-dock', isExpandedDock);
-    overlay.classList.toggle('collapsed-dock', isCollapsedDock);
+    overlay.classList.toggle('expanded-dock', false);
+    overlay.classList.toggle('collapsed-dock', isDock);
     overlay.classList.toggle('full-mode', battleRunning && !isDock);
     const returnBtn = document.getElementById('returnBattleBtn');
-    if(returnBtn) returnBtn.classList.toggle('hidden', !isDock);
+    if(returnBtn) returnBtn.classList.toggle('hidden', true);
     const expandBtn = document.getElementById('expandBattleBtn');
-    if(expandBtn) expandBtn.classList.toggle('hidden', !isCollapsedDock);
+    if(expandBtn) expandBtn.classList.toggle('hidden', !isDock);
     const minimizeBtn = document.getElementById('minimizeBattleBtn');
-    if(minimizeBtn) minimizeBtn.classList.toggle('hidden', !(isExpandedDock || (battleRunning && !isDock)));
+    if(minimizeBtn) minimizeBtn.classList.toggle('hidden', !(battleRunning && !isDock));
     const browseNote = document.getElementById('battleBrowseNote');
-    if(browseNote) browseNote.classList.toggle('hidden', !isExpandedDock);
+    if(browseNote) browseNote.classList.toggle('hidden', true);
   }
 
   function scrollGameToTop(){
@@ -83,7 +81,7 @@ window.UI = (() => {
         <div class="brand-row">
           <div class="logo">
             <div class="logo-mark">🩸</div>
-            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V36</small></div>
+            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V37</small></div>
           </div>
           <button class="btn small ghost" data-action="save">Save</button>
         </div>
@@ -297,7 +295,7 @@ window.UI = (() => {
     const mod = selected.modifier;
     const boss = selected.bossSkill;
     return `<section class="panel dashboard-panel">
-      <div class="section-title"><h3>เป้าหมายตอนนี้</h3><small>ระบบแนะนำ V36</small></div>
+      <div class="section-title"><h3>เป้าหมายตอนนี้</h3><small>ระบบแนะนำ V37</small></div>
       <div class="goal-list">${goals.map((g,i)=>`<div class="goal-item"><b>${i+1}</b><span>${h(g)}</span></div>`).join('')}</div>
       <div class="stage-warn">
         <b>ด่านปัจจุบัน:</b> ${h(selected.title)}
@@ -351,7 +349,7 @@ window.UI = (() => {
     return `<section class="panel farm-setting-panel">
       <div class="section-title"><h3>Auto Farm Settings</h3><small>ใช้กับปุ่มฟาร์มจนแพ้/ฟาร์มตามเงื่อนไข</small></div>
       <div class="speed-tune-row farm-stop-row">${opts.map(([v,label])=>`<button class="chip-btn ${cur===v?'active':''}" data-action="setFarmStop" data-value="${v}">${label}</button>`).join('')}</div>
-      <p class="muted tip-line">ถ้าเลือกเงื่อนไขอื่น ระบบยังหยุดทันทีเมื่อแพ้อยู่เสมอ</p>
+      <p class="muted tip-line">Lv.100 ตอนนี้ขึ้นได้จาก EXP หลังชนะไฟต์ และจากปุ่มอัปเกรดด้วย Gold ถ้าเลือกเงื่อนไขอื่น ระบบยังหยุดทันทีเมื่อแพ้อยู่เสมอ</p>
     </section>`;
   }
 
@@ -946,7 +944,7 @@ window.UI = (() => {
   function manualScreen(){
     return `
       <div class="screen manual-screen">
-        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V36 Progression: Mission, Achievement, Pity, Shop, Codex Reward, Stage Modifier และ Boss Skill</p></div></div>
+        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V37: Mini Dock + Auto Farm Fix + Team EXP + Battle Stats</p></div></div>
         <section class="panel manual-hero">
           <div class="section-title"><h3>เป้าหมายใหม่</h3><small>Endless Loop ถึงด่าน 3000</small></div>
           <p class="muted">ด่านจะสร้างต่อเนื่องและยากขึ้นเรื่อย ๆ จนถึง <b class="gold">ด่าน 3000</b> ถ้าติดด่าน ให้ฟาร์มด่านที่ผ่านได้ อัปเลเวล เปิดกาชา ผสมมอนสเตอร์ และ Rebirth เพื่อเพิ่มพลังถาวร</p>
@@ -959,7 +957,7 @@ window.UI = (() => {
           </div>
         </section>
         <section class="panel">
-          <div class="section-title"><h3>ระบบ V36 ที่เพิ่มมา</h3><small>ทำให้มีเป้าหมายเล่นต่อ</small></div>
+          <div class="section-title"><h3>ระบบ Progression / V37</h3><small>ทำให้มีเป้าหมายเล่นต่อ</small></div>
           <ul class="guide-list">
             <li><b>Achievement:</b> ผ่านด่าน, สะสมปีศาจ, ผสม, Rebirth แล้วรับรางวัลระยะยาว</li>
             <li><b>Pity Gacha:</b> Rare+ ทุก 10, Epic+ ทุก 50, Legendary+ ทุก 200 โรล ส่วน SSR ยังเป็นระดับลับ</li>
@@ -973,7 +971,7 @@ window.UI = (() => {
           <div class="section-title"><h3>Rebirth คืออะไร</h3><small>วนเกิดใหม่เพื่อไปด่านลึกขึ้น</small></div>
           <ul class="guide-list">
             <li>มอนสเตอร์ที่เลเวล <b>100</b> จะกด Rebirth ได้ในหน้า <b>คลัง</b></li>
-            <li>Rebirth จะรีเซ็ตเลเวลกลับเป็น 1 แต่เพิ่มสแต็ก <b>Rebirth +1</b></li>
+            <li>Rebirth จะรีเซ็ตเลเวลและ EXP กลับเป็น 1/0 แต่เพิ่มสแต็ก <b>Rebirth +1</b></li>
             <li>แต่ละสแต็กเพิ่ม HP / ATK / DEF ถาวร และยิ่งสแต็กสูง โบนัสรวมยิ่งดีขึ้น</li>
             <li>อุปกรณ์ ดาว และ Shard ยังอยู่ ไม่หาย</li>
           </ul>
@@ -1005,7 +1003,7 @@ window.UI = (() => {
             <div class="guide-card"><b>Dust</b><p>ได้จากชนะด่าน, ฟาร์มด่านซ้ำ, Idle Reward และ Daily Quest ใช้สำหรับอัปดาว, ผสมมอนสเตอร์ และ Rebirth</p></div>
             <div class="guide-card"><b>Shard</b><p>ได้จากการเปิดกาชาหรือผสมแล้วได้มอนสเตอร์ซ้ำ Shard ผูกกับมอนสเตอร์ตัวนั้น ใช้สำหรับอัปดาว</p></div>
             <div class="guide-card"><b>Equipment</b><p>ดรอปจากการชนะด่าน ยิ่งด่านสูงหรือเป็นบอส โอกาสได้ของระดับสูงยิ่งดี ใช้เพิ่ม HP / ATK / DEF / SPD</p></div>
-            <div class="guide-card"><b>Level</b><p>เกมนี้ไม่มี EXP แยกต่างหาก การเพิ่มเลเวลใช้ Gold โดยตรง ถ้าติดด่านให้ฟาร์ม Gold แล้วอัปเลเวลตัวหลัก</p></div>
+            <div class="guide-card"><b>Level / EXP</b><p>ชนะไฟต์จะได้ EXP ให้มอนสเตอร์ในทีมโดยอัตโนมัติ และยังใช้ Gold กดอัปเกรดเพื่อเร่งเลเวลได้ ถ้าทีมมีตัวถึง Lv.100 Auto Farm แบบ levelcap จะหยุดให้กด Rebirth</p></div>
             <div class="guide-card"><b>Rebirth Stack</b><p>ได้จากมอนสเตอร์ Lv.100 แล้วกด Rebirth ในหน้าคลัง สแต็กนี้เพิ่มค่าสเตตัสถาวรและใช้ไต่ด่านลึกขึ้น</p></div>
           </div>
         </section>
@@ -1090,13 +1088,17 @@ window.UI = (() => {
   function bind(){
     document.querySelectorAll('[data-screen]').forEach(b=>b.addEventListener('click',()=>setScreen(b.dataset.screen)));
     document.querySelectorAll('[data-action]').forEach(b=>{
-      const fire = ()=>{ const ds={...b.dataset}; if('value' in b) ds.value=b.value; handleAction(b.dataset.action,ds,b); };
+      const fire = ()=>{
+        const ds={...b.dataset};
+        if(['SELECT','INPUT','TEXTAREA'].includes(b.tagName) && b.value !== undefined) ds.value=b.value;
+        handleAction(b.dataset.action,ds,b);
+      };
       if(b.tagName === 'SELECT') b.addEventListener('change',fire); else b.addEventListener('click',fire);
     });
   }
 
   function handleAction(action, data, btn){
-    const safeWhileBattle = new Set(['setSpeed','speed','stopAuto','save','exportSave','copyExport','exportBackup','setHeroFilter','setHeroSort','applyHeroSearch','clearHeroSearch','openMonsterMenu','closeMonsterMenu']);
+    const safeWhileBattle = new Set(['setSpeed','speed','stopAuto','save','exportSave','copyExport','exportBackup','setFarmStop','setHeroFilter','setHeroSort','applyHeroSearch','clearHeroSearch','openMonsterMenu','closeMonsterMenu']);
     if(battleRunning && !safeWhileBattle.has(action)) return toast('กำลังต่อสู้อยู่: ดูหน้าอื่นได้ แต่ยังแก้ทีม/อัปเกรด/ผสมไม่ได้จนจบไฟต์');
     switch(action){
       case 'save': S().save(); toast('บันทึกเกมแล้ว'); break;
@@ -1148,7 +1150,7 @@ window.UI = (() => {
       case 'claimAchievement': { const r=S().achievementClaim(data.id); toast(r.msg || (r.ok?'รับ Achievement แล้ว':'ยังรับไม่ได้')); render(); break; }
       case 'claimCodexReward': { const r=S().codexRewardClaim(data.id); toast(r.msg || (r.ok?'รับ Codex Reward แล้ว':'ยังรับไม่ได้')); render(); break; }
       case 'shopBuy': { const r=S().shopPurchase(data.id); toast(r.msg); render(); break; }
-      case 'setFarmStop': S().state.settings.farmStop = data.value || 'lose'; S().save(); toast('ตั้งค่า Auto Farm แล้ว'); render(); break;
+      case 'setFarmStop': { const v = data.value || 'lose'; S().state.settings.farmStop = v; S().save(); toast(`ตั้งค่า Auto Farm: ${farmStopLabel(v)}`); render(); break; }
       case 'exportSave': {
         const box = document.getElementById('saveExportBox');
         if(box){ box.value = S().exportSaveText(); box.focus(); box.select(); }
@@ -1207,6 +1209,11 @@ window.UI = (() => {
   }
 
 
+
+  function farmStopLabel(mode){
+    return ({lose:'จนกว่าแพ้', ticket:'หยุดเมื่อได้ Ticket', levelcap:'หยุดเมื่อทีมมีตัว Lv.100', raredrop:'หยุดเมื่อดรอป Epic+'})[mode] || 'จนกว่าแพ้';
+  }
+
   function shouldStopFarm(before,result,runs){
     const mode = S().state.settings?.farmStop || 'lose';
     if(mode === 'ticket' && S().state.resources.tickets > (before.tickets||0)) return 'ได้ Ticket แล้ว';
@@ -1241,6 +1248,7 @@ window.UI = (() => {
         }
         winStreak++;
         lastRewardText = S().resourceText(result.reward);
+        if(result.exp?.exp) lastRewardText += ` | EXP ทีม +${S().fmt(result.exp.exp)}`;
         if(result.item) lastRewardText += ` | ได้ ${result.item.name}${D().equipmentTypes[result.item.type].label}`;
         const nextId = Math.min(sim.stage.id + 1, D().stages.length);
         if(sim.stage.id >= D().stages.length){
@@ -1290,6 +1298,7 @@ window.UI = (() => {
         const stopWhy = shouldStopFarm(before,result,runs);
         if(stopWhy){ toast(`ฟาร์มหยุด: ${stopWhy} | ฟาร์มสำเร็จ ${runs} รอบ`); break; }
         lastRewardText = S().resourceText(result.reward);
+        if(result.exp?.exp) lastRewardText += ` | EXP ทีม +${S().fmt(result.exp.exp)}`;
         if(result.item) lastRewardText += ` | ได้ ${result.item.name}${D().equipmentTypes[result.item.type].label}`;
         render();
         await wait(450 / Math.max(0.75,battleSpeed));
@@ -1333,6 +1342,7 @@ window.UI = (() => {
         const stopWhy = shouldStopFarm(before,result,runs);
         if(stopWhy){ toast(`ฟาร์มหยุด: ${stopWhy} | ฟาร์มสำเร็จ ${runs} รอบ`); break; }
         lastRewardText = S().resourceText(result.reward);
+        if(result.exp?.exp) lastRewardText += ` | EXP ทีม +${S().fmt(result.exp.exp)}`;
         if(result.item) lastRewardText += ` | ได้ ${result.item.name}${D().equipmentTypes[result.item.type].label}`;
         render();
         await wait(550 / Math.max(0.75,battleSpeed));
@@ -1359,6 +1369,8 @@ window.UI = (() => {
     battleRunning = false;
     if(sim.win){
       let msg = `ชนะ! ${S().resourceText(result.reward)}`;
+      if(result.exp?.exp) msg += ` | EXP ทีม +${S().fmt(result.exp.exp)}`;
+      if(result.exp?.leveled) msg += ` | เลเวลอัป ${result.exp.leveled} ครั้ง`;
       if(result.item) msg += ` | ได้ ${result.item.name}${D().equipmentTypes[result.item.type].label}`;
       toast(msg);
     } else toast('แพ้ ลองกดอัปเกรดอัตโนมัติหรือฟาร์มด่านเก่า');
@@ -1368,10 +1380,11 @@ window.UI = (() => {
   function unitHtml(u){
     const hpPct = Math.max(0,Math.round(u.hp/u.maxHp*100));
     return `<div class="combat-unit rarity-${u.rarity || (u.side==='enemy'?'Enemy':'Common')} ${u.dead?'dead':''}" data-cuid="${u.uid}">
-      <div class="cu-icon">${u.icon}</div><div class="cu-name">${h(u.name)} ${u.rarity&&u.rarity!=='Enemy'?rarityBadge(u.rarity):''}</div><div class="cu-tags">${D().elements[u.element]?.icon||''} ${u.stun?'💫':''}${u.poison?'☠️':''}${u.burn?'🔥':''}</div>
+      <div class="cu-head"><div class="cu-icon">${u.icon}</div><div class="cu-title"><div class="cu-name">${h(u.name)} ${u.rarity&&u.rarity!=='Enemy'?rarityBadge(u.rarity):''}</div><div class="cu-tags">Lv.${u.level||1} ★${u.stars||1} ${D().elements[u.element]?.icon||''} ${u.stun?'💫':''}${u.poison?'☠️':''}${u.burn?'🔥':''}</div></div></div>
       <div class="bar"><i style="width:${hpPct}%"></i></div>
       <div class="bar energy"><i style="width:${Math.round(u.energy||0)}%"></i></div>
-      <div class="cu-hp">${Math.max(0,u.hp)}/${u.maxHp}</div>
+      <div class="cu-hp">HP ${Math.max(0,u.hp)}/${u.maxHp}</div>
+      <div class="cu-stat-grid"><span>ATK <b>${fmt(u.atk||0)}</b></span><span>DEF <b>${fmt(u.def||0)}</b></span><span>SPD <b>${fmt(u.spd||0)}</b></span></div>
     </div>`;
   }
 
@@ -1408,15 +1421,14 @@ window.UI = (() => {
     const returnBtn = document.getElementById('returnBattleBtn');
     if(returnBtn) returnBtn.onclick = () => setScreen('battle');
     const expandBtn = document.getElementById('expandBattleBtn');
-    if(expandBtn) expandBtn.onclick = (e) => { e.stopPropagation(); battleWidgetExpanded = true; syncBattleOverlayMode(); };
+    if(expandBtn) expandBtn.onclick = (e) => { e.stopPropagation(); setScreen('battle'); };
     const minimizeBtn = document.getElementById('minimizeBattleBtn');
     if(minimizeBtn) minimizeBtn.onclick = (e) => { e.stopPropagation(); minimizeBattleToDock(); };
     const stageBox = overlay.querySelector('.battle-stage');
     if(stageBox) stageBox.onclick = (e) => {
       if(e.target && e.target.closest && e.target.closest('button')) return;
-      if(battleRunning && currentScreen() !== 'battle' && !battleWidgetExpanded){
-        battleWidgetExpanded = true;
-        syncBattleOverlayMode();
+      if(battleRunning && currentScreen() !== 'battle'){
+        setScreen('battle');
       }
     };
     document.getElementById('battleTitle').textContent = sim.stage.title;
