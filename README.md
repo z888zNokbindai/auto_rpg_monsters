@@ -1,44 +1,40 @@
-# Abyss Grimoire V30 Tier SSR
+# Abyss Grimoire V33 QoL
 
-Dark Fantasy Text RPG / Auto Battle / Gacha / Fusion / Rebirth
+Dark Fantasy Text RPG แบบ Auto Battle + Gacha + Fusion + Rebirth สำหรับเล่นฆ่าเวลาในมือถือ/คอม
 
-## V30 เพิ่มอะไร
+## เพิ่มใน V33
 
-- สี Tier ชัดขึ้นทุกหน้าที่มีปีศาจ: Team, คลัง, Fusion, Codex, Gacha, Battle
-- เพิ่มปีศาจระดับ SSR 5 ตัว
-- SSR มีโอกาสออกกาชา 0.000001 ตามที่ตั้งไว้
-- ปรับ Max Level เหลือ 100
-- Rebirth ได้เมื่อ Lv.100
-- เพิ่มปุ่มสปีด x50
-- แก้ Battle UI บนมือถือที่ซ้อนกัน โดยให้ Battle เต็มจอเลื่อนได้และลดขนาดส่วนที่ชนกัน
+- Team Preset 3 ชุด: บันทึก/โหลดทีมฟาร์ม ทีมบอส ทีมทดลอง
+- Auto Sell: ขาย/ย่อยอุปกรณ์ Common-Rare ที่ไม่ได้ใส่อยู่ เป็น Gold/Dust
+- Auto Fusion วัตถุดิบต่ำ: ผสมเฉพาะ Common/Rare สำรองที่ไม่อยู่ในทีม ไม่ได้ล็อก และไม่เคย Rebirth
+- ปรับ UI อ่านง่ายขึ้นทุกหน้า: ปุ่มใหญ่ขึ้น, panel ชัดขึ้น, bottom nav 2 แถวบนมือถือ, Monster Manager ดูเป็นระเบียบขึ้น
+- ยังรองรับระบบเดิม: Background Battle, Mini Battle Widget, x50 Speed, SSR, Fusion, Codex, Export/Import Save
 
 ## วิธีรัน
 
-เปิด `index.html` ได้เลย
+เปิด `index.html` ได้ทันที
 
-หรือรันแบบ local server:
+หรือรัน local server:
 
 ```bash
-cd text_auto_gacha_v30_final
+cd text_auto_gacha_v32_qol
 python -m http.server 8000
 ```
 
-แล้วเปิด:
+เปิด:
 
 ```text
 http://localhost:8000
 ```
 
-## วิธีเล่นย่อ
+## หมายเหตุ
 
-1. เริ่มเกมจะได้ปีศาจสุ่ม 1 ตัว
-2. กดสุ่มฟรีช่วงต้นเกมให้ครบ
-3. จัดทีม 5 ตัว
-4. ฟาร์มด่านเพื่อหา Gold / Dust / Ticket / Gear
-5. ผสมปีศาจเพื่อปลดตัวใหม่
-6. เมื่อปีศาจ Lv.100 แล้วกด Rebirth เพื่อเพิ่มสแต็กถาวร
-7. ใช้สปีด x20 หรือ x50 สำหรับฟาร์มไว
+V33 ใช้ save key ใหม่ `abyss_grimoire_v33_save` และพยายามอ่านเซฟ V32 เดิมให้อัตโนมัติ
 
-## เซฟ
 
-เซฟอยู่ใน Browser localStorage และ Export/Import ได้ในหน้า คู่มือ
+## V33 No Half Battle
+
+- เอาโหมด Battle ครึ่งหน้าต่างออกแล้ว
+- ระหว่างสู้ ถ้าย่อ จะเหลือเป็นกล่องเล็กเท่านั้น
+- กดกล่องเล็ก หรือปุ่ม เต็มจอ จะกลับไปหน้า Battle เต็มจอทันที
+- ถ้าสุ่ม/ผสมได้มอนสเตอร์ซ้ำ จะเปลี่ยนเป็น Shard ของมอนสเตอร์ตัวนั้น ใช้สำหรับอัปดาว

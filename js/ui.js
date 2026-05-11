@@ -26,7 +26,7 @@ window.UI = (() => {
     if(screen !== 'battle') lastBrowseScreen = screen;
     S().state.screen = screen;
     if(battleRunning && screen !== 'battle') battleWidgetExpanded = false;
-    if(screen === 'battle') battleWidgetExpanded = true;
+    if(screen === 'battle') battleWidgetExpanded = false;
     S().save();
     render();
     syncBattleOverlayMode();
@@ -38,20 +38,21 @@ window.UI = (() => {
     const overlay = document.getElementById('battleOverlay');
     if(!overlay) return;
     const isDock = battleRunning && currentScreen() !== 'battle';
-    const isExpandedDock = isDock && battleWidgetExpanded;
-    const isCollapsedDock = isDock && !battleWidgetExpanded;
+    // V33: เอาโหมดครึ่งหน้าต่างออก เหลือแค่ 2 สถานะ: กล่องย่อ หรือ Battle เต็มจอ
+    const isExpandedDock = false;
+    const isCollapsedDock = isDock;
     overlay.classList.toggle('dock-mode', isDock);
-    overlay.classList.toggle('expanded-dock', isExpandedDock);
+    overlay.classList.toggle('expanded-dock', false);
     overlay.classList.toggle('collapsed-dock', isCollapsedDock);
     overlay.classList.toggle('full-mode', battleRunning && !isDock);
     const returnBtn = document.getElementById('returnBattleBtn');
-    if(returnBtn) returnBtn.classList.toggle('hidden', !isDock);
+    if(returnBtn) returnBtn.classList.toggle('hidden', true);
     const expandBtn = document.getElementById('expandBattleBtn');
     if(expandBtn) expandBtn.classList.toggle('hidden', !isCollapsedDock);
     const minimizeBtn = document.getElementById('minimizeBattleBtn');
-    if(minimizeBtn) minimizeBtn.classList.toggle('hidden', !(isExpandedDock || (battleRunning && !isDock)));
+    if(minimizeBtn) minimizeBtn.classList.toggle('hidden', !(battleRunning && !isDock));
     const browseNote = document.getElementById('battleBrowseNote');
-    if(browseNote) browseNote.classList.toggle('hidden', !isExpandedDock);
+    if(browseNote) browseNote.classList.add('hidden');
   }
 
   function scrollGameToTop(){
@@ -83,7 +84,7 @@ window.UI = (() => {
         <div class="brand-row">
           <div class="logo">
             <div class="logo-mark">🩸</div>
-            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V30</small></div>
+            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V33</small></div>
           </div>
           <button class="btn small ghost" data-action="save">Save</button>
         </div>
@@ -229,6 +230,42 @@ window.UI = (() => {
     return {...sum, rewardText: `${rewardText || ''}${itemText || ''}`.trim(), at:Date.now()};
   }
 
+
+  function teamPresetPanel(){
+    const slots = ['1','2','3'];
+    return `<section class="panel qol-panel team-preset-panel">
+      <div class="section-title"><h3>ทีม Preset</h3><small>เซฟทีมไว้สลับเล่น</small></div>
+      <div class="preset-grid">
+        ${slots.map(slot=>{
+          const preset = S().state.teamPresets?.[slot] || null;
+          const count = preset ? preset.filter(Boolean).length : 0;
+          const power = preset ? S().teamPresetPower(slot) : 0;
+          return `<div class="preset-card">
+            <b>ทีม ${slot}</b>
+            <small>${count ? `${count}/5 | Power ${fmt(power)}` : 'ยังไม่ได้บันทึก'}</small>
+            <div class="preset-actions">
+              <button class="btn small primary" data-action="savePreset" data-slot="${slot}">บันทึกทีมนี้</button>
+              <button class="btn small ghost" data-action="loadPreset" data-slot="${slot}" ${count?'':'disabled'}>โหลด</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </section>`;
+  }
+
+  function farmToolsPanel(){
+    return `<section class="panel qol-panel farm-tools-panel">
+      <div class="section-title"><h3>เครื่องมือฟาร์ม</h3><small>ลดของรก / ผสมวัตถุดิบต่ำ</small></div>
+      <div class="qol-action-grid">
+        <button class="btn green" data-action="autoSellLow">ขาย/ย่อยของ Common-Rare</button>
+        <button class="btn green" data-action="autoFusionLow10">Auto Fusion ตัวต่ำ x10</button>
+        <button class="btn ghost" data-action="autoFusionLow3">Auto Fusion ตัวต่ำ x3</button>
+        <button class="btn ghost" data-screen="fusion">เปิดหน้าผสมเอง</button>
+      </div>
+      <p class="muted tip-line">Auto Fusion จะใช้เฉพาะ Common/Rare สำรองที่ไม่ได้อยู่ในทีม ไม่ได้ล็อก และยังไม่ Rebirth เพื่อกันเผลอใช้ตัวสำคัญ</p>
+    </section>`;
+  }
+
   function starterPanel(){
     const left = S().state.starter?.freeRollsLeft || 0;
     if(left <= 0) return '';
@@ -372,6 +409,7 @@ window.UI = (() => {
             <button class="btn green" data-action="autoUpgrade">⬆️ อัปเกรดอัตโนมัติ</button>
           </div>
         </section>
+        ${teamPresetPanel()}
         <section class="panel">
           <div class="section-title"><h3>คลังตัวละคร</h3><small>${roster.length} ตัว</small></div>
           ${rosterControls()}
@@ -415,9 +453,13 @@ window.UI = (() => {
             <button class="btn green" data-action="autoUpgrade">⬆️ อัปเกรดทีม</button>
             <button class="btn ghost" data-action="equipBest">🎒 ใส่ของดีที่สุด</button>
             <button class="btn ghost" data-screen="fusion">🧬 ไปผสม</button>
+            <button class="btn ghost" data-action="autoSellLow">🧹 ย่อยของต่ำ</button>
+            <button class="btn ghost" data-action="autoFusionLow10">🧬 Auto Fusion ต่ำ</button>
           </div>
           <div class="muted tip-line">แนะนำ: กด <b>เลือกอัป</b> ที่การ์ดปีศาจ แล้วใช้แผงด้านล่างเพื่ออัปเกรดเฉพาะตัวนั้น</div>
         </section>
+        ${teamPresetPanel()}
+        ${farmToolsPanel()}
         ${selectedUpgradePanel()}
         <section class="panel"><div class="section-title"><h3>รายชื่อปีศาจ</h3><small>${roster.length}/${allCount} ตัว | Max Lv.${S().maxHeroLevel()}</small></div>${rosterControls()}<div class="monster-list">${roster.map(id=>monsterManageCard(id)).join('') || '<div class="empty">ไม่พบมอนสเตอร์ตามตัวกรอง</div>'}</div></section>
         <section class="panel"><div class="section-title"><h3>อุปกรณ์</h3><small>${inv.length} ชิ้น</small></div><div class="stack">${inv.length?inv.map(itemCard).join(''):'<div class="empty">ยังไม่มีอุปกรณ์ ฟาร์มด่านเพื่อหาเพิ่ม</div>'}</div></section>
@@ -788,6 +830,7 @@ window.UI = (() => {
             <div class="guide-card"><b>Ticket</b><p>ได้จากชนะสะสมทุก 7 ครั้ง, First Clear บอสด่านสำคัญ และ Daily Quest ใช้เปิดกาชา 1 ใบต่อ 1 ครั้ง</p></div>
             <div class="guide-card"><b>Dust</b><p>ได้จากชนะด่าน, ฟาร์มด่านซ้ำ, Idle Reward และ Daily Quest ใช้สำหรับอัปดาว, ผสมมอนสเตอร์ และ Rebirth</p></div>
             <div class="guide-card"><b>Shard</b><p>ได้จากการเปิดกาชาหรือผสมแล้วได้มอนสเตอร์ซ้ำ Shard ผูกกับมอนสเตอร์ตัวนั้น ใช้สำหรับอัปดาว</p></div>
+            <div class="guide-card"><b>ตัวซ้ำ</b><p>ถ้าสุ่มหรือผสมได้มอนสเตอร์ที่มีอยู่แล้ว ระบบจะไม่เพิ่มตัวใหม่ในคลัง แต่จะเปลี่ยนเป็น Shard ของมอนสเตอร์ตัวนั้นทันที ยิ่งระดับสูง Shard ที่ได้ยิ่งมาก ใช้กดอัปดาวในหน้าคลัง</p></div>
             <div class="guide-card"><b>Equipment</b><p>ดรอปจากการชนะด่าน ยิ่งด่านสูงหรือเป็นบอส โอกาสได้ของระดับสูงยิ่งดี ใช้เพิ่ม HP / ATK / DEF / SPD</p></div>
             <div class="guide-card"><b>Level</b><p>เกมนี้ไม่มี EXP แยกต่างหาก การเพิ่มเลเวลใช้ Gold โดยตรง ถ้าติดด่านให้ฟาร์ม Gold แล้วอัปเลเวลตัวหลัก</p></div>
             <div class="guide-card"><b>Rebirth Stack</b><p>ได้จากมอนสเตอร์ Lv.100 แล้วกด Rebirth ในหน้าคลัง สแต็กนี้เพิ่มค่าสเตตัสถาวรและใช้ไต่ด่านลึกขึ้น</p></div>
@@ -823,9 +866,12 @@ window.UI = (() => {
           <div class="section-title"><h3>ระบบ Final ที่ควรรู้</h3><small>Quality of Life</small></div>
           <div class="guide-grid">
             <div class="guide-card"><b>Favorite / Lock</b><p>กด Favorite ที่การ์ดมอนสเตอร์เพื่อกันเอาไปผสมโดยไม่ตั้งใจ ตัวที่ล็อกจะไม่ถูก Auto Fusion และเลือกผสมไม่ได้</p></div>
-            <div class="guide-card"><b>Monster Codex</b><p>หน้า “ตำรา” รวมมอนสเตอร์ทั้งหมด ดูตัวที่เคยพบ สกิล ธาตุ บทบาท และสูตรผสมที่เกี่ยวข้อง V26 มีมอนสเตอร์ 67 ตัว สูตรผสมรวม 60 สูตร ต่อสู้แบบ background ได้ และเลือกอัปเฉพาะตัวได้</p></div>
+            <div class="guide-card"><b>Monster Codex</b><p>หน้า “ตำรา” รวมมอนสเตอร์ทั้งหมด ดูตัวที่เคยพบ สกิล ธาตุ บทบาท และสูตรผสมที่เกี่ยวข้อง V33 มีมอนสเตอร์ 67 ตัว สูตรผสมรวม 60 สูตร ต่อสู้แบบ background, Team Preset, Auto Sell และ Auto Fusion วัตถุดิบต่ำ</p></div>
             <div class="guide-card"><b>Filter / Sort</b><p>หน้า Team, คลัง และ Codex มีตัวกรองตามบทบาท ธาตุ ระดับ และ Favorite พร้อมเรียงตาม Power, Level, Rebirth หรือ Rarity</p></div>
             <div class="guide-card"><b>Target Upgrade</b><p>หน้า คลัง มีปุ่ม เลือกอัป บนการ์ดปีศาจทุกตัว แล้วใช้แผงใหญ่ด้านบนเพื่ออัป Lv +1, +10, สูงสุดเท่าที่จ่ายไหว, อัปดาว หรือ Rebirth เฉพาะตัวนั้น</p></div>
+            <div class="guide-card"><b>Team Preset</b><p>บันทึกทีมได้ 3 ชุด เหมาะสำหรับทีมฟาร์ม ทีมบอส และทีมทดลอง สลับได้จากหน้า ทีม หรือ คลัง</p></div>
+            <div class="guide-card"><b>Auto Sell</b><p>ขาย/ย่อยอุปกรณ์ Common-Rare ที่ไม่ได้ใส่อยู่ เพื่อเปลี่ยนเป็น Gold และ Dust ลดความรกของคลัง</p></div>
+            <div class="guide-card"><b>Auto Fusion ต่ำ</b><p>ผสมเฉพาะ Common/Rare สำรองที่ไม่อยู่ในทีม ไม่ได้ล็อก และไม่เคย Rebirth ใช้สำหรับเคลียร์วัตถุดิบต่ำหลังฟาร์มยาว</p></div>
             <div class="guide-card"><b>Auto Farm</b><p>เลือกฟาร์มด่านเดิมจนแพ้ หรือกำหนด 10/50 รอบได้ ใช้กับปุ่มความเร็ว ฟาร์ม x4/x8 เพื่อเก็บทรัพยากรเร็วขึ้น</p></div>
             <div class="guide-card"><b>Battle Summary</b><p>หลังสู้จะมีสรุป MVP, Damage, Heal, ตัวรับดาเมจ และสาเหตุที่แพ้ เพื่อช่วยปรับทีม</p></div>
             <div class="guide-card"><b>PWA</b><p>บน Android/Chrome สามารถกด Add to Home Screen เพื่อเปิดเหมือนแอปเกมได้</p></div>
@@ -885,6 +931,11 @@ window.UI = (() => {
       case 'autoTeam': S().autoTeam(); toast('จัดทีมอัตโนมัติแล้ว'); render(); break;
       case 'autoUpgrade': { const c=S().autoUpgrade(); toast(c?`อัปเกรด/ใส่ของ ${c} ครั้ง`:'ยังอัปเกรดไม่ได้ ทรัพยากรไม่พอ'); render(); break; }
       case 'equipBest': { const c=S().equipBest(); toast(c?`ใส่อุปกรณ์ ${c} ช่องให้ทีม/คลัง`:'ของที่ใส่อยู่ดีที่สุดแล้ว'); render(); break; }
+      case 'autoSellLow': { const r=S().autoSellLow('Rare'); toast(r.msg); render(); break; }
+      case 'autoFusionLow3': { const r=S().autoFusionLow(3); toast(r.msg); render(); break; }
+      case 'autoFusionLow10': { const r=S().autoFusionLow(10); toast(r.msg); render(); break; }
+      case 'savePreset': { const r=S().saveTeamPreset(data.slot); toast(`บันทึกทีม Preset ${r.slot} แล้ว`); render(); break; }
+      case 'loadPreset': { const r=S().loadTeamPreset(data.slot); toast(r.ok?`โหลดทีม Preset ${r.slot} แล้ว`:r.msg); render(); break; }
       case 'selectUpgradeHero': { const r=S().setSelectedHero(data.id); toast(r.ok?'เลือกปีศาจสำหรับอัปเกรดแล้ว':r.msg); render(); break; }
       case 'levelUp10': { const r=S().levelUpMany(data.id,10); toast(r.msg || (r.ok?`อัปเลเวล ${r.count} ครั้งแล้ว`:'อัปไม่ได้')); render(); break; }
       case 'levelUpMax': { const r=S().levelUpMany(data.id,'max'); toast(r.msg || (r.ok?`อัปเลเวล ${r.count} ครั้งแล้ว`:'อัปไม่ได้')); render(); break; }
@@ -1133,7 +1184,7 @@ window.UI = (() => {
   function wait(ms){ return new Promise(resolve=>setTimeout(resolve,ms)); }
 
   function openBattleFullscreenOnStart(){
-    battleWidgetExpanded = true;
+    battleWidgetExpanded = false;
     if(currentScreen() !== 'battle'){
       S().state.screen = 'battle';
       S().save();
@@ -1156,15 +1207,14 @@ window.UI = (() => {
     const returnBtn = document.getElementById('returnBattleBtn');
     if(returnBtn) returnBtn.onclick = () => setScreen('battle');
     const expandBtn = document.getElementById('expandBattleBtn');
-    if(expandBtn) expandBtn.onclick = (e) => { e.stopPropagation(); battleWidgetExpanded = true; syncBattleOverlayMode(); };
+    if(expandBtn) expandBtn.onclick = (e) => { e.stopPropagation(); setScreen('battle'); };
     const minimizeBtn = document.getElementById('minimizeBattleBtn');
     if(minimizeBtn) minimizeBtn.onclick = (e) => { e.stopPropagation(); minimizeBattleToDock(); };
     const stageBox = overlay.querySelector('.battle-stage');
     if(stageBox) stageBox.onclick = (e) => {
       if(e.target && e.target.closest && e.target.closest('button')) return;
-      if(battleRunning && currentScreen() !== 'battle' && !battleWidgetExpanded){
-        battleWidgetExpanded = true;
-        syncBattleOverlayMode();
+      if(battleRunning && currentScreen() !== 'battle'){
+        setScreen('battle');
       }
     };
     document.getElementById('battleTitle').textContent = sim.stage.title;

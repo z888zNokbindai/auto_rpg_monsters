@@ -1,6 +1,6 @@
 window.GameState = (() => {
-  const KEY = 'abyss_grimoire_v30_save';
-  const OLD_KEYS = ['abyss_grimoire_v29_save','abyss_grimoire_v28_save','abyss_grimoire_v27_save','abyss_grimoire_v26_save','abyss_grimoire_v25_save','abyss_grimoire_v24_save','abyss_grimoire_v23_save','abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
+  const KEY = 'abyss_grimoire_v33_save';
+  const OLD_KEYS = ['abyss_grimoire_v32_save','abyss_grimoire_v31_save','abyss_grimoire_v30_save','abyss_grimoire_v28_save','abyss_grimoire_v27_save','abyss_grimoire_v26_save','abyss_grimoire_v25_save','abyss_grimoire_v24_save','abyss_grimoire_v23_save','abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
   const G = () => window.GameData;
   let state = null;
 
@@ -20,7 +20,7 @@ window.GameState = (() => {
     const starterPool = G().heroes.filter(h => ['Common','Rare'].includes(h.rarity));
     const starter = starterPool[Math.floor(Math.random() * starterPool.length)] || G().heroes[0];
     const s = {
-      version:30,
+      version:32,
       screen:'home',
       resources:{gold:420,gems:180,tickets:1,dust:60},
       campaign:{selected:1,unlocked:1,highestCleared:0,clears:{}},
@@ -32,6 +32,7 @@ window.GameState = (() => {
       stats:{totalWins:0,totalLosses:0,totalGachas:0,totalUpgrades:0},
       idle:{last:now},
       settings:{battleSpeed:1,heroFilter:'all',heroSort:'power',heroSearch:'',selectedHero:null},
+      teamPresets:{},
       favorites:{},
       codex:{seen:{}},
       lastBattle:null,
@@ -52,7 +53,7 @@ window.GameState = (() => {
 
   function normalize(){
     const oldVersion = Number(state.version || 0);
-    if(!state.version || state.version < 30){ state.version = Math.max(30, Number(state.version || 0)); }
+    if(!state.version || state.version < 32){ state.version = Math.max(32, Number(state.version || 0)); }
     if(oldVersion < 12){
       state.settings ||= {};
       state.settings.battleSpeed = 1;
@@ -67,7 +68,7 @@ window.GameState = (() => {
       state.version = 16;
     }
     if(Number(state.version || 0) < 30){
-      state.version = 30;
+      state.version = 32;
     }
     state.resources ||= {gold:0,gems:0,tickets:0,dust:0};
     state.campaign ||= {selected:1,unlocked:1,highestCleared:0,clears:{}};
@@ -79,7 +80,11 @@ window.GameState = (() => {
     state.stats ||= {totalWins:0,totalLosses:0,totalGachas:0,totalUpgrades:0};
     state.idle ||= {last:Date.now()};
     state.settings ||= {battleSpeed:1,heroFilter:'all',heroSort:'power',heroSearch:'',selectedHero:null};
-    if(![0.5,0.75,1,2,4,8,12,20].includes(Number(state.settings.battleSpeed))) state.settings.battleSpeed = 1;
+    state.teamPresets ||= {};
+    for(const k of ['1','2','3']){
+      if(state.teamPresets[k]) state.teamPresets[k] = state.teamPresets[k].slice(0,5).map(id=>state.roster?.[id] ? id : null);
+    }
+    if(![0.5,0.75,1,2,4,8,12,20,50].includes(Number(state.settings.battleSpeed))) state.settings.battleSpeed = 1;
     state.settings.heroFilter ||= 'all';
     state.settings.heroSort ||= 'power';
     if(typeof state.settings.heroSearch !== 'string') state.settings.heroSearch = '';
@@ -160,7 +165,7 @@ window.GameState = (() => {
     normalize();
     const payload = {
       game:'Abyss Grimoire',
-      version:30,
+      version:32,
       exportedAt:new Date().toISOString(),
       save:state
     };
@@ -184,7 +189,7 @@ window.GameState = (() => {
       }
       state = incoming;
       backupNow();
-      state.version = 30;
+      state.version = 32;
       normalize();
       save();
       return {ok:true,msg:'นำเข้าเซฟสำเร็จ'};
@@ -528,6 +533,95 @@ window.GameState = (() => {
     save();
     return changes;
   }
+
+
+  function equippedUidSet(){
+    const used = new Set();
+    Object.values(state.roster || {}).forEach(h=>{
+      Object.values(h.equipped || {}).forEach(uid=>{ if(uid) used.add(uid); });
+    });
+    return used;
+  }
+
+  function autoSellLow(maxRarity='Rare'){
+    const maxRank = G().equipmentRarities[maxRarity]?.score ?? 2;
+    const used = equippedUidSet();
+    let sold = 0, gold = 0, dust = 0;
+    state.inventory = (state.inventory || []).filter(item=>{
+      const rare = G().equipmentRarities[item.rarity] || G().equipmentRarities.Common;
+      const shouldSell = !used.has(item.uid) && rare.score <= maxRank;
+      if(shouldSell){
+        sold++;
+        gold += Math.max(5, Math.round((item.value || 10) * (6 + rare.score * 2)));
+        dust += Math.max(1, Math.round(rare.score * 2 + (item.level || 1) * 0.4));
+        return false;
+      }
+      return true;
+    });
+    if(sold){
+      state.resources.gold += gold;
+      state.resources.dust += dust;
+      save();
+      return {ok:true,sold,gold,dust,msg:`ขาย/ย่อยของ ${sold} ชิ้น ได้ Gold ${fmt(gold)} และ Dust ${fmt(dust)}`};
+    }
+    return {ok:false,sold:0,msg:'ไม่มีอุปกรณ์ Common/Rare ที่ไม่ได้ใส่อยู่ให้ขาย'};
+  }
+
+  function autoFusionLow(limit=10){
+    limit = Math.max(1, Math.min(50, Number(limit || 10)));
+    let count = 0;
+    const results = [];
+    const originalTeam = (state.team || []).slice(0,5);
+    while(count < limit){
+      const spare = Object.keys(state.roster || {})
+        .filter(id=>!state.team.includes(id) && !state.favorites?.[id])
+        .map(id=>({id, inst:state.roster[id], def:heroDef(id), st:heroStats(id)}))
+        .filter(x=>x.def && ['Common','Rare'].includes(x.def.rarity) && (x.inst.stars || 1) <= 2 && (x.inst.rebirth || 0) === 0)
+        .sort((a,b)=>rarityRank(a.def.rarity)-rarityRank(b.def.rarity) || (a.inst.level||1)-(b.inst.level||1) || (a.st?.power||0)-(b.st?.power||0));
+      if(spare.length < 2) break;
+      state.fusion ||= {selected:[],last:null};
+      state.fusion.selected = [spare[0].id, spare[1].id];
+      const preview = fusionPreview(state.fusion.selected);
+      if(!preview.ok) break;
+      if(state.resources.gold < preview.cost.gold || state.resources.dust < preview.cost.dust) break;
+      const r = doFusion();
+      if(!r.ok) break;
+      // doFusion เรียก autoTeam เดิมไว้ จึงคืนทีมเดิมถ้าตัวในทีมยังอยู่ครบ
+      state.team = originalTeam.map(id=>id && state.roster[id] ? id : null);
+      results.push(r.result.name);
+      count++;
+    }
+    state.fusion.selected = [];
+    save();
+    if(count) return {ok:true,count,results,msg:`Auto Fusion วัตถุดิบต่ำ ${count} ครั้ง: ${results.slice(0,4).join(', ')}${results.length>4?'...':''}`};
+    return {ok:false,count:0,msg:'ยังไม่มี Common/Rare สำรองที่ผสมได้ หรือทรัพยากรไม่พอ'};
+  }
+
+  function saveTeamPreset(slot){
+    slot = String(slot || '1');
+    state.teamPresets ||= {};
+    state.teamPresets[slot] = (state.team || []).slice(0,5).map(id=>state.roster?.[id] ? id : null);
+    save();
+    return {ok:true,slot,team:state.teamPresets[slot]};
+  }
+
+  function loadTeamPreset(slot){
+    slot = String(slot || '1');
+    state.teamPresets ||= {};
+    const preset = state.teamPresets[slot];
+    if(!preset) return {ok:false,msg:`ยังไม่มีทีม Preset ${slot}`};
+    state.team = preset.slice(0,5).map(id=>state.roster?.[id] ? id : null);
+    while(state.team.length < 5) state.team.push(null);
+    state.fusion.selected = (state.fusion.selected || []).filter(id=>!state.team.includes(id));
+    save();
+    return {ok:true,slot};
+  }
+
+  function teamPresetPower(slot){
+    const preset = state.teamPresets?.[String(slot)] || [];
+    return teamPower(preset);
+  }
+
 
   function autoUpgrade(){
     ensureDaily();
@@ -903,7 +997,7 @@ window.GameState = (() => {
   return {
     get state(){ return state; }, load, save, reset, exportSaveText, importSaveText, fmt, todayKey,
     heroDef, stageDef, rarityDef, heroStats, teamPower, maxHeroLevel, levelCost, rebirthCost, rebirthHero, starCost, shardsNeeded,
-    addHero, starterRecruit, gacha, autoTeam, levelUp, levelUpMany, upgradeOneHero, setSelectedHero, starUp, autoUpgrade, equipBest,
+    addHero, starterRecruit, gacha, autoTeam, levelUp, levelUpMany, upgradeOneHero, setSelectedHero, starUp, autoUpgrade, equipBest, autoSellLow, autoFusionLow, saveTeamPreset, loadTeamPreset, teamPresetPower,
     isFavorite, toggleFavorite, codexSeen, setLastBattle, backupNow, exportBackupText,
     fusionPreview, toggleFusion, clearFusion, doFusion, autoFusion, rarityRank,
     selectedStage, selectStage, completeStage, stageEnemyPower,
