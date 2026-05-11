@@ -1,4 +1,4 @@
-# Abyss Grimoire V37 Mini Dock Fix
+# Abyss Grimoire V38 Top Battle Bar Fix
 
 Dark Fantasy Text RPG / Auto Battle / Gacha / Fusion / Rebirth แบบเล่นบนมือถือได้
 
@@ -7,7 +7,7 @@ Dark Fantasy Text RPG / Auto Battle / Gacha / Fusion / Rebirth แบบเล�
 เปิด `index.html` ได้เลย หรือรัน local server:
 
 ```bash
-cd text_auto_gacha_v37_mini_dock_autofarm_fix
+cd text_auto_gacha_v38_top_battle_bar
 python -m http.server 8000
 ```
 
@@ -17,7 +17,7 @@ python -m http.server 8000
 http://localhost:8000
 ```
 
-## สิ่งที่มีใน V37
+## สิ่งที่มีใน V38
 
 ### 1. Mission / Achievement
 - เพิ่มเป้าหมายระยะยาว เช่น ผ่านด่าน 10/50/100, ชนะ 100 ครั้ง, ผสม 10 ครั้ง, Rebirth ครั้งแรก
@@ -72,22 +72,30 @@ http://localhost:8000
 
 ## หมายเหตุเรื่องเซฟ
 
-V37 ใช้ save key ใหม่:
+V38 ใช้ save key ใหม่:
 
 ```text
-abyss_grimoire_v37_save
+abyss_grimoire_v38_save
 ```
 
 และพยายามอ่านเซฟ V35 เดิมให้อัตโนมัติ
 
 
 
-## แก้ใน V37
+## แก้ใน V38
 
 - แก้ Auto Farm Settings ที่กดแล้วไม่จำค่า เพราะ `data-value` ของปุ่มถูกทับเป็นค่าว่าง
 - กดตั้งค่า Auto Farm ระหว่างดู Battle ได้แล้ว
-- กล่อง Battle ย่อเปลี่ยนเป็นสี่เหลี่ยมเล็กมุมขวาล่าง ไม่ทับแท็บด้านล่าง
-- แตะกล่อง Battle ย่อเพื่อกลับไปหน้าไฟต์เต็ม ไม่มีโหมดครึ่งหน้าต่าง
+- แถบ Battle ด้านบนเปลี่ยนเป็นสี่เหลี่ยมเล็กมุมขวาล่าง ไม่ทับแท็บด้านล่าง
+- ระหว่างสู้แล้วไปหน้าอื่น จะมีแถบ Battle ด้านบนสำหรับกลับไปหน้าไฟต์เต็ม
 - เพิ่มระบบ EXP จากการชนะไฟต์ให้มอนสเตอร์ในทีม
 - เงื่อนไข “หยุดเมื่อทีมมีตัว Lv.100” จะทำงานเมื่อมอนสเตอร์ในทีมถึง Max Level จาก EXP หรืออัปเกรด
 - หน้าต่อสู้แบบเต็มจอโชว์ HP, ATK, DEF, SPD, Lv และดาวของแต่ละตัว
+
+## V38 Top Battle Bar
+
+- เอาหน้าต่าง Battle ย่อแบบแถบด้านบนออกแล้ว
+- ระหว่างสู้แล้วไปหน้าอื่น เกมจะแสดงเป็นแถบสถานะด้านบนของเว็บแทน
+- แถบด้านบนไม่ทับ bottom nav และไม่ทับเนื้อหาหลัก
+- กด “ดูไฟต์เต็ม” เพื่อกลับไปหน้าต่อสู้เต็มจอ
+- ปุ่ม “ย่อ” ในหน้าไฟต์เต็มจะพากลับหน้าแรกและใช้แถบบนแทน

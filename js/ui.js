@@ -6,7 +6,7 @@ window.UI = (() => {
   let autoRun = false;
   let battleSpeed = 1;
   let farmRepeatRun = false;
-  let battleWidgetExpanded = false;
+  let battleWidgetExpanded = false; // kept for old save compatibility; V38 uses top battle bar instead of mini dock
   let lastBrowseScreen = 'home';
 
   function h(str){
@@ -37,19 +37,33 @@ window.UI = (() => {
   function syncBattleOverlayMode(){
     const overlay = document.getElementById('battleOverlay');
     if(!overlay) return;
-    const isDock = battleRunning && currentScreen() !== 'battle';
-    overlay.classList.toggle('dock-mode', isDock);
+    const isAwayFromBattle = battleRunning && currentScreen() !== 'battle';
+
+    // V38: no floating mini/half window. When browsing other pages, the battle UI
+    // is hidden completely and the non-overlapping top status bar in HUD is used.
+    overlay.classList.toggle('hidden', !battleRunning || isAwayFromBattle);
+    overlay.classList.toggle('dock-mode', false);
     overlay.classList.toggle('expanded-dock', false);
-    overlay.classList.toggle('collapsed-dock', isDock);
-    overlay.classList.toggle('full-mode', battleRunning && !isDock);
+    overlay.classList.toggle('collapsed-dock', false);
+    overlay.classList.toggle('full-mode', battleRunning && !isAwayFromBattle);
+
     const returnBtn = document.getElementById('returnBattleBtn');
     if(returnBtn) returnBtn.classList.toggle('hidden', true);
     const expandBtn = document.getElementById('expandBattleBtn');
-    if(expandBtn) expandBtn.classList.toggle('hidden', !isDock);
+    if(expandBtn) expandBtn.classList.toggle('hidden', true);
     const minimizeBtn = document.getElementById('minimizeBattleBtn');
-    if(minimizeBtn) minimizeBtn.classList.toggle('hidden', !(battleRunning && !isDock));
+    if(minimizeBtn) minimizeBtn.classList.toggle('hidden', !battleRunning || isAwayFromBattle);
     const browseNote = document.getElementById('battleBrowseNote');
     if(browseNote) browseNote.classList.toggle('hidden', true);
+  }
+
+  function updateBattleTopBar(title, text, progress){
+    const t = document.getElementById('topBattleTitle');
+    const e = document.getElementById('topBattleEvent');
+    const p = document.getElementById('topBattleProgress');
+    if(t && title) t.textContent = title;
+    if(e && text) e.textContent = text;
+    if(p && Number.isFinite(progress)) p.style.width = `${Math.max(0, Math.min(100, progress))}%`;
   }
 
   function scrollGameToTop(){
@@ -81,7 +95,7 @@ window.UI = (() => {
         <div class="brand-row">
           <div class="logo">
             <div class="logo-mark">🩸</div>
-            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V37</small></div>
+            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V38</small></div>
           </div>
           <button class="btn small ghost" data-action="save">Save</button>
         </div>
@@ -91,7 +105,17 @@ window.UI = (() => {
           <div class="res-pill"><span>Ticket</span><b>🎟️ ${fmt(s.resources.tickets)}</b></div>
           <div class="res-pill"><span>Dust</span><b>✨ ${fmt(s.resources.dust)}</b></div>
         </div>
-        ${battleRunning ? `<div class="battle-live-strip"><b>⚔️ กำลังต่อสู้</b><span>ดูหน้าอื่นได้ กล่องไฟต์จะย่ออยู่ด้านล่าง</span><button class="btn small primary" data-screen="battle">ดูไฟต์เต็ม</button><button class="btn small ghost" data-action="stopAuto">หยุด Auto</button></div>` : ''}
+        ${battleRunning ? `<div class="battle-top-status" role="status" aria-live="polite">
+          <div class="battle-top-main">
+            <b id="topBattleTitle">⚔️ กำลังต่อสู้</b>
+            <span id="topBattleEvent">ไปดูหน้าอื่นได้ ไฟต์ยังทำงานต่อด้านหลัง</span>
+          </div>
+          <div class="battle-top-actions">
+            <button class="btn small primary" data-screen="battle">ดูไฟต์เต็ม</button>
+            <button class="btn small ghost" data-action="stopAuto">หยุด Auto</button>
+          </div>
+          <div class="top-battle-progress"><div id="topBattleProgress"></div></div>
+        </div>` : ''}
       </div>`;
   }
 
@@ -295,7 +319,7 @@ window.UI = (() => {
     const mod = selected.modifier;
     const boss = selected.bossSkill;
     return `<section class="panel dashboard-panel">
-      <div class="section-title"><h3>เป้าหมายตอนนี้</h3><small>ระบบแนะนำ V37</small></div>
+      <div class="section-title"><h3>เป้าหมายตอนนี้</h3><small>ระบบแนะนำ V38</small></div>
       <div class="goal-list">${goals.map((g,i)=>`<div class="goal-item"><b>${i+1}</b><span>${h(g)}</span></div>`).join('')}</div>
       <div class="stage-warn">
         <b>ด่านปัจจุบัน:</b> ${h(selected.title)}
@@ -944,7 +968,7 @@ window.UI = (() => {
   function manualScreen(){
     return `
       <div class="screen manual-screen">
-        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V37: Mini Dock + Auto Farm Fix + Team EXP + Battle Stats</p></div></div>
+        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V38: Top Battle Bar + EXP + Battle Stats</p></div></div>
         <section class="panel manual-hero">
           <div class="section-title"><h3>เป้าหมายใหม่</h3><small>Endless Loop ถึงด่าน 3000</small></div>
           <p class="muted">ด่านจะสร้างต่อเนื่องและยากขึ้นเรื่อย ๆ จนถึง <b class="gold">ด่าน 3000</b> ถ้าติดด่าน ให้ฟาร์มด่านที่ผ่านได้ อัปเลเวล เปิดกาชา ผสมมอนสเตอร์ และ Rebirth เพื่อเพิ่มพลังถาวร</p>
@@ -957,7 +981,7 @@ window.UI = (() => {
           </div>
         </section>
         <section class="panel">
-          <div class="section-title"><h3>ระบบ Progression / V37</h3><small>ทำให้มีเป้าหมายเล่นต่อ</small></div>
+          <div class="section-title"><h3>ระบบ Progression / V38</h3><small>ทำให้มีเป้าหมายเล่นต่อ</small></div>
           <ul class="guide-list">
             <li><b>Achievement:</b> ผ่านด่าน, สะสมปีศาจ, ผสม, Rebirth แล้วรับรางวัลระยะยาว</li>
             <li><b>Pity Gacha:</b> Rare+ ทุก 10, Epic+ ทุก 50, Legendary+ ทุก 200 โรล ส่วน SSR ยังเป็นระดับลับ</li>
@@ -1447,10 +1471,13 @@ window.UI = (() => {
       drawBattleSnapshot(ev.snapshot);
       document.getElementById('eventPopup').className = `event-popup ${ev.type}`;
       document.getElementById('eventTitle').textContent = ev.title;
-      document.getElementById('eventText').textContent = ev.pressText ? `${ev.text}  |  ${ev.pressText}` : ev.text;
+      const eventLine = ev.pressText ? `${ev.text}  |  ${ev.pressText}` : ev.text;
+      document.getElementById('eventText').textContent = eventLine;
       document.querySelector('#eventPopup .event-icon').textContent = ev.icon || '⚔️';
-      progress.style.width = `${Math.round((i+1)/sim.events.length*100)}%`;
-      const row=document.createElement('div'); row.textContent=ev.pressText ? `${ev.text}  |  ${ev.pressText}` : ev.text; log.prepend(row);
+      const percent = Math.round((i+1)/sim.events.length*100);
+      progress.style.width = `${percent}%`;
+      updateBattleTopBar(`⚔️ ${sim.stage.title}`, `${ev.title}: ${eventLine}`, percent);
+      const row=document.createElement('div'); row.textContent=eventLine; log.prepend(row);
       if(log.children.length>18) log.lastChild.remove();
       if(ev.target){
         const target = document.querySelector(`[data-cuid="${ev.target}"]`);
