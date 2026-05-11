@@ -1,48 +1,37 @@
-# Abyss Grimoire V23 Bestiary
+# Abyss Grimoire V26 Background Battle
 
-Dark Fantasy Text RPG: Auto Battle + Gacha + Fusion + Endless Farm + Rebirth.
+Dark Fantasy Text RPG / Auto Battle / Gacha / Fusion / Rebirth
 
-## V23 เพิ่มอะไร
+## V26 เพิ่ม/แก้ไข
 
-- เพิ่มมอนสเตอร์ใหม่ 25 ตัว
-- รวมมอนสเตอร์ทั้งหมด 67 ตัว
-- เพิ่มสูตร Fusion ใหม่ 40 สูตร
-- รวมสูตร Fusion เฉพาะ 60 สูตร
-- เพิ่มสายวิวัฒนาการหลายทอด เช่น Grave Hound → Hellhound → Blood Moon Beast → Blood Moon Drake
-- Codex และ Fusion Recipe Book แสดงจำนวน/สูตรใหม่อัตโนมัติ
-- ใช้ save key ใหม่ `abyss_grimoire_v22_save` และพยายามอ่านเซฟ V21 เดิมให้
+- ต่อสู้ค้างไว้แล้วกดไปดูหน้าอื่นได้
+- Battle จะย่อเป็นแถบลอยด้านล่างเมื่อออกจากหน้า “ลุย”
+- กด “ดูไฟต์เต็ม” เพื่อกลับไปหน้าต่อสู้ได้ทันที
+- เปลี่ยนสปีด/หยุด Auto ได้ระหว่าง Battle
+- ระหว่าง Battle จะดูหน้าอื่นได้ แต่การแก้ทีม/ผสม/อัปเกรด/กาชาจะล็อกไว้จนจบไฟต์ เพื่อกันข้อมูลเพี้ยน
+- ยังมีระบบจาก V25 ครบ: Target Upgrade, Monster Manager, Fusion, Codex, PWA, Export/Import Save
+- ใช้ save key ใหม่ `abyss_grimoire_v26_save` และพยายามอ่านเซฟ V25 เดิมให้อัตโนมัติ
 
 ## วิธีรัน
 
-เปิด `index.html` ได้ทันที
+เปิดไฟล์ `index.html` ได้ทันที
 
 หรือรัน local server:
 
 ```bash
-cd text_auto_gacha_v22
+cd text_auto_gacha_v26_background_battle
 python -m http.server 8000
 ```
 
-เปิด:
+เปิดเว็บ:
 
 ```text
 http://localhost:8000
 ```
 
-## วิธีเล่นสั้น ๆ
+## วิธีใช้ Battle Background
 
-1. เริ่มด้วยมอนสเตอร์สุ่ม 1 ตัว
-2. ใช้สิทธิ์สุ่มฟรีเพิ่ม 2 ตัว
-3. จัดทีม 5 ตัว
-4. ฟาร์ม Gold / Dust / Ticket
-5. เปิดกาชาและผสมมอนสเตอร์
-6. ดันด่านยาวถึง 3000
-7. Lv.1000 แล้ว Rebirth เพื่อเพิ่มพลังถาวร
-
-
-## V23 Update
-
-- แจกสุ่มฟรีเริ่มต้นเพิ่มเป็น 5 ครั้ง หลังจากมอนสเตอร์เริ่มต้น 1 ตัว
-- กดสุ่มฟรีแล้วจะอยู่หน้าเดิม ไม่เด้งไปหน้าจัดทีม
-- เพิ่มปุ่มปรับความเร็วต่อสู้บนหน้าหลักและหน้าลุย
-- เพิ่มความเร็วฟาร์ม x12 และ x20 สำหรับการฟาร์มซ้ำ
+1. เข้า “ลุย” แล้วกด สู้ / ฟาร์ม / Auto
+2. ระหว่างสู้ กดเมนูล่างไปหน้าอื่นได้
+3. Battle จะย่อเป็นแถบลอยด้านล่าง
+4. กด “ดูไฟต์เต็ม” หรือเมนู “ลุย” เพื่อกลับมาดู Battle เต็ม

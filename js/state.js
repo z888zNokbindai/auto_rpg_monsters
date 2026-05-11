@@ -1,6 +1,6 @@
 window.GameState = (() => {
-  const KEY = 'abyss_grimoire_v23_save';
-  const OLD_KEYS = ['abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
+  const KEY = 'abyss_grimoire_v26_save';
+  const OLD_KEYS = ['abyss_grimoire_v25_save','abyss_grimoire_v24_save','abyss_grimoire_v23_save','abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
   const G = () => window.GameData;
   let state = null;
 
@@ -20,7 +20,7 @@ window.GameState = (() => {
     const starterPool = G().heroes.filter(h => ['Common','Rare'].includes(h.rarity));
     const starter = starterPool[Math.floor(Math.random() * starterPool.length)] || G().heroes[0];
     const s = {
-      version:23,
+      version:25,
       screen:'home',
       resources:{gold:420,gems:180,tickets:1,dust:60},
       campaign:{selected:1,unlocked:1,highestCleared:0,clears:{}},
@@ -31,7 +31,7 @@ window.GameState = (() => {
       daily:{date:todayKey(),wins:0,gachas:0,upgrades:0,bossWins:0,claimed:{}},
       stats:{totalWins:0,totalLosses:0,totalGachas:0,totalUpgrades:0},
       idle:{last:now},
-      settings:{battleSpeed:1,heroFilter:'all',heroSort:'power'},
+      settings:{battleSpeed:1,heroFilter:'all',heroSort:'power',heroSearch:'',selectedHero:null},
       favorites:{},
       codex:{seen:{}},
       lastBattle:null,
@@ -52,7 +52,7 @@ window.GameState = (() => {
 
   function normalize(){
     const oldVersion = Number(state.version || 0);
-    if(!state.version || state.version < 23){ state.version = Math.max(23, Number(state.version || 0)); }
+    if(!state.version || state.version < 25){ state.version = Math.max(25, Number(state.version || 0)); }
     if(oldVersion < 12){
       state.settings ||= {};
       state.settings.battleSpeed = 1;
@@ -66,8 +66,8 @@ window.GameState = (() => {
     if(oldVersion < 16){
       state.version = 16;
     }
-    if(Number(state.version || 0) < 23){
-      state.version = 23;
+    if(Number(state.version || 0) < 25){
+      state.version = 25;
     }
     state.resources ||= {gold:0,gems:0,tickets:0,dust:0};
     state.campaign ||= {selected:1,unlocked:1,highestCleared:0,clears:{}};
@@ -78,10 +78,16 @@ window.GameState = (() => {
     state.daily ||= {date:todayKey(),wins:0,gachas:0,upgrades:0,bossWins:0,claimed:{}};
     state.stats ||= {totalWins:0,totalLosses:0,totalGachas:0,totalUpgrades:0};
     state.idle ||= {last:Date.now()};
-    state.settings ||= {battleSpeed:1,heroFilter:'all',heroSort:'power'};
-    if(![0.5,0.75,1,2,4,8,12].includes(Number(state.settings.battleSpeed))) state.settings.battleSpeed = 1;
+    state.settings ||= {battleSpeed:1,heroFilter:'all',heroSort:'power',heroSearch:'',selectedHero:null};
+    if(![0.5,0.75,1,2,4,8,12,20].includes(Number(state.settings.battleSpeed))) state.settings.battleSpeed = 1;
     state.settings.heroFilter ||= 'all';
     state.settings.heroSort ||= 'power';
+    if(typeof state.settings.heroSearch !== 'string') state.settings.heroSearch = '';
+    if(state.settings.selectedHero && !state.roster?.[state.settings.selectedHero]) state.settings.selectedHero = null;
+    if(!state.settings.selectedHero){
+      const firstTeam = (state.team||[]).find(id=>state.roster?.[id]);
+      state.settings.selectedHero = firstTeam || Object.keys(state.roster||{})[0] || null;
+    }
     state.favorites ||= {};
     Object.keys(state.favorites).forEach(id=>{ if(!state.roster?.[id]) delete state.favorites[id]; });
     state.codex ||= {seen:{}};
@@ -154,7 +160,7 @@ window.GameState = (() => {
     normalize();
     const payload = {
       game:'Abyss Grimoire',
-      version:23,
+      version:25,
       exportedAt:new Date().toISOString(),
       save:state
     };
@@ -178,7 +184,7 @@ window.GameState = (() => {
       }
       state = incoming;
       backupNow();
-      state.version = 22;
+      state.version = 25;
       normalize();
       save();
       return {ok:true,msg:'นำเข้าเซฟสำเร็จ'};
@@ -389,6 +395,72 @@ window.GameState = (() => {
     state.stats.totalUpgrades++;
     save();
     return {ok:true};
+  }
+
+
+  function levelUpMany(id, amount=10){
+    ensureDaily();
+    const inst = state.roster[id];
+    if(!inst) return {ok:false,count:0,msg:'ไม่มีมอนสเตอร์นี้'};
+    if(inst.level >= maxHeroLevel()) return {ok:false,count:0,msg:'ถึงเลเวลสูงสุดแล้ว กด Rebirth เพื่อเกิดใหม่'};
+    let count = 0;
+    const maxLoops = amount === 'max' ? 2000 : Math.max(1, Number(amount || 1));
+    while(count < maxLoops && inst.level < maxHeroLevel()){
+      const cost = levelCost(inst);
+      if(state.resources.gold < cost) break;
+      state.resources.gold -= cost;
+      inst.level++;
+      count++;
+    }
+    if(count){
+      state.daily.upgrades += count;
+      state.stats.totalUpgrades += count;
+      save();
+      return {ok:true,count,msg:`อัปเลเวล ${count} ครั้งแล้ว`};
+    }
+    return {ok:false,count:0,msg:'Gold ไม่พอ'};
+  }
+
+  function upgradeOneHero(id){
+    ensureDaily();
+    const inst = state.roster[id];
+    if(!inst) return {ok:false,msg:'ไม่มีมอนสเตอร์นี้'};
+    let levelCount = 0, starCount = 0;
+    for(let loop=0; loop<10 && inst.stars < 6; loop++){
+      const need = shardsNeeded(inst.stars);
+      const dust = starCost(inst);
+      if(inst.shards < need || state.resources.dust < dust) break;
+      inst.shards -= need;
+      state.resources.dust -= dust;
+      inst.stars++;
+      starCount++;
+    }
+    let guard = 0;
+    while(guard++ < 2000 && inst.level < maxHeroLevel()){
+      const cost = levelCost(inst);
+      if(state.resources.gold < cost) break;
+      state.resources.gold -= cost;
+      inst.level++;
+      levelCount++;
+    }
+    if(levelCount || starCount){
+      const total = levelCount + starCount;
+      state.daily.upgrades += total;
+      state.stats.totalUpgrades += total;
+      save();
+      return {ok:true,levelCount,starCount,msg:`อัปเฉพาะตัวนี้: Lv +${levelCount}, ดาว +${starCount}`};
+    }
+    const rb = rebirthCost(inst);
+    if(inst.level >= maxHeroLevel()) return {ok:false,msg:`ถึง Lv.${maxHeroLevel()} แล้ว ถ้ามี Gold ${fmt(rb.gold)} และ Dust ${fmt(rb.dust)} ให้กด Rebirth`};
+    return {ok:false,msg:'ทรัพยากรไม่พอสำหรับอัปตัวนี้'};
+  }
+
+  function setSelectedHero(id){
+    if(!state.roster[id]) return {ok:false,msg:'ไม่มีมอนสเตอร์นี้'};
+    state.settings ||= {};
+    state.settings.selectedHero = id;
+    save();
+    return {ok:true,id};
   }
 
   function starUp(id){
@@ -831,7 +903,7 @@ window.GameState = (() => {
   return {
     get state(){ return state; }, load, save, reset, exportSaveText, importSaveText, fmt, todayKey,
     heroDef, stageDef, rarityDef, heroStats, teamPower, maxHeroLevel, levelCost, rebirthCost, rebirthHero, starCost, shardsNeeded,
-    addHero, starterRecruit, gacha, autoTeam, levelUp, starUp, autoUpgrade, equipBest,
+    addHero, starterRecruit, gacha, autoTeam, levelUp, levelUpMany, upgradeOneHero, setSelectedHero, starUp, autoUpgrade, equipBest,
     isFavorite, toggleFavorite, codexSeen, setLastBattle, backupNow, exportBackupText,
     fusionPreview, toggleFusion, clearFusion, doFusion, autoFusion, rarityRank,
     selectedStage, selectStage, completeStage, stageEnemyPower,
