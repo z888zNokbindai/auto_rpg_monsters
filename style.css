@@ -667,3 +667,116 @@ body{
   .battle-overlay.dock-mode{left:8px;right:8px;bottom:calc(112px + env(safe-area-inset-bottom))}.battle-overlay.dock-mode .battle-stage{max-height:30dvh;border-radius:18px}.battle-overlay.dock-mode .speed-box{max-width:170px}.battle-overlay.dock-mode .chip-btn{padding:6px 8px;font-size:10px}
 }
 @media (max-width:390px){.battle-overlay.dock-mode .speed-box{max-width:135px}.battle-overlay.dock-mode .event-text{-webkit-line-clamp:1}.battle-overlay.dock-mode .battle-stage{max-height:27dvh}}
+
+/* V27: mini battle widget */
+.battle-overlay.collapsed-dock{
+  inset:auto 10px calc(92px + env(safe-area-inset-bottom)) 10px;
+  width:auto;
+  display:block;
+  place-items:unset;
+  background:transparent!important;
+  padding:0;
+  pointer-events:none;
+  z-index:35;
+}
+.battle-overlay.collapsed-dock .battle-stage{
+  pointer-events:auto;
+  cursor:pointer;
+  width:min(360px,100%);
+  margin:0 auto;
+  max-height:none;
+  overflow:hidden;
+  border-radius:18px;
+  padding:9px;
+  box-shadow:0 12px 44px rgba(0,0,0,.68),0 0 0 1px rgba(245,195,91,.18);
+}
+.battle-overlay.collapsed-dock .battle-topline{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px;
+  align-items:center;
+  margin-bottom:6px;
+}
+.battle-overlay.collapsed-dock .battle-topline h2{
+  font-size:14px;
+  line-height:1.15;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  margin:0;
+}
+.battle-overlay.collapsed-dock .tiny-label{font-size:9px;letter-spacing:.08em}
+.battle-overlay.collapsed-dock .speed-box{
+  display:flex;
+  gap:5px;
+  flex-wrap:nowrap;
+  justify-content:flex-end;
+  max-width:none;
+  overflow:visible;
+}
+.battle-overlay.collapsed-dock .speed-box [data-speed],
+.battle-overlay.collapsed-dock .return-battle,
+.battle-overlay.collapsed-dock .minimize-battle{
+  display:none!important;
+}
+.battle-overlay.collapsed-dock .expand-battle,
+.battle-overlay.collapsed-dock .stop-auto{
+  display:inline-flex!important;
+  padding:6px 9px;
+  min-height:30px;
+  font-size:10px;
+}
+.battle-overlay.collapsed-dock .battle-browse-note,
+.battle-overlay.collapsed-dock .press-turn-bar,
+.battle-overlay.collapsed-dock .battle-board,
+.battle-overlay.collapsed-dock .battle-log{display:none!important}
+.battle-overlay.collapsed-dock .event-popup{
+  margin:5px 0 7px;
+  padding:8px;
+  border-radius:14px;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:8px;
+}
+.battle-overlay.collapsed-dock .event-icon{
+  width:32px;
+  height:32px;
+  border-radius:12px;
+  font-size:18px;
+}
+.battle-overlay.collapsed-dock .event-title{
+  font-size:13px;
+  line-height:1.15;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.battle-overlay.collapsed-dock .event-text{
+  font-size:11px;
+  line-height:1.2;
+  margin-top:2px;
+  display:-webkit-box;
+  -webkit-line-clamp:1;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+}
+.battle-overlay.collapsed-dock .progress-rail{height:6px}
+.battle-overlay.expanded-dock .minimize-battle{display:inline-flex!important}
+.battle-overlay.expanded-dock .expand-battle{display:none!important}
+.battle-overlay.expanded-dock .battle-stage{max-height:42dvh}
+.battle-overlay.expanded-dock .battle-log{display:grid;max-height:90px;font-size:12px}
+.battle-overlay.expanded-dock .battle-board{display:none}
+.battle-overlay.full-mode .expand-battle,
+.battle-overlay.full-mode .minimize-battle,
+.battle-overlay.full-mode .return-battle{display:none!important}
+@media (max-width:560px){
+  .battle-overlay.collapsed-dock{left:8px;right:8px;bottom:calc(108px + env(safe-area-inset-bottom))}
+  .battle-overlay.collapsed-dock .battle-stage{width:100%;border-radius:16px;padding:8px}
+  .battle-overlay.expanded-dock{bottom:calc(108px + env(safe-area-inset-bottom))}
+  .battle-overlay.expanded-dock .battle-stage{max-height:46dvh}
+}
+@media (max-width:390px){
+  .battle-overlay.collapsed-dock .event-text{display:none}
+  .battle-overlay.collapsed-dock .event-popup{margin-bottom:6px}
+  .battle-overlay.collapsed-dock .expand-battle,
+  .battle-overlay.collapsed-dock .stop-auto{padding:5px 7px;font-size:9.5px}
+}

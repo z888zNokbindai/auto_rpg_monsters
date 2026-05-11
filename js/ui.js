@@ -6,6 +6,7 @@ window.UI = (() => {
   let autoRun = false;
   let battleSpeed = 1;
   let farmRepeatRun = false;
+  let battleWidgetExpanded = false;
 
   function h(str){
     return String(str ?? '').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -21,6 +22,8 @@ window.UI = (() => {
   }
   function setScreen(screen){
     S().state.screen = screen;
+    if(battleRunning && screen !== 'battle') battleWidgetExpanded = false;
+    if(screen === 'battle') battleWidgetExpanded = true;
     S().save();
     render();
     syncBattleOverlayMode();
@@ -32,12 +35,20 @@ window.UI = (() => {
     const overlay = document.getElementById('battleOverlay');
     if(!overlay) return;
     const isDock = battleRunning && currentScreen() !== 'battle';
+    const isExpandedDock = isDock && battleWidgetExpanded;
+    const isCollapsedDock = isDock && !battleWidgetExpanded;
     overlay.classList.toggle('dock-mode', isDock);
+    overlay.classList.toggle('expanded-dock', isExpandedDock);
+    overlay.classList.toggle('collapsed-dock', isCollapsedDock);
     overlay.classList.toggle('full-mode', battleRunning && !isDock);
     const returnBtn = document.getElementById('returnBattleBtn');
     if(returnBtn) returnBtn.classList.toggle('hidden', !isDock);
+    const expandBtn = document.getElementById('expandBattleBtn');
+    if(expandBtn) expandBtn.classList.toggle('hidden', !isCollapsedDock);
+    const minimizeBtn = document.getElementById('minimizeBattleBtn');
+    if(minimizeBtn) minimizeBtn.classList.toggle('hidden', !isExpandedDock);
     const browseNote = document.getElementById('battleBrowseNote');
-    if(browseNote) browseNote.classList.toggle('hidden', !isDock);
+    if(browseNote) browseNote.classList.toggle('hidden', !isExpandedDock);
   }
 
   function scrollGameToTop(){
@@ -55,7 +66,7 @@ window.UI = (() => {
         <div class="brand-row">
           <div class="logo">
             <div class="logo-mark">🩸</div>
-            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V26</small></div>
+            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V27</small></div>
           </div>
           <button class="btn small ghost" data-action="save">Save</button>
         </div>
@@ -65,7 +76,7 @@ window.UI = (() => {
           <div class="res-pill"><span>Ticket</span><b>🎟️ ${fmt(s.resources.tickets)}</b></div>
           <div class="res-pill"><span>Dust</span><b>✨ ${fmt(s.resources.dust)}</b></div>
         </div>
-        ${battleRunning ? `<div class="battle-live-strip"><b>⚔️ กำลังต่อสู้</b><span>ดูหน้าอื่นได้ แต่การแก้ทีม/ผสม/อัปเกรดจะล็อกจนจบไฟต์</span><button class="btn small primary" data-screen="battle">ดูไฟต์</button><button class="btn small ghost" data-action="stopAuto">หยุด Auto</button></div>` : ''}
+        ${battleRunning ? `<div class="battle-live-strip"><b>⚔️ กำลังต่อสู้</b><span>ดูหน้าอื่นได้ กล่องไฟต์จะย่ออยู่ด้านล่าง</span><button class="btn small primary" data-screen="battle">ดูไฟต์เต็ม</button><button class="btn small ghost" data-action="stopAuto">หยุด Auto</button></div>` : ''}
       </div>`;
   }
 
@@ -951,6 +962,7 @@ window.UI = (() => {
     farmRepeatRun = false;
     autoRun = true;
     battleRunning = true;
+    openBattleFullscreenOnStart();
     let winStreak = 0;
     let lastRewardText = '';
     try{
@@ -995,6 +1007,7 @@ window.UI = (() => {
     farmRepeatRun = true;
     autoRun = false;
     battleRunning = true;
+    openBattleFullscreenOnStart();
     let runs = 0;
     let lastRewardText = '';
     try{
@@ -1034,6 +1047,7 @@ window.UI = (() => {
     farmRepeatRun = true;
     autoRun = false;
     battleRunning = true;
+    openBattleFullscreenOnStart();
     let runs = 0;
     let lastRewardText = '';
     try{
@@ -1068,6 +1082,7 @@ window.UI = (() => {
     if(battleRunning) return;
     if(S().state.team.filter(Boolean).length===0) return toast('ยังไม่มีทีม');
     battleRunning = true;
+    openBattleFullscreenOnStart();
     const sim = window.BattleSim.simulate(S().state.campaign.selected);
     await playBattle(sim);
     const result = S().completeStage(sim.stage.id, sim.win);
@@ -1100,6 +1115,16 @@ window.UI = (() => {
 
   function wait(ms){ return new Promise(resolve=>setTimeout(resolve,ms)); }
 
+  function openBattleFullscreenOnStart(){
+    battleWidgetExpanded = true;
+    if(currentScreen() !== 'battle'){
+      S().state.screen = 'battle';
+      S().save();
+      render();
+      scrollGameToTop();
+    }
+  }
+
   async function playBattle(sim){
     const overlay=document.getElementById('battleOverlay');
     const log=document.getElementById('battleLog');
@@ -1113,6 +1138,18 @@ window.UI = (() => {
     }
     const returnBtn = document.getElementById('returnBattleBtn');
     if(returnBtn) returnBtn.onclick = () => setScreen('battle');
+    const expandBtn = document.getElementById('expandBattleBtn');
+    if(expandBtn) expandBtn.onclick = (e) => { e.stopPropagation(); battleWidgetExpanded = true; syncBattleOverlayMode(); };
+    const minimizeBtn = document.getElementById('minimizeBattleBtn');
+    if(minimizeBtn) minimizeBtn.onclick = (e) => { e.stopPropagation(); battleWidgetExpanded = false; syncBattleOverlayMode(); };
+    const stageBox = overlay.querySelector('.battle-stage');
+    if(stageBox) stageBox.onclick = (e) => {
+      if(e.target && e.target.closest && e.target.closest('button')) return;
+      if(battleRunning && currentScreen() !== 'battle' && !battleWidgetExpanded){
+        battleWidgetExpanded = true;
+        syncBattleOverlayMode();
+      }
+    };
     document.getElementById('battleTitle').textContent = sim.stage.title;
     log.innerHTML=''; progress.style.width='0%';
     battleSpeed = S().state.settings.battleSpeed || 1;
@@ -1143,7 +1180,8 @@ window.UI = (() => {
     }
     await wait(1500 / Math.max(0.75, battleSpeed));
     overlay.classList.add('hidden');
-    overlay.classList.remove('dock-mode','full-mode');
+    overlay.classList.remove('dock-mode','expanded-dock','collapsed-dock','full-mode');
+    battleWidgetExpanded = false;
     const stopBtnEnd = document.getElementById('stopAutoBtn');
     if(stopBtnEnd) stopBtnEnd.classList.add('hidden');
   }
