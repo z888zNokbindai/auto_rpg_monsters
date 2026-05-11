@@ -1,4 +1,4 @@
-const CACHE_NAME = 'abyss-grimoire-v21-cache-v1';
+const CACHE_NAME = 'abyss-grimoire-v22-cache-v1';
 const ASSETS = [
   './', './index.html', './style.css', './manifest.json',
   './js/data.js', './js/state.js', './js/battle.js', './js/ui.js', './js/main.js',

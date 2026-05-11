@@ -74,6 +74,38 @@ window.GameData = (() => {
 
     {id:'abyss_seraph',name:'เซราฟอเวจี',icon:'🩸',rarity:'Mythic',element:'Light',role:'Mage',target:'all',skill:'สวรรค์กลับด้าน',skillDesc:'โจมตีหมู่รุนแรง ลด Energy และมีโอกาสทำให้ศัตรูเสีย Press Turn',base:{hp:920,atk:265,def:86,spd:112},ai:'void'},
     {id:'worldroot_hydra',name:'ไฮดรารากโลก',icon:'🐲',rarity:'Mythic',element:'Nature',role:'Tank',target:'front',skill:'รากโลกพันธนาการ',skillDesc:'แทงค์ระดับสูง โจมตีหมู่และฟื้นตัวต่อเนื่อง',base:{hp:1450,atk:205,def:155,spd:80},ai:'dragon_fire'},
+
+
+    // V22: เพิ่มมอนสเตอร์ชุด Final+ สำหรับการสะสมและสายผสมหลายทอด
+    {id:'rot_rat',name:'หนูเน่า',icon:'🐭',rarity:'Common',element:'Dark',role:'Debuffer',target:'lowest',skill:'ฟันหนูสกปรก',skillDesc:'กัดเป้าหมายเลือดต่ำและมีโอกาสติด Poison เหมาะเป็นวัตถุดิบสายพิษ',base:{hp:370,atk:92,def:25,spd:116},ai:'poison'},
+    {id:'bone_pup',name:'ลูกหมากระดูก',icon:'🦴',rarity:'Common',element:'Dark',role:'Warrior',target:'front',skill:'กระโจนกัด',skillDesc:'โจมตีเดี่ยวเร็ว ใช้ต่อยอดเป็นสายหมาเงา',base:{hp:470,atk:108,def:36,spd:96},ai:'strike'},
+    {id:'grave_crow',name:'อีกาสุสาน',icon:'🐦‍⬛',rarity:'Common',element:'Dark',role:'Ranger',target:'back',skill:'จิกตาหลังแนว',skillDesc:'เล็งแนวหลัง ดาเมจไม่สูงแต่หา Weak มืดได้ดี',base:{hp:340,atk:102,def:24,spd:126},ai:'assassin'},
+    {id:'mire_slime',name:'สไลม์บึงดำ',icon:'🟢',rarity:'Common',element:'Water',role:'Tank',target:'front',skill:'ร่างเหนียวหนืด',skillDesc:'เลือดเยอะกว่าตัวเริ่มต้น ต้านไฟต์ยาวได้ดี',base:{hp:760,atk:58,def:72,spd:42},ai:'tank'},
+    {id:'ember_larva',name:'ตัวอ่อนเถ้าไฟ',icon:'🐛',rarity:'Common',element:'Fire',role:'Mage',target:'random',skill:'สะเก็ดเถ้าไฟ',skillDesc:'เวทไฟเบา ๆ มีไว้ผสมสายเพลิง',base:{hp:390,atk:112,def:24,spd:86},ai:'cleave'},
+
+    {id:'moon_moth',name:'ผีเสื้อจันทร์ดับ',icon:'🦋',rarity:'Rare',element:'Light',role:'Support',target:'ally_low',skill:'ผงจันทร์',skillDesc:'ฮีลเดี่ยวและช่วยเติม Energy เล็กน้อย',base:{hp:500,atk:96,def:44,spd:104},ai:'heal'},
+    {id:'carrion_squire',name:'สไควร์ซากศพ',icon:'🧟',rarity:'Rare',element:'Dark',role:'Tank',target:'front',skill:'ยืนเฝ้าหลุม',skillDesc:'แทงค์มืดต้นเกม DEF ดีแต่ช้า',base:{hp:880,atk:78,def:108,spd:50},ai:'shield'},
+    {id:'blood_leech',name:'ปลิงโลหิต',icon:'🪱',rarity:'Rare',element:'Water',role:'Assassin',target:'lowest',skill:'ดูดเลือดสั้น',skillDesc:'ตีตัวเลือดต่ำและฟื้น HP ตัวเองเล็กน้อย',base:{hp:460,atk:145,def:36,spd:120},ai:'lifesteal'},
+    {id:'drowned_bride',name:'เจ้าสาวจมน้ำ',icon:'👰',rarity:'Rare',element:'Water',role:'Support',target:'ally_low',skill:'คำสาบานใต้น้ำ',skillDesc:'ฮีลตัวเลือดต่ำและเหมาะต่อยอดสายคลื่น',base:{hp:560,atk:105,def:50,spd:88},ai:'heal'},
+    {id:'lantern_jack',name:'แจ็คตะเกียงผี',icon:'🎃',rarity:'Rare',element:'Fire',role:'Mage',target:'random',skill:'ไฟหลอกทาง',skillDesc:'โจมตีสุ่ม 2 เป้าหมาย โอกาส Burn สูง',base:{hp:520,atk:142,def:38,spd:92},ai:'aoe_burn'},
+    {id:'moss_ogre',name:'ยักษ์มอสส์',icon:'🧌',rarity:'Rare',element:'Nature',role:'Tank',target:'front',skill:'ทุบพื้นรากไม้',skillDesc:'แทงค์ธรรมชาติ เลือดสูงมากแต่ช้า',base:{hp:980,atk:92,def:104,spd:44},ai:'guard'},
+    {id:'silver_acolyte',name:'นักบวชเงินหม่น',icon:'🪙',rarity:'Rare',element:'Light',role:'Mage',target:'random',skill:'แสงเงินบาดตา',skillDesc:'เวทแสงสุ่มเป้าหมาย เหมาะใช้ล่าตัวมืด',base:{hp:510,atk:138,def:42,spd:94},ai:'cleave'},
+
+    {id:'crypt_butcher',name:'คนแล่เนื้อสุสาน',icon:'🔪',rarity:'Epic',element:'Dark',role:'Warrior',target:'front',skill:'มีดแล่วิญญาณ',skillDesc:'ตีแรง ช้า แต่ดูดเลือดได้ดีเมื่อไฟต์ยืด',base:{hp:830,atk:188,def:72,spd:66},ai:'lifesteal'},
+    {id:'mirror_fiend',name:'ปีศาจกระจก',icon:'🪞',rarity:'Epic',element:'Light',role:'Debuffer',target:'all',skill:'เงาสะท้อนแตก',skillDesc:'โจมตีหมู่และลด ATK ศัตรู เหมาะแก้ทีมบอสตีแรง',base:{hp:640,atk:154,def:58,spd:104},ai:'curse'},
+    {id:'frost_revenant',name:'เรเวแนนท์น้ำแข็ง',icon:'🥶',rarity:'Epic',element:'Water',role:'Debuffer',target:'all',skill:'ลมหายใจหนาวตาย',skillDesc:'โจมตีหมู่และชะลอความเร็วศัตรู',base:{hp:690,atk:160,def:64,spd:88},ai:'aoe_stun'},
+    {id:'plague_doctor',name:'แพทย์หน้ากากโรค',icon:'🎭',rarity:'Epic',element:'Dark',role:'Debuffer',target:'all',skill:'ใบสั่งยามรณะ',skillDesc:'พิษหมู่แรง เหมาะดันไฟต์ที่บอสเลือดเยอะ',base:{hp:650,atk:148,def:60,spd:94},ai:'poison'},
+    {id:'sunless_monk',name:'นักพรตไร้ตะวัน',icon:'📿',rarity:'Epic',element:'Light',role:'Support',target:'ally_low',skill:'มนต์แสงซีด',skillDesc:'ฮีลทีมเล็กน้อยและเติม Energy เหมาะทีมเวท',base:{hp:680,atk:134,def:68,spd:100},ai:'team_heal'},
+    {id:'hellhound',name:'เฮลฮาวด์',icon:'🐕‍🦺',rarity:'Epic',element:'Fire',role:'Assassin',target:'back',skill:'เขี้ยวไฟนรก',skillDesc:'ล้วงหลังพร้อม Burn ถ้าฆ่าได้จะเร่งจังหวะทีม',base:{hp:620,atk:192,def:46,spd:136},ai:'execute'},
+    {id:'witch_lantern',name:'ตะเกียงแม่มด',icon:'🏮',rarity:'Epic',element:'Fire',role:'Mage',target:'all',skill:'ไฟแม่มดวนเวียน',skillDesc:'ตีหมู่และ Burn เหมาะฟาร์มด่านลูกน้องหลายตัว',base:{hp:610,atk:178,def:48,spd:98},ai:'dragon_fire'},
+
+    {id:'blood_moon_beast',name:'อสูรจันทร์โลหิต',icon:'🌕',rarity:'Legendary',element:'Dark',role:'Warrior',target:'front',skill:'คำรามจันทร์เลือด',skillDesc:'โจมตีแรงและดูดเลือด ถ้าเป้าหมายติด Curse จะดาเมจสูงขึ้น',base:{hp:980,atk:218,def:92,spd:98},ai:'lifesteal'},
+    {id:'hollow_knight',name:'อัศวินกลวงเปล่า',icon:'♞',rarity:'Legendary',element:'Dark',role:'Tank',target:'front',skill:'เกราะว่างเปล่า',skillDesc:'แทงค์มืดที่ดึงดาเมจและลด Energy ศัตรูเล็กน้อย',base:{hp:1220,atk:150,def:136,spd:76},ai:'guard'},
+    {id:'grave_seraph',name:'เซราฟสุสาน',icon:'🪽',rarity:'Legendary',element:'Light',role:'Support',target:'ally_low',skill:'ปีกเหนือหลุมศพ',skillDesc:'ฮีลทีมแรงและบัฟ DEF เหมาะทีมฟาร์มยาว',base:{hp:820,atk:165,def:86,spd:112},ai:'legend_heal'},
+    {id:'abyss_chimera',name:'คิเมร่าอเวจี',icon:'🦴',rarity:'Legendary',element:'Nature',role:'Warrior',target:'front',skill:'สามเขี้ยวอเวจี',skillDesc:'ตีหลายจังหวะ มีดูดเลือด และทนกว่าตัวดาเมจทั่วไป',base:{hp:1030,atk:210,def:90,spd:104},ai:'triple'},
+
+    {id:'blood_moon_drake',name:'เดรกจันทร์โลหิต',icon:'🐉',rarity:'Mythic',element:'Dark',role:'Mage',target:'all',skill:'คราสเลือดกลืนฟ้า',skillDesc:'โจมตีหมู่หนัก ลด Energy และทำให้ศัตรูเสียจังหวะ Press Turn',base:{hp:1040,atk:285,def:92,spd:118},ai:'void'},
+    {id:'mother_of_ash',name:'มารดาแห่งเถ้า',icon:'👁️',rarity:'Mythic',element:'Fire',role:'Support',target:'ally_low',skill:'กำเนิดใหม่ในเถ้าดำ',skillDesc:'ฮีลทีมระดับสูง เติม Energy และช่วยทีมยืนฟาร์มบอส',base:{hp:980,atk:220,def:95,spd:120},ai:'legend_heal'},
   ];
 
   const enemyTemplates = [
@@ -189,6 +221,48 @@ window.GameData = (() => {
     {id:'f18',from:['stone_golem','verdant_chimera'],result:'worldroot_hydra',title:'รากโลกตื่น',note:'Mythic Tank ธรรมชาติ'},
     {id:'f19',from:['jade_general','sun_squire'],result:'seraph_inquisitor',title:'กองทัพแสงหยก',note:'สายบัฟทีม Legendary'},
     {id:'f20',from:['abyss_lord','eclipse_oni'],result:'void_emperor',title:'ราชาห้วงว่าง',note:'Mythic Mage มืดโจมตีหมู่'},
+
+    // V22: สูตรผสมเพิ่ม 40 รายการ เน้นหลายทอดและเป้าหมายระยะยาว
+    {id:'f21',from:['rot_rat','bone_pup'],result:'grave_hound',title:'ลูกหมาเงาจากซากเน่า',note:'สูตรต้นเกมสำหรับเปิดสายหมาเงา'},
+    {id:'f22',from:['rot_rat','grave_crow'],result:'bone_rat',title:'ฝูงหนูใต้อีกา',note:'ได้ตัวเร็วสายมืดไว้เป็นวัตถุดิบต่อ'},
+    {id:'f23',from:['grave_crow','shadow_thief'],result:'dusk_reaper',title:'เงาปีกยมทูต',note:'อัปสายล้วงหลังเป็นตัวปิดงาน'},
+    {id:'f24',from:['mire_slime','thornling'],result:'moss_ogre',title:'บึงมอสส์มีชีวิต',note:'ได้แทงค์ธรรมชาติระดับ Rare'},
+    {id:'f25',from:['ember_larva','ash_imp'],result:'fire_taoist',title:'อิมป์กลืนตัวอ่อนเถ้า',note:'เปิดสายเวทไฟ Burn หมู่'},
+    {id:'f26',from:['ember_larva','rust_guard'],result:'magma_brute',title:'เกราะสนิมหลอมไฟ',note:'ต่อยอดเป็นแทงค์ไฟ Epic'},
+    {id:'f27',from:['moon_moth','candle_wisp'],result:'silver_acolyte',title:'แมลงจันทร์ใต้ตะเกียง',note:'ได้เมจแสง Rare สำหรับล่าธาตุมืด'},
+    {id:'f28',from:['moon_moth','spark_monk'],result:'thunder_sage',title:'ปีกจันทร์นำอสนี',note:'ผสมเป็นเมจแสงโจมตีหมู่'},
+    {id:'f29',from:['carrion_squire','sun_squire'],result:'hollow_knight',title:'อัศวินสองคำสาบาน',note:'สายแทงค์มืด Legendary'},
+    {id:'f30',from:['carrion_squire','bone_pup'],result:'grave_hound',title:'หมาเฝ้าหลุมศพ',note:'สูตรสำรองสำหรับ Grave Hound'},
+    {id:'f31',from:['blood_leech','herb_healer'],result:'blood_blade',title:'เลือดกับยาสมาน',note:'เปลี่ยนสายฮีลอ่อนเป็น Warrior ดูดเลือด'},
+    {id:'f32',from:['drowned_bride','pond_sprite'],result:'tide_oracle',title:'เจ้าสาวแห่งคำทำนายน้ำ',note:'Support น้ำสำหรับทีมฟาร์ม'},
+    {id:'f33',from:['lantern_jack','ash_imp'],result:'witch_lantern',title:'ตะเกียงแม่มดจุดไฟ',note:'เมจไฟ Epic สำหรับกวาดลูกน้อง'},
+    {id:'f34',from:['moss_ogre','stone_golem'],result:'verdant_chimera',title:'กายหินกินรากไม้',note:'Warrior ธรรมชาติที่ยืนได้นาน'},
+    {id:'f35',from:['silver_acolyte','moon_priest'],result:'seraph_inquisitor',title:'ศาลแสงเงิน',note:'Legendary สายบัฟแสง'},
+    {id:'f36',from:['crypt_butcher','blood_blade'],result:'blood_moon_beast',title:'เขียงใต้จันทร์เลือด',note:'เปิดสาย Blood Moon ระยะยาว'},
+    {id:'f37',from:['mirror_fiend','candle_wisp'],result:'hollow_knight',title:'เกราะในกระจกเทียน',note:'ได้แทงค์มืด Legendary แบบทางเลือก'},
+    {id:'f38',from:['frost_revenant','frost_acolyte'],result:'frost_leviathan',title:'วิญญาณเยือกแข็งลงทะเล',note:'แทงค์น้ำแข็งระดับ Legendary'},
+    {id:'f39',from:['plague_doctor','poison_doctor'],result:'plague_nun',title:'โรงพยาบาลสุสาน',note:'Support มืดสายพิษ/ทีมยืน'},
+    {id:'f40',from:['sunless_monk','moon_priest'],result:'sun_lotus',title:'บัวแสงไร้ตะวัน',note:'ฮีลแสง Legendary'},
+    {id:'f41',from:['hellhound','fire_taoist'],result:'flame_dragonling',title:'เขี้ยวไฟเรียกมังกร',note:'ต่อสายไฟเป็น Legendary Mage'},
+    {id:'f42',from:['witch_lantern','abyss_lord'],result:'necro_mandrake',title:'ตะเกียงเรียกรากสุสาน',note:'Debuffer มืดระดับสูง'},
+    {id:'f43',from:['grave_hound','hellhound'],result:'blood_moon_beast',title:'หมาเงากลืนไฟนรก',note:'อัปสายหมาเป็นอสูรจันทร์เลือด'},
+    {id:'f44',from:['blood_moon_beast','ash_phoenix'],result:'blood_moon_drake',title:'เดรกเกิดจากจันทร์เลือด',note:'Mythic สายโจมตีหมู่/ลด Energy'},
+    {id:'f45',from:['hollow_knight','eclipse_oni'],result:'abyss_chimera',title:'หน้ากากคราสในเกราะกลวง',note:'Legendary ธรรมชาติสายบู๊ทน'},
+    {id:'f46',from:['grave_seraph','seraph_inquisitor'],result:'abyss_seraph',title:'ปีกพิพากษากลับด้าน',note:'Mythic Mage แสงลดจังหวะศัตรู'},
+    {id:'f47',from:['abyss_chimera','worldroot_hydra'],result:'mother_of_ash',title:'รากโลกในครรภ์เถ้า',note:'Mythic Support สำหรับฟาร์มบอสยาว'},
+    {id:'f48',from:['mother_of_ash','blood_moon_drake'],result:'void_emperor',title:'เถ้าเลือดเปิดสูญญะ',note:'ทางลัดสู่ Void Emperor ถ้ามีวัตถุดิบหนัก'},
+    {id:'f49',from:['drowned_bride','moon_moth'],result:'moon_priest',title:'ม่านน้ำใต้จันทร์',note:'ได้ Support แสงเติม Energy'},
+    {id:'f50',from:['lantern_jack','candle_wisp'],result:'spark_monk',title:'ตะเกียงปลุกประกายอสนี',note:'เมจแสง Rare สำหรับต่อสายสายฟ้า'},
+    {id:'f51',from:['mire_slime','river_guard'],result:'frost_acolyte',title:'วารีในบึงเยือกแข็ง',note:'เปลี่ยนแทงค์น้ำเป็นเมจน้ำแข็ง'},
+    {id:'f52',from:['bone_pup','bone_rat'],result:'grave_hound',title:'ฝูงกระดูกล่ากลิ่น',note:'สูตร Grave Hound แบบใช้ตัวมืดเร็ว'},
+    {id:'f53',from:['grave_crow','dusk_reaper'],result:'hollow_knight',title:'ปีกอีกาบนเกราะว่าง',note:'ทางเลือกสู่อัศวินกลวงเปล่า'},
+    {id:'f54',from:['crypt_butcher','verdant_chimera'],result:'abyss_chimera',title:'คิเมร่ากินเขียงสุสาน',note:'สาย Chimera หลายทอด'},
+    {id:'f55',from:['mirror_fiend','void_emperor'],result:'abyss_seraph',title:'กระจกสูญญะสะท้อนสวรรค์',note:'สูตร Mythic แลกเปลี่ยนสาย'},
+    {id:'f56',from:['frost_revenant','tide_oracle'],result:'frost_leviathan',title:'คำทำนายทะเลน้ำแข็ง',note:'แทงค์น้ำแข็งสำหรับบอสกายภาพ'},
+    {id:'f57',from:['plague_doctor','plague_nun'],result:'necro_mandrake',title:'ภาวนาแพทย์โรค',note:'พิษ/คำสาประดับ Legendary'},
+    {id:'f58',from:['sunless_monk','seraph_inquisitor'],result:'grave_seraph',title:'เซราฟไร้ตะวัน',note:'ฮีลทีมระดับ Legendary'},
+    {id:'f59',from:['witch_lantern','ash_phoenix'],result:'mother_of_ash',title:'ฟีนิกซ์ในตะเกียงแม่มด',note:'สาย Support Mythic ไฟ'},
+    {id:'f60',from:['blood_moon_drake','abyss_seraph'],result:'celestial_sword',title:'คราสเลือดตัดปีกอเวจี',note:'สูตรแลก Mythic เป็นตัวล้วงหลังระดับสูง'},
   ];
 
   return { rarities, elements, roles, heroes, enemyTemplates, bossTemplates, equipmentTypes, equipmentRarities, stages:buildStages(), dailyQuests, fusionRecipes };

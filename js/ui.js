@@ -480,7 +480,7 @@ window.UI = (() => {
     const owned = S().state.roster || {};
     if(!recipes.length) return '';
     return `<section class="panel recipe-book">
-      <div class="section-title"><h3>ตำราผสม 20 รายการ</h3><small>สูตรเฉพาะ = การันตีผลลัพธ์ / ไม่มีสูตร = สุ่มได้</small></div>
+      <div class="section-title"><h3>ตำราผสม ${recipes.length} รายการ</h3><small>สูตรเฉพาะ = การันตีผลลัพธ์ / ไม่มีสูตร = สุ่มได้</small></div>
       <div class="recipe-grid">
         ${recipes.map(r=>{
           const a = S().heroDef(r.from[0]);
@@ -528,7 +528,7 @@ window.UI = (() => {
     });
     const seenCount = D().heroes.filter(h=>S().codexSeen(h.id)).length;
     return `<div class="screen">
-      <div class="page-title"><div><h2>Monster Codex</h2><p>สารบัญมอนสเตอร์ทั้งหมด ดูตัวที่เคยพบ สกิล บทบาท ธาตุ และสูตรผสมที่เกี่ยวข้อง</p></div><b class="gold">${seenCount}/${D().heroes.length}</b></div>
+      <div class="page-title"><div><h2>Monster Codex</h2><p>สารบัญมอนสเตอร์ทั้งหมด ดูตัวที่เคยพบ สกิล บทบาท ธาตุ และสูตรผสมที่เกี่ยวข้อง ตอนนี้มีมอนสเตอร์และสายผสมเพิ่มขึ้น</p></div><b class="gold">${seenCount}/${D().heroes.length}</b></div>
       <section class="panel">${rosterControls()}</section>
       <section class="panel"><div class="section-title"><h3>มอนสเตอร์ทั้งหมด</h3><small>${heroes.length} รายการ</small></div><div class="stack">${heroes.map(codexCard).join('')}</div></section>
     </div>`;
@@ -559,7 +559,7 @@ window.UI = (() => {
   function manualScreen(){
     return `
       <div class="screen manual-screen">
-        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V21 Scroll Fix: Responsive Battle + Favorite + Codex + Auto Farm + PWA</p></div></div>
+        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V22 Bestiary: เพิ่ม Monster/Fusion หลายทอด + Scroll Fix</p></div></div>
         <section class="panel manual-hero">
           <div class="section-title"><h3>เป้าหมายใหม่</h3><small>Endless Loop ถึงด่าน 3000</small></div>
           <p class="muted">ด่านจะสร้างต่อเนื่องและยากขึ้นเรื่อย ๆ จนถึง <b class="gold">ด่าน 3000</b> ถ้าติดด่าน ให้ฟาร์มด่านที่ผ่านได้ อัปเลเวล เปิดกาชา ผสมมอนสเตอร์ และ Rebirth เพื่อเพิ่มพลังถาวร</p>
@@ -640,7 +640,7 @@ window.UI = (() => {
           <div class="section-title"><h3>ระบบ Final ที่ควรรู้</h3><small>Quality of Life</small></div>
           <div class="guide-grid">
             <div class="guide-card"><b>Favorite / Lock</b><p>กด Favorite ที่การ์ดมอนสเตอร์เพื่อกันเอาไปผสมโดยไม่ตั้งใจ ตัวที่ล็อกจะไม่ถูก Auto Fusion และเลือกผสมไม่ได้</p></div>
-            <div class="guide-card"><b>Monster Codex</b><p>หน้า “ตำรา” รวมมอนสเตอร์ทั้งหมด ดูตัวที่เคยพบ สกิล ธาตุ บทบาท และสูตรผสมที่เกี่ยวข้อง</p></div>
+            <div class="guide-card"><b>Monster Codex</b><p>หน้า “ตำรา” รวมมอนสเตอร์ทั้งหมด ดูตัวที่เคยพบ สกิล ธาตุ บทบาท และสูตรผสมที่เกี่ยวข้อง V22 เพิ่มมอนสเตอร์ใหม่ 25 ตัว และสูตรผสมรวม 60 สูตร</p></div>
             <div class="guide-card"><b>Filter / Sort</b><p>หน้า Team, คลัง และ Codex มีตัวกรองตามบทบาท ธาตุ ระดับ และ Favorite พร้อมเรียงตาม Power, Level, Rebirth หรือ Rarity</p></div>
             <div class="guide-card"><b>Auto Farm</b><p>เลือกฟาร์มด่านเดิมจนแพ้ หรือกำหนด 10/50 รอบได้ ใช้กับปุ่มความเร็ว ฟาร์ม x4/x8 เพื่อเก็บทรัพยากรเร็วขึ้น</p></div>
             <div class="guide-card"><b>Battle Summary</b><p>หลังสู้จะมีสรุป MVP, Damage, Heal, ตัวรับดาเมจ และสาเหตุที่แพ้ เพื่อช่วยปรับทีม</p></div>
