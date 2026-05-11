@@ -26,7 +26,7 @@ window.UI = (() => {
     if(screen !== 'battle') lastBrowseScreen = screen;
     S().state.screen = screen;
     if(battleRunning && screen !== 'battle') battleWidgetExpanded = false;
-    if(screen === 'battle') battleWidgetExpanded = false;
+    if(screen === 'battle') battleWidgetExpanded = true;
     S().save();
     render();
     syncBattleOverlayMode();
@@ -38,21 +38,20 @@ window.UI = (() => {
     const overlay = document.getElementById('battleOverlay');
     if(!overlay) return;
     const isDock = battleRunning && currentScreen() !== 'battle';
-    // V33: เอาโหมดครึ่งหน้าต่างออก เหลือแค่ 2 สถานะ: กล่องย่อ หรือ Battle เต็มจอ
-    const isExpandedDock = false;
-    const isCollapsedDock = isDock;
+    const isExpandedDock = isDock && battleWidgetExpanded;
+    const isCollapsedDock = isDock && !battleWidgetExpanded;
     overlay.classList.toggle('dock-mode', isDock);
-    overlay.classList.toggle('expanded-dock', false);
+    overlay.classList.toggle('expanded-dock', isExpandedDock);
     overlay.classList.toggle('collapsed-dock', isCollapsedDock);
     overlay.classList.toggle('full-mode', battleRunning && !isDock);
     const returnBtn = document.getElementById('returnBattleBtn');
-    if(returnBtn) returnBtn.classList.toggle('hidden', true);
+    if(returnBtn) returnBtn.classList.toggle('hidden', !isDock);
     const expandBtn = document.getElementById('expandBattleBtn');
     if(expandBtn) expandBtn.classList.toggle('hidden', !isCollapsedDock);
     const minimizeBtn = document.getElementById('minimizeBattleBtn');
-    if(minimizeBtn) minimizeBtn.classList.toggle('hidden', !(battleRunning && !isDock));
+    if(minimizeBtn) minimizeBtn.classList.toggle('hidden', !(isExpandedDock || (battleRunning && !isDock)));
     const browseNote = document.getElementById('battleBrowseNote');
-    if(browseNote) browseNote.classList.add('hidden');
+    if(browseNote) browseNote.classList.toggle('hidden', !isExpandedDock);
   }
 
   function scrollGameToTop(){
@@ -84,7 +83,7 @@ window.UI = (() => {
         <div class="brand-row">
           <div class="logo">
             <div class="logo-mark">🩸</div>
-            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V33</small></div>
+            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V34</small></div>
           </div>
           <button class="btn small ghost" data-action="save">Save</button>
         </div>
@@ -397,23 +396,25 @@ window.UI = (() => {
     const team = S().state.team;
     const front = [team[0],team[1]], back=[team[2],team[3],team[4]];
     return `
-      <div class="screen">
-        <div class="page-title"><div><h2>จัดทีม</h2><p>แตะตัวละครด้านล่างเพื่อใส่/ถอดทีม ตอนนี้การ์ดจะแสดง HP / ATK / DEF / SPD แล้ว</p></div><b class="gold">Power ${fmt(S().teamPower())}</b></div>
-        <section class="panel">
-          <div class="slots">
+      <div class="screen manager-lite-screen">
+        <div class="page-title"><div><h2>จัดทีม</h2><p>เลือกตำแหน่งจากช่องทีม แล้วแตะปีศาจเพื่อจัดทีม เมนูคำสั่งจะสไลด์ขึ้นด้านล่าง</p></div><b class="gold">Power ${fmt(S().teamPower())}</b></div>
+        <section class="panel team-board-panel">
+          <div class="section-title"><h3>ทีมปัจจุบัน</h3><small>Front 2 / Back 3</small></div>
+          <div class="slots compact-slots">
             <div class="slot-row"><div class="slot-label">Front</div><div class="slot-list">${front.map((id,i)=>slotCard(id,i)).join('')}</div></div>
             <div class="slot-row"><div class="slot-label">Back</div><div class="slot-list back">${back.map((id,i)=>slotCard(id,i+2)).join('')}</div></div>
           </div>
-          <div class="grid2" style="margin-top:12px">
+          <div class="action-strip">
             <button class="btn green" data-action="autoTeam">👥 จัดทีมอัตโนมัติ</button>
-            <button class="btn green" data-action="autoUpgrade">⬆️ อัปเกรดอัตโนมัติ</button>
+            <button class="btn ghost" data-action="clearTeam">ถอดทีมทั้งหมด</button>
+            <button class="btn ghost" data-screen="heroes">จัดการปีศาจ</button>
           </div>
         </section>
         ${teamPresetPanel()}
-        <section class="panel">
-          <div class="section-title"><h3>คลังตัวละคร</h3><small>${roster.length} ตัว</small></div>
+        <section class="panel compact-manager-panel">
+          <div class="section-title"><h3>เลือกปีศาจเข้าทีม</h3><small>${roster.length} ตัว</small></div>
           ${rosterControls()}
-          <div class="stack">${roster.map(id=>unitCard(id,{teamPick:true})).join('')}</div>
+          <div class="compact-monster-list">${roster.map(id=>compactHeroCard(id,{mode:'team'})).join('') || '<div class="empty">ไม่พบปีศาจตามตัวกรอง</div>'}</div>
         </section>
       </div>`;
   }
@@ -438,34 +439,34 @@ window.UI = (() => {
         (inst.level>=S().maxHeroLevel() && S().state.resources.gold>=rb.gold && S().state.resources.dust>=rb.dust);
     }).length;
     const inv = S().state.inventory.slice().sort((a,b)=>D().equipmentRarities[b.rarity].score-D().equipmentRarities[a.rarity].score || b.value-a.value);
+    const showInv = !!S().state.settings?.showInventory;
     return `
       <div class="screen monster-manager-screen">
-        <div class="page-title"><div><h2>จัดการปีศาจ</h2><p>หน้ารวมสำหรับเลือกทีม ล็อกตัวสำคัญ อัปเลเวล และดูสเตตัสแบบเร็ว</p></div></div>
-        <section class="panel manager-overview">
+        <div class="page-title"><div><h2>จัดการปีศาจ</h2><p>รายการสั้นลง แตะปีศาจ 1 ครั้งเพื่อเปิดเมนูสไลด์สำหรับอัปเกรด ใส่ทีม ล็อก หรือผสม</p></div></div>
+        <section class="panel manager-overview compact-overview">
           <div class="manager-stats">
             <div><span>ทั้งหมด</span><b>${allCount}</b></div>
             <div><span>ในทีม</span><b>${teamCount}/5</b></div>
             <div><span>ล็อกไว้</span><b>${favCount}</b></div>
             <div><span>อัปได้</span><b>${upgradeableCount}</b></div>
           </div>
-          <div class="manager-actions">
+          <div class="manager-actions compact-actions">
             <button class="btn green" data-action="autoTeam">👥 จัดทีมอัตโนมัติ</button>
-            <button class="btn green" data-action="autoUpgrade">⬆️ อัปเกรดทีม</button>
+            <button class="btn green" data-action="autoUpgrade">⬆️ อัปทีม</button>
             <button class="btn ghost" data-action="equipBest">🎒 ใส่ของดีที่สุด</button>
-            <button class="btn ghost" data-screen="fusion">🧬 ไปผสม</button>
-            <button class="btn ghost" data-action="autoSellLow">🧹 ย่อยของต่ำ</button>
-            <button class="btn ghost" data-action="autoFusionLow10">🧬 Auto Fusion ต่ำ</button>
+            <button class="btn ghost" data-action="toggleInventory">${showInv?'ซ่อนอุปกรณ์':'ดูอุปกรณ์'}</button>
           </div>
-          <div class="muted tip-line">แนะนำ: กด <b>เลือกอัป</b> ที่การ์ดปีศาจ แล้วใช้แผงด้านล่างเพื่ออัปเกรดเฉพาะตัวนั้น</div>
         </section>
         ${teamPresetPanel()}
         ${farmToolsPanel()}
-        ${selectedUpgradePanel()}
-        <section class="panel"><div class="section-title"><h3>รายชื่อปีศาจ</h3><small>${roster.length}/${allCount} ตัว | Max Lv.${S().maxHeroLevel()}</small></div>${rosterControls()}<div class="monster-list">${roster.map(id=>monsterManageCard(id)).join('') || '<div class="empty">ไม่พบมอนสเตอร์ตามตัวกรอง</div>'}</div></section>
-        <section class="panel"><div class="section-title"><h3>อุปกรณ์</h3><small>${inv.length} ชิ้น</small></div><div class="stack">${inv.length?inv.map(itemCard).join(''):'<div class="empty">ยังไม่มีอุปกรณ์ ฟาร์มด่านเพื่อหาเพิ่ม</div>'}</div></section>
+        <section class="panel compact-manager-panel sticky-manager-panel">
+          <div class="section-title"><h3>รายชื่อปีศาจ</h3><small>${roster.length}/${allCount} ตัว | แตะเพื่อจัดการ</small></div>
+          ${rosterControls()}
+          <div class="compact-monster-list">${roster.map(id=>compactHeroCard(id,{mode:'manage'})).join('') || '<div class="empty">ไม่พบปีศาจตามตัวกรอง</div>'}</div>
+        </section>
+        ${showInv ? `<section class="panel"><div class="section-title"><h3>อุปกรณ์</h3><small>${inv.length} ชิ้น</small></div><div class="compact-inventory-list">${inv.length?inv.map(itemCard).join(''):'<div class="empty">ยังไม่มีอุปกรณ์ ฟาร์มด่านเพื่อหาเพิ่ม</div>'}</div></section>` : ''}
       </div>`;
   }
-
 
   function selectedUpgradePanel(){
     const id = S().state.settings?.selectedHero || Object.keys(S().state.roster || {})[0];
@@ -583,6 +584,76 @@ window.UI = (() => {
     </div>`;
   }
 
+
+  function compactHeroCard(id,opt={}){
+    const def = S().heroDef(id), inst = S().state.roster[id];
+    if(!def || !inst) return '';
+    const st = S().heroStats(id);
+    const role = D().roles[def.role], elem = D().elements[def.element];
+    const inTeam = S().state.team.includes(id);
+    const inFusion = (S().state.fusion?.selected || []).includes(id);
+    const fav = S().isFavorite(id);
+    const selected = S().state.settings?.selectedHero === id;
+    const needShard = S().shardsNeeded(inst.stars);
+    const tags = [inTeam?'ทีม':'',inFusion?'ผสม':'',fav?'ล็อก':''].filter(Boolean).map(x=>`<span class="tag good">${x}</span>`).join('');
+    return `<button class="compact-monster-card rarity-${def.rarity} ${selected?'selected':''} ${inTeam?'in-team':''} ${inFusion?'fusion-selected':''}" data-action="openMonsterMenu" data-id="${id}" data-mode="${opt.mode||''}">
+      <div class="rarity-line"></div>
+      <div class="unit-icon">${def.icon}</div>
+      <div class="compact-monster-info">
+        <div class="compact-title"><b>${fav?'🔒 ':''}${h(def.name)}</b> ${rarityBadge(def.rarity)} ${tags}</div>
+        <div class="unit-meta">${role.icon} ${role.label} | ${elem.icon} ${elem.label} | Lv.${inst.level}/${S().maxHeroLevel()} | ★${inst.stars} | R+${inst.rebirth||0}</div>
+        <div class="compact-stats">HP ${fmt(st.hp)} · ATK ${fmt(st.atk)} · DEF ${fmt(st.def)} · SPD ${fmt(st.spd)}</div>
+      </div>
+      <div class="compact-power"><small>Power</small><b>${fmt(st.power)}</b></div>
+    </button>`;
+  }
+
+  function monsterActionSheet(){
+    if(!S().state.settings?.monsterMenuOpen) return '';
+    const id = S().state.settings?.selectedHero;
+    if(!id || !S().state.roster[id]) return '';
+    const def = S().heroDef(id), inst = S().state.roster[id], st = S().heroStats(id);
+    if(!def || !inst) return '';
+    const role = D().roles[def.role], elem = D().elements[def.element];
+    const inTeam = S().state.team.includes(id);
+    const inFusion = (S().state.fusion?.selected || []).includes(id);
+    const fav = S().isFavorite(id);
+    const levelCost = S().levelCost(inst);
+    const canLevel = inst.level < S().maxHeroLevel() && S().state.resources.gold >= levelCost;
+    const needShard = S().shardsNeeded(inst.stars);
+    const canStar = inst.stars < 6 && inst.shards >= needShard && S().state.resources.dust >= S().starCost(inst);
+    const rbCost = S().rebirthCost(inst);
+    const canRebirth = inst.level >= S().maxHeroLevel() && S().state.resources.gold >= rbCost.gold && S().state.resources.dust >= rbCost.dust;
+    const canFusion = !inTeam && !fav;
+    return `<div class="monster-sheet-backdrop" data-action="closeMonsterMenu"></div>
+      <aside class="monster-sheet rarity-${def.rarity}">
+        <div class="sheet-grip"></div>
+        <div class="sheet-head">
+          <div class="unit-icon big">${def.icon}</div>
+          <div class="sheet-title">
+            <div><b>${fav?'🔒 ':''}${h(def.name)}</b> ${rarityBadge(def.rarity)} ${inTeam?'<span class="tag good">ทีม</span>':''} ${inFusion?'<span class="tag good">ผสม</span>':''}</div>
+            <small>${role.icon} ${role.label} | ${elem.icon} ${elem.label} | Lv.${inst.level}/${S().maxHeroLevel()} | ★${inst.stars} | R+${inst.rebirth||0}</small>
+          </div>
+          <button class="btn small ghost" data-action="closeMonsterMenu">ปิด</button>
+        </div>
+        ${statGrid(st)}
+        <div class="sheet-skill"><b>${h(def.skill)}</b><span>${h(def.skillDesc)}</span></div>
+        <div class="sheet-costs">Shard ${fmt(inst.shards)}/${fmt(needShard)} | Lv+ 🪙 ${fmt(levelCost)} | ★+ ✨ ${fmt(S().starCost(inst))} | Rebirth 🪙 ${fmt(rbCost.gold)} ✨ ${fmt(rbCost.dust)}</div>
+        <div class="sheet-actions">
+          <button class="btn primary" data-action="upgradeOneHero" data-id="${id}">⬆️ อัปตัวนี้จนหมด</button>
+          <button class="btn green" data-action="levelUp" data-id="${id}" ${canLevel?'':'disabled'}>Lv +1</button>
+          <button class="btn green" data-action="levelUp10" data-id="${id}" ${canLevel?'':'disabled'}>Lv +10</button>
+          <button class="btn green" data-action="levelUpMax" data-id="${id}" ${canLevel?'':'disabled'}>Lv Max</button>
+          <button class="btn ${canStar?'primary':'ghost'}" data-action="starUp" data-id="${id}" ${canStar?'':'disabled'}>★ อัปดาว</button>
+          <button class="btn ${canRebirth?'primary':'ghost'}" data-action="rebirthHero" data-id="${id}" ${canRebirth?'':'disabled'}>Rebirth</button>
+          <button class="btn ghost" data-action="toggleTeam" data-id="${id}">${inTeam?'ถอดทีม':'ใส่ทีม'}</button>
+          <button class="btn ${canFusion?'ghost':'ghost'}" data-action="toggleFusion" data-id="${id}" ${canFusion?'':'disabled'}>${inFusion?'เอาออกจากผสม':'เลือกผสม'}</button>
+          <button class="btn ghost" data-action="toggleFavorite" data-id="${id}">${fav?'🔓 ปลดล็อก':'🔒 ล็อก'}</button>
+          <button class="btn ghost" data-action="closeMonsterMenu">เสร็จแล้ว</button>
+        </div>
+      </aside>`;
+  }
+
   function equipmentLine(inst){
     const parts = Object.keys(D().equipmentTypes).map(type=>{
       const item = S().getEquipment(inst.equipped?.[type]);
@@ -629,36 +700,39 @@ window.UI = (() => {
 
   function fusionScreen(){
     const selected = S().state.fusion?.selected || [];
-    const spare = Object.keys(S().state.roster)
-      .filter(id=>!S().state.team.includes(id) && !S().isFavorite(id))
+    const spare = rosterList()
+      .filter(id=>S().state.roster[id] && !S().state.team.includes(id) && !S().isFavorite(id))
       .sort((a,b)=>S().heroStats(a).power-S().heroStats(b).power);
     const preview = S().fusionPreview();
     const last = S().state.fusion?.last;
+    const showRecipes = !!S().state.settings?.showFusionRecipes;
     return `
-      <div class="screen">
-        <div class="page-title"><div><h2>ห้องหลอมปีศาจ</h2><p>เลือกตัวสำรอง 2 ตัวอะไรก็ได้ ถ้ามีสูตรจะได้ผลลัพธ์การันตี ถ้าไม่มีสูตรจะเป็น Chaos Fusion แบบสุ่ม</p></div></div>
-        <section class="panel fusion-lab">
+      <div class="screen fusion-manager-screen">
+        <div class="page-title"><div><h2>ห้องหลอมปีศาจ</h2><p>แตะปีศาจสำรองเพื่อเปิดเมนู แล้วกด “เลือกผสม” ไม่ต้องเลื่อนหาปุ่มยาว ๆ</p></div></div>
+        <section class="panel fusion-lab fusion-sticky-panel">
           <div class="section-title"><h3>Fusion Preview</h3><small>${selected.length}/2</small></div>
-          <div class="fusion-grid">
+          <div class="fusion-grid compact-fusion-grid">
             ${fusionSlot(selected[0], 'ตัวที่ 1')}
             <div class="fusion-plus">＋</div>
             ${fusionSlot(selected[1], 'ตัวที่ 2')}
           </div>
-          <div class="fusion-result">
+          <div class="fusion-result compact-fusion-result">
             ${preview.ok ? fusionPreviewHtml(preview) : `<div class="empty">${h(preview.msg)}</div>`}
           </div>
-          <div class="grid3" style="margin-top:10px">
+          <div class="action-strip">
             <button class="btn primary" data-action="doFusion" ${preview.ok?'':'disabled'}>🧬 ผสมเลย</button>
             <button class="btn green" data-action="autoFusion">⚡ ผสมอัตโนมัติ</button>
             <button class="btn ghost" data-action="clearFusion">ล้าง</button>
+            <button class="btn ghost" data-action="toggleFusionRecipes">${showRecipes?'ซ่อนสูตร':'ดูสูตร'}</button>
           </div>
-          <p class="muted">กันพลาด: ตัวที่อยู่ในทีมจะผสมไม่ได้ ต้องถอดทีมก่อน | V21: ปรับ scroll มือถือ/คอม + ไม่มีสูตรก็ผสมได้ทุกคู่แบบสุ่ม / Favorite จะถูกกันไม่ให้ผสม</p>
+          <p class="muted tip-line">ตัวที่อยู่ในทีม/ล็อก Favorite จะไม่ถูกผสม เพื่อกันพลาด</p>
         </section>
         ${last ? lastFusionHtml(last) : ''}
-        ${fusionRecipeBook()}
-        <section class="panel">
-          <div class="section-title"><h3>ตัวสำรองที่ผสมได้</h3><small>${spare.length} ตัว</small></div>
-          <div class="stack">${spare.length?spare.map(id=>unitCard(id,{fusionPick:true})).join(''):'<div class="empty">ยังไม่มีตัวสำรองที่ผสมได้ เปิดกาชาเพิ่ม ถอดตัวจากทีม หรือปลด Favorite ก่อน</div>'}</div>
+        ${showRecipes ? fusionRecipeBook() : ''}
+        <section class="panel compact-manager-panel">
+          <div class="section-title"><h3>ตัวสำรองที่ผสมได้</h3><small>${spare.length} ตัว | ใช้ตัวกรองด้านล่างได้</small></div>
+          ${rosterControls()}
+          <div class="compact-monster-list">${spare.length?spare.map(id=>compactHeroCard(id,{mode:'fusion'})).join(''):'<div class="empty">ยังไม่มีตัวสำรองที่ผสมได้ เปิดกาชาเพิ่ม ถอดตัวจากทีม หรือปลด Favorite ก่อน</div>'}</div>
         </section>
       </div>`;
   }
@@ -830,7 +904,6 @@ window.UI = (() => {
             <div class="guide-card"><b>Ticket</b><p>ได้จากชนะสะสมทุก 7 ครั้ง, First Clear บอสด่านสำคัญ และ Daily Quest ใช้เปิดกาชา 1 ใบต่อ 1 ครั้ง</p></div>
             <div class="guide-card"><b>Dust</b><p>ได้จากชนะด่าน, ฟาร์มด่านซ้ำ, Idle Reward และ Daily Quest ใช้สำหรับอัปดาว, ผสมมอนสเตอร์ และ Rebirth</p></div>
             <div class="guide-card"><b>Shard</b><p>ได้จากการเปิดกาชาหรือผสมแล้วได้มอนสเตอร์ซ้ำ Shard ผูกกับมอนสเตอร์ตัวนั้น ใช้สำหรับอัปดาว</p></div>
-            <div class="guide-card"><b>ตัวซ้ำ</b><p>ถ้าสุ่มหรือผสมได้มอนสเตอร์ที่มีอยู่แล้ว ระบบจะไม่เพิ่มตัวใหม่ในคลัง แต่จะเปลี่ยนเป็น Shard ของมอนสเตอร์ตัวนั้นทันที ยิ่งระดับสูง Shard ที่ได้ยิ่งมาก ใช้กดอัปดาวในหน้าคลัง</p></div>
             <div class="guide-card"><b>Equipment</b><p>ดรอปจากการชนะด่าน ยิ่งด่านสูงหรือเป็นบอส โอกาสได้ของระดับสูงยิ่งดี ใช้เพิ่ม HP / ATK / DEF / SPD</p></div>
             <div class="guide-card"><b>Level</b><p>เกมนี้ไม่มี EXP แยกต่างหาก การเพิ่มเลเวลใช้ Gold โดยตรง ถ้าติดด่านให้ฟาร์ม Gold แล้วอัปเลเวลตัวหลัก</p></div>
             <div class="guide-card"><b>Rebirth Stack</b><p>ได้จากมอนสเตอร์ Lv.100 แล้วกด Rebirth ในหน้าคลัง สแต็กนี้เพิ่มค่าสเตตัสถาวรและใช้ไต่ด่านลึกขึ้น</p></div>
@@ -866,7 +939,7 @@ window.UI = (() => {
           <div class="section-title"><h3>ระบบ Final ที่ควรรู้</h3><small>Quality of Life</small></div>
           <div class="guide-grid">
             <div class="guide-card"><b>Favorite / Lock</b><p>กด Favorite ที่การ์ดมอนสเตอร์เพื่อกันเอาไปผสมโดยไม่ตั้งใจ ตัวที่ล็อกจะไม่ถูก Auto Fusion และเลือกผสมไม่ได้</p></div>
-            <div class="guide-card"><b>Monster Codex</b><p>หน้า “ตำรา” รวมมอนสเตอร์ทั้งหมด ดูตัวที่เคยพบ สกิล ธาตุ บทบาท และสูตรผสมที่เกี่ยวข้อง V33 มีมอนสเตอร์ 67 ตัว สูตรผสมรวม 60 สูตร ต่อสู้แบบ background, Team Preset, Auto Sell และ Auto Fusion วัตถุดิบต่ำ</p></div>
+            <div class="guide-card"><b>Monster Codex</b><p>หน้า “ตำรา” รวมมอนสเตอร์ทั้งหมด ดูตัวที่เคยพบ สกิล ธาตุ บทบาท และสูตรผสมที่เกี่ยวข้อง V34 ปรับหน้าจัดการปีศาจให้สั้นลง ใช้เมนูสไลด์สำหรับคำสั่งหลัก ลดการเลื่อนยาว</p></div>
             <div class="guide-card"><b>Filter / Sort</b><p>หน้า Team, คลัง และ Codex มีตัวกรองตามบทบาท ธาตุ ระดับ และ Favorite พร้อมเรียงตาม Power, Level, Rebirth หรือ Rarity</p></div>
             <div class="guide-card"><b>Target Upgrade</b><p>หน้า คลัง มีปุ่ม เลือกอัป บนการ์ดปีศาจทุกตัว แล้วใช้แผงใหญ่ด้านบนเพื่ออัป Lv +1, +10, สูงสุดเท่าที่จ่ายไหว, อัปดาว หรือ Rebirth เฉพาะตัวนั้น</p></div>
             <div class="guide-card"><b>Team Preset</b><p>บันทึกทีมได้ 3 ชุด เหมาะสำหรับทีมฟาร์ม ทีมบอส และทีมทดลอง สลับได้จากหน้า ทีม หรือ คลัง</p></div>
@@ -909,7 +982,7 @@ window.UI = (() => {
   function render(){
     const screen = currentScreen();
     const map = {home, battle:battleScreen, team:teamScreen, fusion:fusionScreen, gacha:gachaScreen, heroes:heroesScreen, codex:codexScreen, manual:manualScreen};
-    app().innerHTML = hud() + (map[screen]||home)() + nav();
+    app().innerHTML = hud() + (map[screen]||home)() + nav() + monsterActionSheet();
     bind();
     syncBattleOverlayMode();
   }
@@ -923,7 +996,7 @@ window.UI = (() => {
   }
 
   function handleAction(action, data, btn){
-    const safeWhileBattle = new Set(['setSpeed','speed','stopAuto','save','exportSave','copyExport','exportBackup','setHeroFilter','setHeroSort','applyHeroSearch','clearHeroSearch']);
+    const safeWhileBattle = new Set(['setSpeed','speed','stopAuto','save','exportSave','copyExport','exportBackup','setHeroFilter','setHeroSort','applyHeroSearch','clearHeroSearch','openMonsterMenu','closeMonsterMenu']);
     if(battleRunning && !safeWhileBattle.has(action)) return toast('กำลังต่อสู้อยู่: ดูหน้าอื่นได้ แต่ยังแก้ทีม/อัปเกรด/ผสมไม่ได้จนจบไฟต์');
     switch(action){
       case 'save': S().save(); toast('บันทึกเกมแล้ว'); break;
@@ -943,6 +1016,11 @@ window.UI = (() => {
       case 'toggleFavorite': { const r=S().toggleFavorite(data.id); toast(r.ok?(r.locked?'ล็อก Favorite แล้ว':'ปลดล็อก Favorite แล้ว'):r.msg); render(); break; }
       case 'setHeroFilter': S().state.settings.heroFilter = data.value || 'all'; S().save(); render(); break;
       case 'setHeroSort': S().state.settings.heroSort = data.value || 'power'; S().save(); render(); break;
+      case 'openMonsterMenu': { const r=S().setSelectedHero(data.id); if(!r.ok) toast(r.msg); else S().state.settings.monsterMenuOpen = true; S().save(); render(); break; }
+      case 'closeMonsterMenu': S().state.settings.monsterMenuOpen = false; S().save(); render(); break;
+      case 'clearTeam': S().state.team = [null,null,null,null,null]; S().save(); toast('ถอดทีมทั้งหมดแล้ว'); render(); break;
+      case 'toggleInventory': S().state.settings.showInventory = !S().state.settings.showInventory; S().save(); render(); break;
+      case 'toggleFusionRecipes': S().state.settings.showFusionRecipes = !S().state.settings.showFusionRecipes; S().save(); render(); break;
       case 'applyHeroSearch': { const box=document.getElementById('heroSearchBox'); S().state.settings.heroSearch = box ? box.value.trim() : ''; S().save(); render(); break; }
       case 'clearHeroSearch': S().state.settings.heroSearch = ''; S().save(); render(); break;
       case 'smartBattle': startBattle(); break;
@@ -1184,7 +1262,7 @@ window.UI = (() => {
   function wait(ms){ return new Promise(resolve=>setTimeout(resolve,ms)); }
 
   function openBattleFullscreenOnStart(){
-    battleWidgetExpanded = false;
+    battleWidgetExpanded = true;
     if(currentScreen() !== 'battle'){
       S().state.screen = 'battle';
       S().save();
@@ -1207,14 +1285,15 @@ window.UI = (() => {
     const returnBtn = document.getElementById('returnBattleBtn');
     if(returnBtn) returnBtn.onclick = () => setScreen('battle');
     const expandBtn = document.getElementById('expandBattleBtn');
-    if(expandBtn) expandBtn.onclick = (e) => { e.stopPropagation(); setScreen('battle'); };
+    if(expandBtn) expandBtn.onclick = (e) => { e.stopPropagation(); battleWidgetExpanded = true; syncBattleOverlayMode(); };
     const minimizeBtn = document.getElementById('minimizeBattleBtn');
     if(minimizeBtn) minimizeBtn.onclick = (e) => { e.stopPropagation(); minimizeBattleToDock(); };
     const stageBox = overlay.querySelector('.battle-stage');
     if(stageBox) stageBox.onclick = (e) => {
       if(e.target && e.target.closest && e.target.closest('button')) return;
-      if(battleRunning && currentScreen() !== 'battle'){
-        setScreen('battle');
+      if(battleRunning && currentScreen() !== 'battle' && !battleWidgetExpanded){
+        battleWidgetExpanded = true;
+        syncBattleOverlayMode();
       }
     };
     document.getElementById('battleTitle').textContent = sim.stage.title;

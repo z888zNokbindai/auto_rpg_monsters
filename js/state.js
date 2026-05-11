@@ -1,5 +1,5 @@
 window.GameState = (() => {
-  const KEY = 'abyss_grimoire_v33_save';
+  const KEY = 'abyss_grimoire_v34_save';
   const OLD_KEYS = ['abyss_grimoire_v32_save','abyss_grimoire_v31_save','abyss_grimoire_v30_save','abyss_grimoire_v28_save','abyss_grimoire_v27_save','abyss_grimoire_v26_save','abyss_grimoire_v25_save','abyss_grimoire_v24_save','abyss_grimoire_v23_save','abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
   const G = () => window.GameData;
   let state = null;
@@ -20,7 +20,7 @@ window.GameState = (() => {
     const starterPool = G().heroes.filter(h => ['Common','Rare'].includes(h.rarity));
     const starter = starterPool[Math.floor(Math.random() * starterPool.length)] || G().heroes[0];
     const s = {
-      version:32,
+      version:34,
       screen:'home',
       resources:{gold:420,gems:180,tickets:1,dust:60},
       campaign:{selected:1,unlocked:1,highestCleared:0,clears:{}},
@@ -68,7 +68,7 @@ window.GameState = (() => {
       state.version = 16;
     }
     if(Number(state.version || 0) < 30){
-      state.version = 32;
+      state.version = 34;
     }
     state.resources ||= {gold:0,gems:0,tickets:0,dust:0};
     state.campaign ||= {selected:1,unlocked:1,highestCleared:0,clears:{}};
@@ -106,7 +106,7 @@ window.GameState = (() => {
       state.starter.freeRollsLeft = Math.max(Number(state.starter.freeRollsLeft||0), Math.max(0, 5 - usedFree));
     }
     Object.values(state.roster || {}).forEach(inst=>{
-      inst.level = Math.max(1, Math.min(maxHeroLevel(), Number(inst.level || 1))); // V30 max Lv.100
+      inst.level = Math.max(1, Math.min(maxHeroLevel(), Number(inst.level || 1))); // V34 max Lv.100
       inst.stars = Math.max(1, Math.min(6, Number(inst.stars || 1)));
       inst.rebirth = Math.max(0, Number(inst.rebirth || 0));
       inst.shards = Math.max(0, Number(inst.shards || 0));
@@ -165,7 +165,7 @@ window.GameState = (() => {
     normalize();
     const payload = {
       game:'Abyss Grimoire',
-      version:32,
+      version:34,
       exportedAt:new Date().toISOString(),
       save:state
     };
@@ -189,7 +189,7 @@ window.GameState = (() => {
       }
       state = incoming;
       backupNow();
-      state.version = 32;
+      state.version = 34;
       normalize();
       save();
       return {ok:true,msg:'นำเข้าเซฟสำเร็จ'};
