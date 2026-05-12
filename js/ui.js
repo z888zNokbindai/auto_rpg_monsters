@@ -96,7 +96,7 @@ window.UI = (() => {
         <div class="brand-row">
           <div class="logo">
             <div class="logo-mark">🩸</div>
-            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V43</small></div>
+            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V44</small></div>
           </div>
           <button class="btn small ghost" data-action="save">Save</button>
         </div>
@@ -316,6 +316,13 @@ window.UI = (() => {
         <div><span>รับดาเมจสูงสุด</span><b>${b.topTaken?.icon || ''} ${h(b.topTaken?.name || '-')} ${fmt(b.topTaken?.value || 0)}</b></div>
       </div>
       ${rewards}${reasons}
+      <div class="battle-advice-block">${(S().battleAdvice ? S().battleAdvice(b) : []).map(x=>`<span>${h(x)}</span>`).join('')}</div>
+      <div class="battle-next-actions">
+        <button class="btn primary small" data-action="startBattle">สู้ต่อ</button>
+        <button class="btn amber small" data-action="farmRepeat10">ฟาร์ม 10 รอบ</button>
+        <button class="btn green small" data-action="autoTeamCounterStage">จัดทีมแก้ทาง</button>
+        <button class="btn ghost small" data-screen="heroes">ไปคลัง</button>
+      </div>
     </section>`;
   }
 
@@ -413,7 +420,7 @@ window.UI = (() => {
     const mod = selected.modifier;
     const boss = selected.bossSkill;
     return `<section class="panel dashboard-panel">
-      <div class="section-title"><h3>เป้าหมายตอนนี้</h3><small>ระบบแนะนำ V43</small></div>
+      <div class="section-title"><h3>เป้าหมายตอนนี้</h3><small>ระบบแนะนำ V44</small></div>
       <div class="goal-list">${goals.map((g,i)=>`<div class="goal-item"><b>${i+1}</b><span>${h(g)}</span></div>`).join('')}</div>
       <div class="stage-warn">
         <b>ด่านปัจจุบัน:</b> ${h(selected.title)}
@@ -422,11 +429,83 @@ window.UI = (() => {
       </div>
       <div class="grid2" style="margin-top:10px">
         <button class="btn primary" data-action="startBattle">สู้ด่านนี้</button>
+        <button class="btn green" data-action="autoTeamCounterStage">จัดทีมแก้ทาง</button>
         <button class="btn amber" data-action="farmRepeat">ฟาร์มตามเงื่อนไข</button>
         <button class="btn ghost" data-screen="dungeon">Daily Dungeon</button>
         <button class="btn ghost" data-screen="shop">เปิดร้านค้า</button>
         <button class="btn ghost" data-screen="codex">รับ Codex Reward</button>
       </div>
+    </section>`;
+  }
+
+
+
+  function teamAnalysisPanel(compact=false){
+    const a = S().teamAnalysis ? S().teamAnalysis() : null;
+    if(!a) return '';
+    const counters = (a.counters||[]).map(e=>`${D().elements[e]?.icon||''} ${D().elements[e]?.label||e}`).join(' / ') || 'ไม่มีข้อมูล';
+    const ratioPct = Math.round((a.ratio||0)*100);
+    const problems = (a.problems||[]).length ? a.problems : ['ทีมพร้อมใช้งาน'];
+    return `<section class="panel smart-panel team-analysis-panel">
+      <div class="section-title"><h3>วิเคราะห์ทีม</h3><small>Team ${fmt(a.teamPower)} / Enemy ${fmt(a.enemyPower)} (${ratioPct}%)</small></div>
+      <div class="analysis-grid">
+        <div><span>ทีม</span><b>${a.teamCount}/5 ตัว</b></div>
+        <div><span>ธาตุแก้ทาง</span><b>${h(counters)}</b></div>
+        <div><span>SPD เฉลี่ย</span><b>${fmt(a.avgSpd)} vs ${fmt(a.enemySpd)}</b></div>
+      </div>
+      <div class="smart-list ${compact?'compact':''}">${problems.map(x=>`<div class="smart-row ${x==='ทีมพร้อมใช้งาน'?'ok':'warn'}"><b>${x==='ทีมพร้อมใช้งาน'?'✅':'⚠️'}</b><span>${h(x)}</span></div>`).join('')}</div>
+      <div class="smart-suggest">${(a.suggestions||[]).slice(0,4).map(x=>`<span>${h(x)}</span>`).join('')}</div>
+      <div class="grid2" style="margin-top:10px">
+        <button class="btn primary" data-action="autoTeamCounterStage">จัดทีมแก้ทางด่านนี้</button>
+        <button class="btn ghost" data-action="autoLockImportant">ล็อก Legendary+ อัตโนมัติ</button>
+      </div>
+    </section>`;
+  }
+
+  function fusionHelperPanel(limit=6){
+    const f = S().fusionHelper ? S().fusionHelper() : {ready:[],targets:[]};
+    const ready = (f.ready||[]).slice(0,limit);
+    const targets = (f.targets||[]).slice(0,limit);
+    const row = x => `<div class="fusion-help-row rarity-${x.result.rarity}">
+      <div><b>${x.result.icon} ${h(x.result.name)}</b> ${rarityBadge(x.result.rarity)}<small>${h(x.da.name)} + ${h(x.db.name)} ${x.ownedResult?'| มีแล้ว':'| ยังไม่มี'}</small></div>
+      <button class="btn small ${x.ready?'primary':'ghost'}" ${x.ready?`data-action="selectFusionRecipe" data-a="${x.a}" data-b="${x.b}"`:'disabled'}>${x.ready?'เลือกผสม':'ขาด '+h(x.missing.join(', '))}</button>
+    </div>`;
+    return `<section class="panel smart-panel fusion-helper-panel">
+      <div class="section-title"><h3>Fusion Helper</h3><small>สูตรที่ทำได้ ${fmt(f.totalReady||0)} สูตร</small></div>
+      <h4 class="mini-head">ทำได้ตอนนี้</h4>
+      <div class="stack">${ready.length?ready.map(row).join(''):'<div class="empty">ยังไม่มีสูตรที่ทำได้ตอนนี้ ลองถอดตัวจากทีม/ปลดล็อก Favorite หรือเปิดกาชาเพิ่ม</div>'}</div>
+      <h4 class="mini-head">เป้าหมายที่ยังไม่มี</h4>
+      <div class="stack compact-stack">${targets.length?targets.map(row).join(''):'<div class="empty">สะสมครบเกือบหมดแล้ว</div>'}</div>
+      <button class="btn ghost wide" data-screen="fusion">เปิดหน้าผสมเต็ม</button>
+    </section>`;
+  }
+
+  function dailyDealsPanel(){
+    const deals = S().dailyDeals ? S().dailyDeals() : [];
+    return `<section class="panel smart-panel daily-deals-panel">
+      <div class="section-title"><h3>Daily Deals</h3><small>ของสุ่มรายวัน รีเซ็ตตามวัน</small></div>
+      <div class="shop-grid compact-shop-grid">${deals.map(d=>`<div class="shop-card shop-card-v44 daily-deal-card">
+        <div><b>${h(d.title)}</b><small>${h(d.desc)} | เหลือ ${Math.max(0,d.limit-d.bought)}/${d.limit}</small></div>
+        <div class="shop-cost"><b>จ่าย:</b> ${S().resourceText(d.cost).replace(/\+/g,'') || '-'}</div>
+        <div class="shop-cost"><b>ได้:</b> ${S().resourceText(d.reward)}</div>
+        <div class="shop-actions-v44">
+          <button class="btn primary small" data-action="buyDailyDeal" data-id="${d.id}" ${d.bought>=d.limit?'disabled':''}>ซื้อ</button>
+          <button class="btn ghost small" data-action="buyDailyDealMany" data-id="${d.id}" data-count="max" ${d.bought>=d.limit?'disabled':''}>Max</button>
+        </div>
+      </div>`).join('')}</div>
+    </section>`;
+  }
+
+  function endgameGoalsPanel(){
+    const goals = S().endgameGoals ? S().endgameGoals() : [];
+    const claimed = S().state.endgame?.claimed || {};
+    return `<section class="panel smart-panel endgame-panel">
+      <div class="section-title"><h3>Endgame Goals</h3><small>เป้าหมายใหญ่ระยะยาว</small></div>
+      <div class="stack">${goals.map(g=>{ const pct=Math.min(100,Math.round((g.value/Math.max(1,g.need))*100)); const done=g.value>=g.need; const got=claimed[g.id]; return `<div class="goal-progress ${done&&!got?'done':''}">
+        <div class="goal-progress-head"><b>${h(g.title)}</b><small>${fmt(g.value)}/${fmt(g.need)} | ${S().resourceText(g.reward)}</small></div>
+        <div class="thin-progress"><i style="width:${pct}%"></i></div>
+        <button class="btn small ${done&&!got?'primary':'ghost'}" data-action="claimEndgameGoal" data-id="${g.id}" ${done&&!got?'':'disabled'}>${got?'รับแล้ว':'รับ'}</button>
+      </div>`;}).join('')}</div>
     </section>`;
   }
 
@@ -474,14 +553,15 @@ window.UI = (() => {
 
   function shopScreen(){
     const items = D().shopItems || [];
-    return `<div class="screen shop-screen shop-screen-v43">
+    return `<div class="screen shop-screen shop-screen-v44">
       <div class="page-title"><div><h2>ร้านค้าเถ้ากระดูก</h2><p>ซื้อไวขึ้นด้วยปุ่ม x1 / x10 / Max ใช้ทรัพยากรที่ฟาร์มได้แปลงเป็นของจำเป็น</p></div></div>
+      ${dailyDealsPanel()}
       <section class="panel"><div class="section-title"><h3>สินค้า</h3><small>${items.length} รายการ</small></div>
-        <div class="shop-grid shop-grid-v43">${items.map(item=>`<div class="shop-card shop-card-v43">
+        <div class="shop-grid shop-grid-v44">${items.map(item=>`<div class="shop-card shop-card-v44">
           <div><b>${h(item.title)}</b><small>${h(item.desc)}</small></div>
           <div class="shop-cost"><b>จ่าย:</b> ${S().resourceText(item.cost).replace(/\+/g,'') || '-'}</div>
           <div class="shop-cost"><b>ได้:</b> ${item.reward ? S().resourceText(item.reward) : item.kind==='shard' ? `Shard สุ่ม +${item.amount}` : 'อุปกรณ์สุ่ม'}</div>
-          <div class="shop-actions-v43">
+          <div class="shop-actions-v44">
             <button class="btn primary small" data-action="shopBuy" data-id="${item.id}">ซื้อ x1</button>
             <button class="btn amber small" data-action="shopBuyMany" data-id="${item.id}" data-count="10">x10</button>
             <button class="btn ghost small" data-action="shopBuyMany" data-id="${item.id}" data-count="max">Max</button>
@@ -507,7 +587,7 @@ window.UI = (() => {
     ];
     return `<section class="panel shortcut-panel">
       <div class="section-title"><h3>จัดทีมอัตโนมัติหลายแนว</h3><small>ใช้เมื่ออยากลองทีมเร็ว ๆ</small></div>
-      <div class="shortcut-grid">${styles.map(([id,title,desc])=>`<button class="shortcut-card" data-action="autoTeamStyle" data-style="${id}"><b>${title}</b><small>${desc}</small></button>`).join('')}</div>
+      <div class="shortcut-grid"><button class="shortcut-card primary-card" data-action="autoTeamCounterStage"><b>แก้ทางด่านนี้</b><small>วิเคราะห์ศัตรูและเลือกธาตุ/บทบาทที่เหมาะ</small></button>${styles.map(([id,title,desc])=>`<button class="shortcut-card" data-action="autoTeamStyle" data-style="${id}"><b>${title}</b><small>${desc}</small></button>`).join('')}</div>
     </section>`;
   }
 
@@ -569,6 +649,10 @@ window.UI = (() => {
     return `<div class="screen shortcuts-screen">
       <div class="page-title"><div><h2>เมนูลัด</h2><p>รวมคำสั่งที่กดบ่อย ลดการเลื่อนหน้าคลัง/ทีม/ผสมเมื่อมีปีศาจเยอะ</p></div><b class="gold">Team ${fmt(S().teamPower())}</b></div>
       ${dashboardGoals()}
+      ${teamAnalysisPanel(true)}
+      ${dailyDealsPanel()}
+      ${fusionHelperPanel(5)}
+      ${endgameGoalsPanel()}
       ${quickTeamPanel()}
       ${quickUpgradePanel()}
       ${quickFarmPanel()}
@@ -616,11 +700,14 @@ window.UI = (() => {
           <p class="muted"><b>Modifier:</b> ${selected.modifier ? h(selected.modifier.title)+' — '+h(selected.modifier.desc) : 'ปกติ'} ${selected.bossSkill ? ' | <b>Boss Skill:</b> '+h(selected.bossSkill.title)+' — '+h(selected.bossSkill.desc) : ''}</p>
         </section>
         ${dailyLoginPanel()}
+        ${teamAnalysisPanel(true)}
+        ${dailyDealsPanel()}
         ${autoFarmSettingsPanel()}
         ${formationPanel(true)}
         ${dashboardGoals()}
         ${starterPanel()}
         ${battleSummaryPanel()}
+        ${fusionHelperPanel(4)}
         <section class="panel">
           <div class="section-title"><h3>ทีมปัจจุบัน</h3><small>Power ${fmt(tp)}</small></div>
           ${teamMini()}
@@ -682,7 +769,7 @@ window.UI = (() => {
     const tp = S().teamPower();
     const ep = S().stageEnemyPower(sel);
     return `
-      <div class="screen battle-page-v43">
+      <div class="screen battle-page-v44">
         <section class="hero-banner battle-command-hero">
           <div class="tiny-label">ABYSS ROUTE</div>
           <h2>${sel.title}</h2>
@@ -709,6 +796,7 @@ window.UI = (() => {
             ${sel.bossSkill ? `<div><b>Boss Skill</b><span>${h(sel.bossSkill.title)} — ${h(sel.bossSkill.desc)}</span></div>` : ''}
           </div>
         </section>
+        ${teamAnalysisPanel(true)}
         ${autoFarmSettingsPanel()}
         ${battleSummaryPanel()}
         <section class="panel stage-map-panel">
@@ -739,6 +827,7 @@ window.UI = (() => {
     return `
       <div class="screen manager-lite-screen">
         <div class="page-title"><div><h2>จัดทีม</h2><p>เลือกตำแหน่งจากช่องทีม แล้วแตะปีศาจเพื่อจัดทีม เมนูคำสั่งจะสไลด์ขึ้นด้านล่าง</p></div><b class="gold">Power ${fmt(S().teamPower())}</b></div>
+        ${teamAnalysisPanel(true)}
         <section class="panel team-board-panel">
           <div class="section-title"><h3>ทีมปัจจุบัน</h3><small>Front 2 / Back 3</small></div>
           <div class="slots compact-slots">
@@ -1075,6 +1164,7 @@ window.UI = (() => {
     return `
       <div class="screen fusion-manager-screen">
         <div class="page-title"><div><h2>ห้องหลอมปีศาจ</h2><p>แตะปีศาจสำรองเพื่อเปิดเมนู แล้วกด “เลือกผสม” ไม่ต้องเลื่อนหาปุ่มยาว ๆ</p></div></div>
+        ${fusionHelperPanel(8)}
         <section class="panel fusion-lab fusion-sticky-panel">
           <div class="section-title"><h3>Fusion Preview</h3><small>${selected.length}/2</small></div>
           <div class="fusion-grid compact-fusion-grid">
@@ -1224,7 +1314,7 @@ window.UI = (() => {
   function manualScreen(){
     return `
       <div class="screen manual-screen">
-        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V43: Shortcut Menu + Star/Rebirth Bulk</p></div></div>
+        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V44: Smart Assist + Progression</p></div></div>
         <section class="panel manual-hero">
           <div class="section-title"><h3>เป้าหมายใหม่</h3><small>Endless Loop ถึงด่าน 3000</small></div>
           <p class="muted">ด่านจะสร้างต่อเนื่องและยากขึ้นเรื่อย ๆ จนถึง <b class="gold">ด่าน 3000</b> ถ้าติดด่าน ให้ฟาร์มด่านที่ผ่านได้ อัปเลเวล เปิดกาชา ผสมมอนสเตอร์ และ Rebirth เพื่อเพิ่มพลังถาวร</p>
@@ -1237,7 +1327,7 @@ window.UI = (() => {
           </div>
         </section>
         <section class="panel">
-          <div class="section-title"><h3>ระบบ Progression / V43</h3><small>ทำให้มีเป้าหมายเล่นต่อ</small></div>
+          <div class="section-title"><h3>ระบบ Progression / V44</h3><small>ทำให้มีเป้าหมายเล่นต่อ</small></div>
           <ul class="guide-list">
             <li><b>Achievement:</b> ผ่านด่าน, สะสมปีศาจ, ผสม, Rebirth แล้วรับรางวัลระยะยาว</li>
             <li><b>Pity Gacha:</b> Rare+ ทุก 10, Epic+ ทุก 50, Legendary+ ทุก 200 โรล ส่วน SSR ยังเป็นระดับลับ</li>
@@ -1251,6 +1341,12 @@ window.UI = (() => {
             <li><b>Combat Log Mode:</b> เลือก Log เต็ม/เฉพาะสกิล/เฉพาะผล/ซ่อน Log เพื่อฟาร์มเร็วขึ้น</li>
             <li><b>Stage Modifier:</b> ด่านบางด่านมีเงื่อนไขพิเศษ เช่น ศัตรูเร็วขึ้น/เลือดเยอะขึ้น</li>
             <li><b>Boss Skill:</b> บอสทุก 5 ด่านมีออร่าเฉพาะ ทำให้ต้องฟาร์มหรือปรับทีมบ้าง</li>
+            <li><b>วิเคราะห์ทีม:</b> หน้าแรก/หน้าลุยจะแสดงว่าทีมขาด Tank/Support/ธาตุแก้ทางหรือ Power ต่ำกว่าศัตรูหรือไม่</li>
+            <li><b>จัดทีมแก้ทางด่านนี้:</b> ระบบจะดูธาตุศัตรูและเลือกตัวที่เหมาะจากคลังโดยไม่ต้องจัดเองทีละตัว</li>
+            <li><b>Fusion Helper:</b> แสดงสูตรที่ทำได้ตอนนี้ สูตรที่ยังขาดวัตถุดิบ และตัวที่ยังไม่มี</li>
+            <li><b>Auto Lock Legendary+:</b> ล็อกตัวหายากอัตโนมัติ กันเผลอเอาไป Fusion หรือ Auto Fusion</li>
+            <li><b>Daily Deals:</b> ร้านค้ามีของสุ่มรายวัน เช่น Ticket Bundle, Dust, Gold, SSR Shard และ Rebirth Supply</li>
+            <li><b>Endgame Goals:</b> เป้าหมายใหญ่ เช่น ผ่านด่าน 100/500, Codex 80 ตัว, Rebirth รวม 50 ครั้ง</li>
           </ul>
         </section>
         <section class="panel">
@@ -1396,6 +1492,12 @@ window.UI = (() => {
       case 'save': S().save(); toast('บันทึกเกมแล้ว'); break;
       case 'setSpeed': { const v=Number(data.speedValue || data.speed || 1); S().state.settings.battleSpeed=v; battleSpeed=v; S().save(); toast(v===20?'เปิดข้ามไว x20 แล้ว':v===50?'เปิดฟาร์ม x50 แล้ว':`ตั้งความเร็วต่อสู้ ${v}x แล้ว`); render(); break; }
       case 'autoTeam': S().autoTeam(); toast('จัดทีมสมดุลแล้ว'); render(); break;
+      case 'autoTeamCounterStage': { const r=S().autoTeamCounterStage(); toast(r.msg || (r.ok?'จัดทีมแก้ทางแล้ว':'จัดไม่ได้')); render(); break; }
+      case 'autoLockImportant': { const r=S().autoLockImportant('Legendary'); toast(r.msg); render(); break; }
+      case 'selectFusionRecipe': { S().state.fusion.selected=[data.a,data.b]; S().save(); toast('เลือกวัตถุดิบตามสูตรแล้ว'); render(); break; }
+      case 'buyDailyDeal': { const r=S().buyDailyDeal(data.id,1); toast(r.msg); render(); break; }
+      case 'buyDailyDealMany': { const r=S().buyDailyDeal(data.id,data.count||'max'); toast(r.msg); render(); break; }
+      case 'claimEndgameGoal': { const r=S().claimEndgameGoal(data.id); toast(r.msg); render(); break; }
       case 'autoTeamStyle': { const r=S().autoTeamStyle(data.style || 'balanced'); toast(r.ok?`จัดทีมแนว ${r.label} แล้ว`:r.msg); render(); break; }
       case 'bulkUpgradeTeam': { const r=S().bulkUpgradeTeamToCap(); toast(r.msg); render(); break; }
       case 'bulkStarUpAll': { const r=S().bulkStarUpAll(); toast(r.msg); render(); break; }
@@ -1726,7 +1828,7 @@ window.UI = (() => {
   function wait(ms){ return new Promise(resolve=>setTimeout(resolve,ms)); }
 
   function finishBattleAndRender(){
-    // V43: battle can run while the player browses other pages.
+    // V44: battle can run while the player browses other pages.
     // After battle ends, only close the battle overlay. Do not jump screens,
     // and do not reset scroll on the page the player is viewing.
     battleReturnScreen = null;

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'abyss-grimoire-v43-summon-shop-dungeonfix-cache-v2';
+const CACHE_NAME = 'abyss-grimoire-v44-smart-assist-cache-v1';
 const ASSETS = [
   './', './index.html', './style.css', './manifest.json',
   './js/data.js', './js/state.js', './js/battle.js', './js/ui.js', './js/main.js',

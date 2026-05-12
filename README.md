@@ -1,4 +1,4 @@
-# Abyss Grimoire V43 - Summon / Shop / Dungeon Fix
+# Abyss Grimoire V44 - Summon / Shop / Dungeon Fix
 
 Dark Fantasy Text RPG / Auto Battle / Gacha / Fusion / Rebirth / Daily Dungeon สำหรับเล่นบนมือถือหรือคอมแบบ static web
 
@@ -7,7 +7,7 @@ Dark Fantasy Text RPG / Auto Battle / Gacha / Fusion / Rebirth / Daily Dungeon �
 เปิด `index.html` ได้เลย หรือรันผ่าน local server:
 
 ```bash
-cd text_auto_gacha_v43_summon_shop_dungeonfix
+cd text_auto_gacha_v44_summon_shop_dungeonfix
 python -m http.server 8000
 ```
 
@@ -17,7 +17,7 @@ python -m http.server 8000
 http://localhost:8000
 ```
 
-## เพิ่ม/แก้ใน V43
+## เพิ่ม/แก้ใน V44
 
 ### 1. Battle Flow ไม่ refresh ระหว่างฟาร์ม
 
@@ -86,10 +86,22 @@ http://localhost:8000
 
 ## หมายเหตุเรื่องเซฟ
 
-V43 ใช้ save key ใหม่:
+V44 ใช้ save key ใหม่:
 
 ```text
-abyss_grimoire_v43_save
+abyss_grimoire_v44_save
 ```
 
 ระบบจะพยายามอ่านเซฟ V42/V41/V40/V39 และเวอร์ชันเก่าที่รองรับให้อัตโนมัติ
+
+
+## V44 Smart Assist Update
+
+- เพิ่มวิเคราะห์ทีมตามด่านปัจจุบัน
+- เพิ่มปุ่มจัดทีมแก้ทางด่านนี้
+- เพิ่ม Fusion Helper บอกสูตรที่ทำได้ตอนนี้และตัวที่ยังขาด
+- เพิ่ม Auto Lock Legendary+ กันเผลอผสม/ย่อยตัวสำคัญ
+- เพิ่ม Battle Result พร้อมปุ่มสู้ต่อ/ฟาร์ม/จัดทีมแก้ทาง
+- เพิ่ม Daily Deals ในร้านค้า
+- เพิ่ม Endgame Goals สำหรับเป้าหมายระยะยาว
+- ปรับหน้าเมนูลัดให้เป็นศูนย์กลางมากขึ้น
