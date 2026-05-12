@@ -8,6 +8,7 @@ window.UI = (() => {
   let farmRepeatRun = false;
   let battleWidgetExpanded = false; // kept for old save compatibility; V39 uses top battle bar instead of mini dock
   let lastBrowseScreen = 'home';
+  let battleReturnScreen = null;
 
   function h(str){
     return String(str ?? '').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -95,7 +96,7 @@ window.UI = (() => {
         <div class="brand-row">
           <div class="logo">
             <div class="logo-mark">🩸</div>
-            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V42</small></div>
+            <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V43</small></div>
           </div>
           <button class="btn small ghost" data-action="save">Save</button>
         </div>
@@ -412,7 +413,7 @@ window.UI = (() => {
     const mod = selected.modifier;
     const boss = selected.bossSkill;
     return `<section class="panel dashboard-panel">
-      <div class="section-title"><h3>เป้าหมายตอนนี้</h3><small>ระบบแนะนำ V42</small></div>
+      <div class="section-title"><h3>เป้าหมายตอนนี้</h3><small>ระบบแนะนำ V43</small></div>
       <div class="goal-list">${goals.map((g,i)=>`<div class="goal-item"><b>${i+1}</b><span>${h(g)}</span></div>`).join('')}</div>
       <div class="stage-warn">
         <b>ด่านปัจจุบัน:</b> ${h(selected.title)}
@@ -473,14 +474,18 @@ window.UI = (() => {
 
   function shopScreen(){
     const items = D().shopItems || [];
-    return `<div class="screen shop-screen">
-      <div class="page-title"><div><h2>ร้านค้าเถ้ากระดูก</h2><p>ใช้ทรัพยากรที่ฟาร์มได้แปลงเป็น Ticket, Dust, Gold, Shard หรือกล่องอุปกรณ์</p></div></div>
+    return `<div class="screen shop-screen shop-screen-v43">
+      <div class="page-title"><div><h2>ร้านค้าเถ้ากระดูก</h2><p>ซื้อไวขึ้นด้วยปุ่ม x1 / x10 / Max ใช้ทรัพยากรที่ฟาร์มได้แปลงเป็นของจำเป็น</p></div></div>
       <section class="panel"><div class="section-title"><h3>สินค้า</h3><small>${items.length} รายการ</small></div>
-        <div class="shop-grid">${items.map(item=>`<div class="shop-card">
+        <div class="shop-grid shop-grid-v43">${items.map(item=>`<div class="shop-card shop-card-v43">
           <div><b>${h(item.title)}</b><small>${h(item.desc)}</small></div>
-          <div class="shop-cost">จ่าย: ${S().resourceText(item.cost).replace(/\+/g,'') || '-'}</div>
-          <div class="shop-cost">ได้: ${item.reward ? S().resourceText(item.reward) : item.kind==='shard' ? `Shard สุ่ม +${item.amount}` : 'อุปกรณ์สุ่ม'}</div>
-          <button class="btn primary" data-action="shopBuy" data-id="${item.id}">ซื้อ</button>
+          <div class="shop-cost"><b>จ่าย:</b> ${S().resourceText(item.cost).replace(/\+/g,'') || '-'}</div>
+          <div class="shop-cost"><b>ได้:</b> ${item.reward ? S().resourceText(item.reward) : item.kind==='shard' ? `Shard สุ่ม +${item.amount}` : 'อุปกรณ์สุ่ม'}</div>
+          <div class="shop-actions-v43">
+            <button class="btn primary small" data-action="shopBuy" data-id="${item.id}">ซื้อ x1</button>
+            <button class="btn amber small" data-action="shopBuyMany" data-id="${item.id}" data-count="10">x10</button>
+            <button class="btn ghost small" data-action="shopBuyMany" data-id="${item.id}" data-count="max">Max</button>
+          </div>
         </div>`).join('')}</div>
       </section>
       ${achievementsPanel(8)}
@@ -677,7 +682,7 @@ window.UI = (() => {
     const tp = S().teamPower();
     const ep = S().stageEnemyPower(sel);
     return `
-      <div class="screen battle-page-v42">
+      <div class="screen battle-page-v43">
         <section class="hero-banner battle-command-hero">
           <div class="tiny-label">ABYSS ROUTE</div>
           <h2>${sel.title}</h2>
@@ -1015,21 +1020,38 @@ window.UI = (() => {
 
   function gachaScreen(){
     const results = S().state.gacha.lastResults || [];
+    const summary = S().state.gacha.lastSummary || null;
+    const highlights = S().state.gacha.lastHighlights || [];
+    const available = Math.floor(Number(S().state.resources.tickets || 0)) + Math.floor(Number(S().state.resources.gems || 0) / 100);
+    const rarityOrder = ['SSR','Mythic','Legendary','Epic','Rare','Common'];
     return `
-      <div class="screen">
-        <div class="page-title"><div><h2>แท่นอัญเชิญอเวจี</h2><p>Ticket ได้จากชนะทุก 7 ครั้ง, ผู้คุมประตู, เควสรายวัน</p></div></div>
+      <div class="screen gacha-screen-v43">
+        <div class="page-title"><div><h2>แท่นอัญเชิญอเวจี</h2><p>ผู้เล่นใหม่เริ่มด้วย 2,000 Ticket + 500 Gem | เปิดเยอะได้โดยไม่เด้งไปหน้าจัดทีม</p></div></div>
         <section class="gacha-door"><div><h3>☽</h3><p>Rare+ ทุก 10 | Epic+ ทุก 50 | Legendary+ ทุก 200 | SSR เป็นตัวลับ</p></div></section>
-        <section class="panel">
+        <section class="panel summon-panel-v43">
           ${(S().state.starter?.freeRollsLeft||0)>0 ? `<button class="btn primary pulse wide" data-action="starterRecruit">🔮 สุ่มฟรีเริ่มต้น เหลือ ${S().state.starter.freeRollsLeft}/5</button><div class="hr"></div>` : ''}
-          <div class="grid2">
-            <button class="btn primary" data-action="gacha1">🔮 อัญเชิญ 1 ครั้ง</button>
-            <button class="btn primary" data-action="gacha10">🔮 อัญเชิญ 10 ครั้ง</button>
+          <div class="summon-resource-line"><b>เปิดได้ประมาณ ${fmt(available)} ครั้ง</b><small>ใช้ Ticket ก่อน ถ้า Ticket หมดใช้ 100 Gem / ครั้ง</small></div>
+          <div class="summon-grid-v43">
+            <button class="btn primary" data-action="gacha1">🔮 x1</button>
+            <button class="btn primary" data-action="gacha10">🔮 x10</button>
+            <button class="btn amber" data-action="gacha100">🔮 x100</button>
+            <button class="btn amber" data-action="gacha1000">🔮 x1000</button>
+            <button class="btn green wide" data-action="gachaAll">🔮 อัญเชิญจนหมด</button>
           </div>
-          <p class="muted">ใช้ Ticket ก่อน ถ้า Ticket หมดใช้ 100 Gem / ครั้ง | Pity Rare ${S().state.gacha.rarePity||0}/10 | Epic ${S().state.gacha.epicPity}/50 | Legendary ${S().state.gacha.legendPity}/200</p>
+          <p class="muted">Pity Rare ${S().state.gacha.rarePity||0}/10 | Epic ${S().state.gacha.epicPity}/50 | Legendary ${S().state.gacha.legendPity}/200</p>
         </section>
+        ${summary ? `<section class="panel gacha-summary-panel">
+          <div class="section-title"><h3>สรุปอัญเชิญล่าสุด</h3><small>เปิด ${fmt(summary.count)} ครั้ง | แสดงผลล่าสุด ${fmt(summary.shown)} รายการ</small></div>
+          <div class="summary-pills">
+            ${rarityOrder.filter(r=>summary.byRarity?.[r]).map(r=>`<span class="tier-badge rarity-${r}">${r} x${fmt(summary.byRarity[r])}</span>`).join('')}
+            <span class="pill-lite">ใหม่ ${fmt(summary.byType?.new||0)}</span>
+            <span class="pill-lite">Shard ${fmt(summary.byType?.shards||0)}</span>
+          </div>
+          ${highlights.length ? `<div class="legend-alert"><b>🔥 Legend+ ที่ได้ล่าสุด ${fmt(highlights.length)} รายการ</b><div class="legend-list">${highlights.slice(-12).reverse().map(x=>`<span class="tier-badge rarity-${x.rarity}">${h(x.icon||'')} ${h(x.name)} ${x.type==='new'?'ใหม่':'Shard +' + fmt(x.amount)}</span>`).join('')}</div></div>` : `<p class="muted">ยังไม่มี Legendary+ ในรอบล่าสุด</p>`}
+        </section>` : ''}
         <section class="panel">
-          <div class="section-title"><h3>ผลล่าสุด</h3><small>${results.length} รายการ</small></div>
-          <div class="gacha-results">${results.length?results.map(gachaResultRow).join(''):'<div class="empty">ยังไม่มีผลกาชา</div>'}</div>
+          <div class="section-title"><h3>ผลล่าสุด</h3><small>${results.length} รายการล่าสุด</small></div>
+          <div class="gacha-results compact-results-v43">${results.length?results.map(gachaResultRow).join(''):'<div class="empty">ยังไม่มีผลกาชา</div>'}</div>
         </section>
         ${questShort()}
       </div>`;
@@ -1202,7 +1224,7 @@ window.UI = (() => {
   function manualScreen(){
     return `
       <div class="screen manual-screen">
-        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V42: Shortcut Menu + Star/Rebirth Bulk</p></div></div>
+        <div class="page-title"><div><h2>คู่มือการเล่น</h2><p>V43: Shortcut Menu + Star/Rebirth Bulk</p></div></div>
         <section class="panel manual-hero">
           <div class="section-title"><h3>เป้าหมายใหม่</h3><small>Endless Loop ถึงด่าน 3000</small></div>
           <p class="muted">ด่านจะสร้างต่อเนื่องและยากขึ้นเรื่อย ๆ จนถึง <b class="gold">ด่าน 3000</b> ถ้าติดด่าน ให้ฟาร์มด่านที่ผ่านได้ อัปเลเวล เปิดกาชา ผสมมอนสเตอร์ และ Rebirth เพื่อเพิ่มพลังถาวร</p>
@@ -1215,7 +1237,7 @@ window.UI = (() => {
           </div>
         </section>
         <section class="panel">
-          <div class="section-title"><h3>ระบบ Progression / V42</h3><small>ทำให้มีเป้าหมายเล่นต่อ</small></div>
+          <div class="section-title"><h3>ระบบ Progression / V43</h3><small>ทำให้มีเป้าหมายเล่นต่อ</small></div>
           <ul class="guide-list">
             <li><b>Achievement:</b> ผ่านด่าน, สะสมปีศาจ, ผสม, Rebirth แล้วรับรางวัลระยะยาว</li>
             <li><b>Pity Gacha:</b> Rare+ ทุก 10, Epic+ ทุก 50, Legendary+ ทุก 200 โรล ส่วน SSR ยังเป็นระดับลับ</li>
@@ -1410,6 +1432,9 @@ window.UI = (() => {
       case 'starterRecruit': doStarterRecruit(); break;
       case 'gacha1': doGacha(1); break;
       case 'gacha10': doGacha(10); break;
+      case 'gacha100': doGacha(100); break;
+      case 'gacha1000': doGacha(1000); break;
+      case 'gachaAll': doGacha('all'); break;
       case 'levelUp': { const r=S().levelUp(data.id); toast(r.ok?'อัปเลเวลแล้ว':r.msg); render(); break; }
       case 'starUp': { const r=S().starUp(data.id); toast(r.ok?`อัปดาวแล้ว ★${r.stars}`:r.msg); render(); break; }
       case 'rebirthHero': { const r=S().rebirthHero(data.id); toast(r.ok?`Rebirth สำเร็จ R+${r.rebirth}`:r.msg); render(); break; }
@@ -1424,6 +1449,7 @@ window.UI = (() => {
       case 'claimAchievement': { const r=S().achievementClaim(data.id); toast(r.msg || (r.ok?'รับ Achievement แล้ว':'ยังรับไม่ได้')); render(); break; }
       case 'claimCodexReward': { const r=S().codexRewardClaim(data.id); toast(r.msg || (r.ok?'รับ Codex Reward แล้ว':'ยังรับไม่ได้')); render(); break; }
       case 'shopBuy': { const r=S().shopPurchase(data.id); toast(r.msg); render(); break; }
+      case 'shopBuyMany': { const r=S().shopPurchaseMany(data.id, data.count || 1); toast(r.msg); render(); break; }
       case 'setFarmStop': { const v = data.value || 'lose'; S().state.settings.farmStop = v; S().save(); toast(`ตั้งค่า Auto Farm: ${farmStopLabel(v)}`); render(); break; }
       case 'setLogMode': { const v = data.value || 'full'; S().state.settings.logMode = v; S().save(); toast(`Combat Log: ${v}`); render(); break; }
       case 'startDungeon': startDungeon(data.id); break;
@@ -1478,9 +1504,13 @@ window.UI = (() => {
   }
 
   function doGacha(count){
-    const r=S().gacha(count);
-    toast(r.ok?`อัญเชิญ ${count} ครั้งแล้ว`:r.msg);
-    if(r.ok) S().state.screen='gacha';
+    const r = count === 'all' ? S().gachaAll() : S().gacha(count);
+    if(!r.ok){ toast(r.msg); render(); return; }
+    const total = r.summary?.count || count;
+    const lp = r.summary?.legendPlusCount || 0;
+    toast(lp ? `🔥 อัญเชิญ ${fmt(total)} ครั้ง ได้ Legend+ ${fmt(lp)} รายการ!` : `อัญเชิญ ${fmt(total)} ครั้งแล้ว`);
+    // อยู่หน้าอัญเชิญ ไม่เด้งไปหน้าจัดทีม แม้ได้ตัวใหม่
+    S().state.screen='gacha';
     render();
   }
 
@@ -1532,7 +1562,7 @@ window.UI = (() => {
           break;
         }
         if(nextId <= S().state.campaign.unlocked) S().selectStage(nextId);
-        render();
+        // Do not re-render the full app between fights; it feels like a page refresh.
         await wait(900 / Math.max(0.75,battleSpeed));
       }
       if(!autoRun && winStreak>0){
@@ -1541,7 +1571,7 @@ window.UI = (() => {
     } finally {
       autoRun = false;
       battleRunning = false;
-      render();
+      finishBattleAndRender();
     }
   }
 
@@ -1576,7 +1606,7 @@ window.UI = (() => {
         lastRewardText = S().resourceText(result.reward);
         if(result.exp?.exp) lastRewardText += ` | EXP ทีม +${S().fmt(result.exp.exp)}`;
         if(result.item) lastRewardText += ` | ได้ ${result.item.name}${D().equipmentTypes[result.item.type].label}`;
-        render();
+        // Do not re-render the full app between fights; it feels like a page refresh.
         await wait(450 / Math.max(0.75,battleSpeed));
       }
       if(farmRepeatRun && runs >= limit){
@@ -1587,7 +1617,7 @@ window.UI = (() => {
     } finally {
       farmRepeatRun = false;
       battleRunning = false;
-      render();
+      finishBattleAndRender();
     }
   }
 
@@ -1620,7 +1650,7 @@ window.UI = (() => {
         lastRewardText = S().resourceText(result.reward);
         if(result.exp?.exp) lastRewardText += ` | EXP ทีม +${S().fmt(result.exp.exp)}`;
         if(result.item) lastRewardText += ` | ได้ ${result.item.name}${D().equipmentTypes[result.item.type].label}`;
-        render();
+        // Do not re-render the full app between fights; it feels like a page refresh.
         await wait(550 / Math.max(0.75,battleSpeed));
       }
       if(!farmRepeatRun && runs>0){
@@ -1629,7 +1659,7 @@ window.UI = (() => {
     } finally {
       farmRepeatRun = false;
       battleRunning = false;
-      render();
+      finishBattleAndRender();
     }
   }
 
@@ -1652,7 +1682,7 @@ window.UI = (() => {
       if(result.shard) msg += ` | ${result.shard.name} Shard +${result.shard.amount}`;
       toast(msg);
     } else toast('แพ้ใน Dungeon');
-    render();
+    finishBattleAndRender();
   }
 
   async function startBattle(){
@@ -1672,7 +1702,7 @@ window.UI = (() => {
       if(result.item) msg += ` | ได้ ${result.item.name}${D().equipmentTypes[result.item.type].label}`;
       toast(msg);
     } else toast('แพ้ ลองกดอัปเกรดอัตโนมัติหรือฟาร์มด่านเก่า');
-    render();
+    finishBattleAndRender();
   }
 
   function unitHtml(u){
@@ -1695,7 +1725,34 @@ window.UI = (() => {
 
   function wait(ms){ return new Promise(resolve=>setTimeout(resolve,ms)); }
 
+  function finishBattleAndRender(){
+    // V43: battle can run while the player browses other pages.
+    // After battle ends, only close the battle overlay. Do not jump screens,
+    // and do not reset scroll on the page the player is viewing.
+    battleReturnScreen = null;
+    const wasBattleScreen = currentScreen() === 'battle';
+    const restoreY = window.scrollY || 0;
+    const appEl = app();
+    const restoreAppY = appEl ? appEl.scrollTop : 0;
+    if(wasBattleScreen){
+      const target = lastBrowseScreen && lastBrowseScreen !== 'battle' ? lastBrowseScreen : 'home';
+      S().state.screen = target;
+      S().save();
+    }
+    render();
+    if(wasBattleScreen){
+      scrollGameToTop();
+    } else {
+      requestAnimationFrame(()=>{
+        try{ window.scrollTo({top:restoreY,left:0,behavior:'instant'}); }catch(e){ window.scrollTo(0,restoreY); }
+        const el = app();
+        if(el) el.scrollTop = restoreAppY;
+      });
+    }
+  }
+
   function openBattleFullscreenOnStart(){
+    if(!battleReturnScreen) battleReturnScreen = currentScreen() || 'home';
     battleWidgetExpanded = true;
     if(currentScreen() !== 'battle'){
       S().state.screen = 'battle';

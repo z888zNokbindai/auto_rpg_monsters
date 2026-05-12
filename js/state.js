@@ -1,6 +1,6 @@
 window.GameState = (() => {
-  const KEY = 'abyss_grimoire_v42_save';
-  const OLD_KEYS = ['abyss_grimoire_v41_save','abyss_grimoire_v40_save','abyss_grimoire_v39_save','abyss_grimoire_v38_save','abyss_grimoire_v37_save','abyss_grimoire_v36_save','abyss_grimoire_v35_save','abyss_grimoire_v34_save','abyss_grimoire_v33_save','abyss_grimoire_v32_save','abyss_grimoire_v31_save','abyss_grimoire_v30_save','abyss_grimoire_v28_save','abyss_grimoire_v27_save','abyss_grimoire_v26_save','abyss_grimoire_v25_save','abyss_grimoire_v24_save','abyss_grimoire_v23_save','abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
+  const KEY = 'abyss_grimoire_v43_save';
+  const OLD_KEYS = ['abyss_grimoire_v42_save','abyss_grimoire_v41_save','abyss_grimoire_v40_save','abyss_grimoire_v39_save','abyss_grimoire_v38_save','abyss_grimoire_v37_save','abyss_grimoire_v36_save','abyss_grimoire_v35_save','abyss_grimoire_v34_save','abyss_grimoire_v33_save','abyss_grimoire_v32_save','abyss_grimoire_v31_save','abyss_grimoire_v30_save','abyss_grimoire_v28_save','abyss_grimoire_v27_save','abyss_grimoire_v26_save','abyss_grimoire_v25_save','abyss_grimoire_v24_save','abyss_grimoire_v23_save','abyss_grimoire_v22_save','abyss_grimoire_v21_save','abyss_grimoire_v20_save','abyss_grimoire_v19_save','abyss_grimoire_v18_save','abyss_grimoire_v17_save','abyss_grimoire_v16_save','abyss_grimoire_v15_save','abyss_grimoire_v14_save','abyss_grimoire_v13_save','abyss_grimoire_v12_save','abyss_grimoire_v11_save'];
   const G = () => window.GameData;
   let state = null;
 
@@ -21,9 +21,9 @@ window.GameState = (() => {
     const starterPool = G().heroes.filter(h => ['Common','Rare'].includes(h.rarity));
     const starter = starterPool[Math.floor(Math.random() * starterPool.length)] || G().heroes[0];
     const s = {
-      version:42,
+      version:43,
       screen:'home',
-      resources:{gold:420,gems:180,tickets:1,dust:60,ssrShards:0},
+      resources:{gold:420,gems:500,tickets:2000,dust:60,ssrShards:0},
       campaign:{selected:1,unlocked:1,highestCleared:0,clears:{}},
       roster:{},
       team:[starter.id,null,null,null,null],
@@ -104,6 +104,9 @@ window.GameState = (() => {
     state.gacha.rarePity = Number(state.gacha.rarePity || 0);
     state.gacha.epicPity = Number(state.gacha.epicPity || 0);
     state.gacha.legendPity = Number(state.gacha.legendPity || 0);
+    state.gacha.lastResults ||= [];
+    state.gacha.lastSummary ||= null;
+    state.gacha.lastHighlights ||= [];
     state.daily ||= {date:todayKey(),wins:0,gachas:0,upgrades:0,bossWins:0,dungeonRuns:{},claimed:{}};
     state.daily.dungeonRuns ||= {};
     state.stats ||= {totalWins:0,totalLosses:0,totalGachas:0,totalUpgrades:0};
@@ -155,7 +158,7 @@ window.GameState = (() => {
     });
     state.team = (state.team||[]).slice(0,5); while(state.team.length<5) state.team.push(null);
     state.team = state.team.map(id => state.roster && state.roster[id] ? id : null);
-    state.version = 42;
+    state.version = 43;
     state.fusion.selected = (state.fusion.selected||[]).filter(id=>state.roster && state.roster[id] && !state.team.includes(id) && !state.favorites[id]);
     ensureDaily();
     grantDailyLoginReward();
@@ -208,7 +211,7 @@ window.GameState = (() => {
     normalize();
     const payload = {
       game:'Abyss Grimoire',
-      version:42,
+      version:43,
       exportedAt:new Date().toISOString(),
       save:state
     };
@@ -232,7 +235,7 @@ window.GameState = (() => {
       }
       state = incoming;
       backupNow();
-      state.version = 42;
+      state.version = 43;
       normalize();
       save();
       return {ok:true,msg:'นำเข้าเซฟสำเร็จ'};
@@ -521,8 +524,30 @@ window.GameState = (() => {
     return weighted[weighted.length-1].h;
   }
 
+  function summarizeGacha(results, requestedCount){
+    const byRarity = {};
+    const byType = {new:0, shards:0};
+    const legendPlus = [];
+    for(const r of results || []){
+      const rarity = r?.hero?.rarity || 'Unknown';
+      byRarity[rarity] = (byRarity[rarity] || 0) + 1;
+      if(r?.type === 'new') byType.new++; else byType.shards++;
+      if(r?.hero && rarityRank(r.hero.rarity) >= 3) legendPlus.push({id:r.hero.id,name:r.hero.name,rarity:r.hero.rarity,type:r.type,amount:r.amount||0,icon:r.hero.icon});
+    }
+    return {
+      count: requestedCount || (results?.length || 0),
+      shown: Math.min(results?.length || 0, 120),
+      byRarity,
+      byType,
+      legendPlus,
+      legendPlusCount: legendPlus.length,
+      at: Date.now()
+    };
+  }
+
   function gacha(count){
     ensureDaily();
+    count = Math.max(1, Math.floor(Number(count || 1)));
     const costTickets = Math.min(state.resources.tickets, count);
     const gemNeed = (count - costTickets) * 100;
     if(state.resources.gems < gemNeed) return {ok:false,msg:'Gem ไม่พอสำหรับเปิดกาชา'};
@@ -545,11 +570,21 @@ window.GameState = (() => {
       if(rank >= 3) state.gacha.legendPity = 0;
       results.push(addHero(h.id));
     }
-    state.gacha.lastResults = results;
+    const summary = summarizeGacha(results, count);
+    // เก็บผลล่าสุดไม่เกิน 120 รายการ เพื่อไม่ให้หน้ากาชายาว/หน่วงเมื่อเปิด 1000+ ครั้ง
+    state.gacha.lastResults = results.slice(-120);
+    state.gacha.lastSummary = summary;
+    state.gacha.lastHighlights = summary.legendPlus.slice(-80);
     state.daily.gachas += count;
     state.stats.totalGachas += count;
     save();
-    return {ok:true,results};
+    return {ok:true,results,summary};
+  }
+
+  function gachaAll(){
+    const count = Math.floor(Number(state.resources.tickets || 0)) + Math.floor(Number(state.resources.gems || 0) / 100);
+    if(count <= 0) return {ok:false,msg:'ไม่มี Ticket/Gem สำหรับอัญเชิญ'};
+    return gacha(count);
   }
 
   function teamCandidates(){
@@ -1229,7 +1264,7 @@ window.GameState = (() => {
     state.favorites ||= {};
     if(state.favorites[id]) delete state.favorites[id];
     else state.favorites[id] = Date.now();
-    state.version = 42;
+    state.version = 43;
     state.fusion.selected = (state.fusion.selected||[]).filter(x=>!state.favorites[x]);
     save();
     return {ok:true,locked:!!state.favorites[id]};
@@ -1307,7 +1342,23 @@ window.GameState = (() => {
     const d = dungeonDef(id);
     if(!d) return null;
     const baseStage = Math.max(1, state.campaign.highestCleared || state.campaign.selected || 1);
-    const scale = Number(((0.88 + Math.pow(baseStage,1.12)*0.035 + baseStage*0.04) * (d.powerMul || 1)).toFixed(3));
+    const tp = Math.max(900, teamPower() || 900);
+    // V43: Daily Dungeon no longer uses a fixed easy curve. Every entry rolls a
+    // random enemy team around the current player power. Most rolls are fair,
+    // some are easier, and some are dangerous enough to lose if the team setup is bad.
+    const variance = 0.78 + Math.random() * 0.48; // 78% - 126% of player power before dungeon multiplier
+    const pressure = Number(d.powerMul || 1);
+    const enemyCount = 3 + Math.floor(Math.random()*3); // 3-5 enemies
+    const targetPower = Math.round(tp * variance * pressure);
+    const scale = Number(Math.max(0.45, targetPower / (560 * 4.2 * (enemyCount/4))).toFixed(3));
+    const modRoll = Math.random();
+    const mod = modRoll < .25
+      ? {id:'dungeon_hp',title:'สุ่มทีมเลือดหนา',desc:'ศัตรู HP +18%',effects:{enemyAtk:1,enemyHp:1.18,enemyDef:1,enemySpd:1}}
+      : modRoll < .50
+        ? {id:'dungeon_speed',title:'สุ่มทีมเร็ว',desc:'ศัตรู SPD +14%',effects:{enemyAtk:1,enemyHp:1,enemyDef:1,enemySpd:1.14}}
+        : modRoll < .75
+          ? {id:'dungeon_strike',title:'สุ่มทีมจู่โจม',desc:'ศัตรู ATK +12%',effects:{enemyAtk:1.12,enemyHp:1,enemyDef:1,enemySpd:1}}
+          : {id:'dungeon_balanced',title:'สุ่มทีมสมดุล',desc:'ศัตรูค่าสเตตัสสมดุล',effects:{enemyAtk:1,enemyHp:1,enemyDef:1,enemySpd:1}};
     return {
       id:100000 + (G().dungeons||[]).findIndex(x=>x.id===id) + 1,
       dungeonId:id,
@@ -1315,11 +1366,12 @@ window.GameState = (() => {
       title:d.title,
       area:'Daily Dungeon',
       isBoss:true,
-      modifier:{id:'dungeon',title:d.title,desc:d.desc,effects:{enemyAtk:1,enemyHp:1,enemyDef:1,enemySpd:1}},
-      bossSkill:{id:'dungeon_keeper',title:'Dungeon Keeper',desc:'ศัตรูปรับระดับตามด่านสูงสุดของผู้เล่น',effects:{bossHp:1.15,bossAtk:1.06}},
-      enemyCount:4,
-      power:Math.round(560 * scale * 4.2),
+      modifier:mod,
+      bossSkill:{id:'dungeon_keeper',title:'Random Keeper',desc:'ทีมศัตรูสุ่มตามพลังผู้เล่น ไม่ง่ายตายตัว',effects:{bossHp:1.08,bossAtk:1.04}},
+      enemyCount,
+      power:targetPower,
       enemyScale:scale,
+      dungeonRandom:true,
       firstReward:{},repeatReward:{},
       dungeon:d,
     };
@@ -1453,6 +1505,22 @@ window.GameState = (() => {
     return {ok:true,msg,detail};
   }
 
+
+  function shopPurchaseMany(id, count=1){
+    count = count === 'max' ? 'max' : Math.max(1, Math.floor(Number(count || 1)));
+    let bought = 0;
+    let last = null;
+    const maxLoops = count === 'max' ? 9999 : count;
+    for(let i=0; i<maxLoops; i++){
+      const r = shopPurchase(id);
+      if(!r.ok){ last = r; break; }
+      bought++;
+      last = r;
+    }
+    if(!bought) return last || {ok:false,msg:'ซื้อไม่ได้'};
+    return {ok:true,count:bought,msg:`ซื้อสำเร็จ ${bought} ครั้ง${last?.msg ? ' | ล่าสุด: '+last.msg : ''}`};
+  }
+
   function achievementProgress(a){
     if(!a) return 0;
     if(a.check === 'stage') return state.campaign.highestCleared || 0;
@@ -1515,11 +1583,11 @@ window.GameState = (() => {
   return {
     get state(){ return state; }, load, save, reset, exportSaveText, importSaveText, fmt, todayKey, grantDailyLoginReward,
     heroDef, stageDef, rarityDef, heroStats, previewRebirth, previewStar, rebirthMultiplier, formationBonus, teamPower, maxHeroLevel, expToNext, battleExpForStage, levelCost, rebirthCost, rebirthHero, starCost, shardsNeeded,
-    addHero, starterRecruit, gacha, autoTeam, autoTeamStyle, levelUp, levelUpMany, upgradeOneHero, bulkUpgradeTeamToCap, setSelectedHero, starUp, bulkStarUpAll, bulkRebirthAll, autoUpgrade, equipBest, autoSellLow, autoFusionLow, saveTeamPreset, loadTeamPreset, teamPresetPower,
+    addHero, starterRecruit, gacha, gachaAll, autoTeam, autoTeamStyle, levelUp, levelUpMany, upgradeOneHero, bulkUpgradeTeamToCap, setSelectedHero, starUp, bulkStarUpAll, bulkRebirthAll, autoUpgrade, equipBest, autoSellLow, autoFusionLow, saveTeamPreset, loadTeamPreset, teamPresetPower,
     isFavorite, toggleFavorite, codexSeen, setLastBattle, backupNow, exportBackupText,
     fusionPreview, toggleFusion, clearFusion, doFusion, autoFusion, rarityRank,
     selectedStage, selectStage, completeStage, dungeonDef, dungeonRunsLeft, dungeonStage, dungeonReward, completeDungeon, stageEnemyPower,
     makeEquipment, randomEquipment, getEquipment, idlePreview, claimIdle,
-    questProgress, questClaim, shopPurchase, achievementProgress, achievementClaim, codexRewardProgress, codexRewardClaim, nextGoal, resourceText
+    questProgress, questClaim, shopPurchase, shopPurchaseMany, achievementProgress, achievementClaim, codexRewardProgress, codexRewardClaim, nextGoal, resourceText
   };
 })();

@@ -111,12 +111,25 @@ window.BattleSim = (() => {
 
   function makeEnemies(stage){
     const enemies=[];
+    const dungeon = stage.dungeonRandom || stage.dungeon;
     if(stage.isBoss){
-      const bossT = D().bossTemplates[Math.floor((stage.id/5-1) % D().bossTemplates.length)];
+      let bossT;
+      if(dungeon){
+        const preferred = D().bossTemplates.filter(t=>!stage.dungeon?.element || t.element===stage.dungeon.element || t.role===stage.dungeon.role);
+        bossT = pick(preferred.length ? preferred : D().bossTemplates);
+      } else {
+        bossT = D().bossTemplates[Math.floor((stage.id/5-1) % D().bossTemplates.length)];
+      }
       enemies.push(scaleEnemy(bossT, stage, 0));
     }
     while(enemies.length < stage.enemyCount){
-      const t = D().enemyTemplates[(stage.id + enemies.length*2) % D().enemyTemplates.length];
+      let t;
+      if(dungeon){
+        const pool = D().enemyTemplates.filter(x=>Math.random()<.35 || x.element===stage.dungeon?.element || x.role===stage.dungeon?.role);
+        t = pick(pool.length ? pool : D().enemyTemplates);
+      } else {
+        t = D().enemyTemplates[(stage.id + enemies.length*2) % D().enemyTemplates.length];
+      }
       enemies.push(scaleEnemy(t, stage, enemies.length));
     }
     enemies.forEach(e=>e.hp=e.maxHp);
