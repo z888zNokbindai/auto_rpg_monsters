@@ -1123,9 +1123,9 @@ window.UI = (() => {
           <div class="summon-grid-v43">
             <button class="btn primary" data-action="gacha1">🔮 x1</button>
             <button class="btn primary" data-action="gacha10">🔮 x10</button>
-            <button class="btn amber" data-action="gacha100">🔮 x100</button>
-            <button class="btn amber" data-action="gacha1000">🔮 x1000</button>
-            <button class="btn green wide" data-action="gachaAll">🔮 อัญเชิญจนหมด</button>
+            <button class="btn amber" data-action="gacha100" ${available>=100?'':'disabled'}>🔮 x100</button>
+            <button class="btn amber" data-action="gacha1000" ${available>=1000?'':'disabled'}>🔮 x1000</button>
+            <button class="btn green wide" data-action="gachaAll" ${available>0?'':'disabled'}>🔮 อัญเชิญจนหมด</button>
           </div>
           <p class="muted">Pity Rare ${S().state.gacha.rarePity||0}/10 | Epic ${S().state.gacha.epicPity}/50 | Legendary ${S().state.gacha.legendPity}/200</p>
         </section>
