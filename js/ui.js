@@ -35,6 +35,33 @@ window.UI = (() => {
   }
   function currentScreen(){ return S().state.screen || 'home'; }
 
+  function toggleSidebar(){
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if(sidebar && overlay){
+      sidebar.classList.toggle('hidden');
+      overlay.classList.toggle('hidden');
+    }
+  }
+
+  function closeSidebar(){
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if(sidebar && overlay){
+      sidebar.classList.add('hidden');
+      overlay.classList.add('hidden');
+    }
+  }
+
+  function openSidebar(){
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if(sidebar && overlay){
+      sidebar.classList.remove('hidden');
+      overlay.classList.remove('hidden');
+    }
+  }
+
   function syncBattleOverlayMode(){
     const overlay = document.getElementById('battleOverlay');
     if(!overlay) return;
@@ -93,7 +120,8 @@ window.UI = (() => {
     const s = S().state;
     return `
       <div class="top-hud">
-        <div class="brand-row">
+        <button class="menu-toggle" data-action="toggleSidebar">☰</button>
+        <div class="brand-row" style="padding-left:50px;">
           <div class="logo">
             <div class="logo-mark">🩸</div>
             <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V44</small></div>
@@ -121,11 +149,24 @@ window.UI = (() => {
       </div>`;
   }
 
-  function nav(){
+  function sidebarNav(){
     const items = [
-      ['home','🏚️','ฐาน'],['shortcuts','⚡','เมนูลัด'],['battle','⚔️','ลุย'],['dungeon','🕳️','ดันเจี้ยน'],['team','🛡️','ทีม'],['fusion','🧬','ผสม'],['gacha','🔮','อัญเชิญ'],['shop','🛒','ร้าน'],['heroes','📦','คลัง'],['codex','📖','ตำรา'],['manual','📜','คู่มือ']
+      ['home','🏚️','ฐาน'],['shortcuts','⚡','เมนูลัด'],['battle','⚔️','ลุย'],
+      ['dungeon','🕳️','ดันเจี้ยน'],['team','🛡️','ทีม'],['fusion','🧬','ผสม'],
+      ['gacha','🔮','อัญเชิญ'],['shop','🛒','ร้าน'],['heroes','📦','คลัง'],
+      ['codex','📖','ตำรา'],['manual','📜','คู่มือ']
     ];
-    return `<nav class="bottom-nav">${items.map(([id,ic,tx])=>`<button class="nav-btn ${currentScreen()===id?'active':''}" data-screen="${id}"><i>${ic}</i><span>${tx}</span></button>`).join('')}</nav>`;
+    const cur = currentScreen();
+    return items.map(([id,ic,tx])=>
+      `<button class="sidebar-btn ${cur===id?'active':''}" data-screen="${id}" data-action="closeSidebar">
+        <i>${ic}</i><span>${tx}</span>
+      </button>`
+    ).join('');
+  }
+
+  function nav(){
+    // Hide bottom nav - now using sidebar
+    return '';
   }
 
   function teamMini(){
@@ -1469,6 +1510,11 @@ window.UI = (() => {
     const screen = currentScreen();
     const map = {home, shortcuts:shortcutsScreen, battle:battleScreen, dungeon:dungeonScreen, team:teamScreen, fusion:fusionScreen, gacha:gachaScreen, shop:shopScreen, heroes:heroesScreen, codex:codexScreen, manual:manualScreen};
     app().innerHTML = hud() + (map[screen]||home)() + nav() + monsterActionSheet();
+    
+    // Update sidebar navigation
+    const sidebarNavEl = document.getElementById('sidebarNav');
+    if(sidebarNavEl) sidebarNavEl.innerHTML = sidebarNav();
+    
     bind();
     syncBattleOverlayMode();
   }
@@ -1486,9 +1532,11 @@ window.UI = (() => {
   }
 
   function handleAction(action, data, btn){
-    const safeWhileBattle = new Set(['setSpeed','speed','stopAuto','save','exportSave','copyExport','exportBackup','setFarmStop','setLogMode','setHeroFilter','setHeroSort','applyHeroSearch','clearHeroSearch','openMonsterMenu','closeMonsterMenu']);
+    const safeWhileBattle = new Set(['setSpeed','speed','stopAuto','save','exportSave','copyExport','exportBackup','setFarmStop','setLogMode','setHeroFilter','setHeroSort','applyHeroSearch','clearHeroSearch','openMonsterMenu','closeMonsterMenu','toggleSidebar','closeSidebar']);
     if(battleRunning && !safeWhileBattle.has(action)) return toast('กำลังต่อสู้อยู่: ดูหน้าอื่นได้ แต่ยังแก้ทีม/อัปเกรด/ผสมไม่ได้จนจบไฟต์');
     switch(action){
+      case 'toggleSidebar': toggleSidebar(); break;
+      case 'closeSidebar': closeSidebar(); break;
       case 'save': S().save(); toast('บันทึกเกมแล้ว'); break;
       case 'setSpeed': { const v=Number(data.speedValue || data.speed || 1); S().state.settings.battleSpeed=v; battleSpeed=v; S().save(); toast(v===20?'เปิดข้ามไว x20 แล้ว':v===50?'เปิดฟาร์ม x50 แล้ว':`ตั้งความเร็วต่อสู้ ${v}x แล้ว`); render(); break; }
       case 'autoTeam': S().autoTeam(); toast('จัดทีมสมดุลแล้ว'); render(); break;
@@ -1933,5 +1981,5 @@ window.UI = (() => {
     if(stopBtnEnd) stopBtnEnd.classList.add('hidden');
   }
 
-  return { render, toast, setScreen };
+  return { render, toast, setScreen, openSidebar };
 })();

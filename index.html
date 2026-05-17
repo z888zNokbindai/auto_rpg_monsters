@@ -12,6 +12,22 @@
 <body>
   <div id="app" class="app-shell"></div>
 
+  <!-- Sidebar Navigation -->
+  <div id="sidebarOverlay" class="sidebar-overlay hidden" data-action="closeSidebar"></div>
+  <aside id="sidebar" class="sidebar hidden">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-mark">🩸</div>
+        <div><h1>Abyss Grimoire</h1><small>Dark Fantasy RPG V44</small></div>
+      </div>
+      <button class="btn small ghost" data-action="closeSidebar">✕</button>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-footer">
+      <button class="btn small ghost" data-action="save">💾 Save</button>
+    </div>
+  </aside>
+
   <div id="toastHost" class="toast-host"></div>
 
   <div id="battleOverlay" class="battle-overlay hidden">
