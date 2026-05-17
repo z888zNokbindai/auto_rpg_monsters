@@ -470,5 +470,35 @@ window.GameData = (() => {
     {id:'f100',from:['void_tick','void_emperor'],result:'astral_lich',title:'เห็บสูญญะกลืนจักรพรรดิ',note:'ทางเสี่ยงสู่ Lich ดารา'},
   ];
 
-  return { rarities, elements, roles, heroes, enemyTemplates, bossTemplates, equipmentTypes, equipmentRarities, gearSets, stages:buildStages(), dungeons, formationBonuses, passiveDefs, loginRewards7, dailyQuests, achievements, shopItems, codexRewards, fusionRecipes };
+  return { 
+    rarities, 
+    elements, 
+    roles, 
+    heroes, 
+    enemyTemplates, 
+    bossTemplates, 
+    equipmentTypes, 
+    equipmentRarities, 
+    gearSets, 
+    stages:buildStages(), 
+    dungeons, 
+    formationBonuses, 
+    passiveDefs, 
+    loginRewards7, 
+    dailyQuests, 
+    achievements, 
+    shopItems, 
+    codexRewards, 
+    fusionRecipes,
+    getElementRelation: (att, def) => {
+      if(att === def) return 'neutral';
+      const e = elements[att];
+      if(!e) return 'neutral';
+      if(e.strong === def) return 'strong';
+      if(e.weak === def) return 'weak';
+      return 'neutral';
+    },
+    getElementIcon: (el) => elements[el]?.icon || '⚪',
+    getElementLabel: (el) => elements[el]?.label || el
+  };
 })();

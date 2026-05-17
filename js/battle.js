@@ -13,6 +13,26 @@ window.BattleSim = (() => {
     if(e.weak === def.element) return .72;
     return 1;
   }
+  
+  function getElementRelation(attElement, defElement){
+    if(attElement === defElement) return 'neutral';
+    const e = D().elements[attElement];
+    if(!e) return 'neutral';
+    if(e.strong === defElement) return 'strong';
+    if(e.weak === defElement) return 'weak';
+    return 'neutral';
+  }
+  
+  function getElementIcon(element){
+    const e = D().elements[element];
+    return e ? e.icon : '⚪';
+  }
+  
+  function getElementLabel(element){
+    const e = D().elements[element];
+    return e ? e.label : element;
+  }
+  
   function isWeak(att,target){ return elementMult(att,target) > 1.01; }
   function isResist(att,target){ return elementMult(att,target) < .99; }
 
@@ -28,13 +48,15 @@ window.BattleSim = (() => {
     const miss = Math.random() < clamp(baseMiss, .04, .18);
     let crit = !miss && Math.random() < (att.crit || .08);
     if(crit) dmg *= 1.65;
+    const relation = getElementRelation(att.element, target.element);
     return {
       amount: miss ? 0 : Math.max(12, Math.round(dmg)),
       crit,
       miss,
       weak: !miss && affinity > 1.01,
       resist: !miss && affinity < .99,
-      affinity
+      affinity,
+      elementRelation: relation
     };
   }
 
@@ -145,6 +167,12 @@ window.BattleSim = (() => {
     }
     return {allies:allies.map(mini), enemies:enemies.map(mini), ...extra};
   }
+  
+  function renderElementRelation(relation){
+    if(relation === 'strong') return '<span class="elem-relation strong">🔥ได้เปรียบ</span>';
+    if(relation === 'weak') return '<span class="elem-relation weak">❄️เสียเปรียบ</span>';
+    return '';
+  }
 
   function pressLabel(press){
     if(!press) return '';
@@ -228,7 +256,7 @@ window.BattleSim = (() => {
     logEvent(events, allies, enemies, {
       type:d.weak?'weak':d.crit?'crit':d.resist?'resist':'damage', icon:actor.icon, title,
       text:`${actor.name} ใส่ ${target.name} -${amount}${detail}`,
-      actor:actor.uid,target:target.uid,amount,crit:d.crit,weak:d.weak,resist:d.resist
+      actor:actor.uid,target:target.uid,amount,crit:d.crit,weak:d.weak,resist:d.resist,elementRelation:d.elementRelation
     }, press);
     return {...d, amount, kind:d.weak?'weak':d.crit?'crit':d.resist?'resist':'normal'};
   }

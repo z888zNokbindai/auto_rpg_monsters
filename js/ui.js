@@ -1810,7 +1810,7 @@ window.UI = (() => {
   function unitHtml(u){
     const hpPct = Math.max(0,Math.round(u.hp/u.maxHp*100));
     return `<div class="combat-unit rarity-${u.rarity || (u.side==='enemy'?'Enemy':'Common')} ${u.dead?'dead':''}" data-cuid="${u.uid}">
-      <div class="cu-head"><div class="cu-icon">${u.icon}</div><div class="cu-title"><div class="cu-name">${h(u.name)} ${u.rarity&&u.rarity!=='Enemy'?rarityBadge(u.rarity):''}</div><div class="cu-tags">Lv.${u.level||1} ★${u.stars||1} ${D().elements[u.element]?.icon||''} ${u.stun?'💫':''}${u.poison?'☠️':''}${u.burn?'🔥':''}</div></div></div>
+      <div class="cu-head"><div class="cu-icon">${u.icon}</div><div class="cu-title"><div class="cu-name">${h(u.name)} ${u.rarity&&u.rarity!=='Enemy'?rarityBadge(u.rarity):''}</div><div class="cu-tags">Lv.${u.level||1} ★${u.stars||1} <span class="elem-badge elem-${u.element||''}">${D().elements[u.element]?.icon||'⚪'}</span> ${u.stun?'💫':''}${u.poison?'☠️':''}${u.burn?'🔥':''}</div></div></div>
       <div class="bar"><i style="width:${hpPct}%"></i></div>
       <div class="bar energy"><i style="width:${Math.round(u.energy||0)}%"></i></div>
       <div class="cu-hp">HP ${Math.max(0,u.hp)}/${u.maxHp}</div>
@@ -1913,7 +1913,10 @@ window.UI = (() => {
       const mode = S().state.settings?.logMode || 'full';
       const showRow = mode === 'full' || (mode === 'skill' && ['skill','weak','crit','win','lose','boss','modifier'].includes(ev.type)) || (mode === 'result' && ['win','lose','start'].includes(ev.type));
       if(mode !== 'hidden' && showRow){
-        const row=document.createElement('div'); row.textContent=eventLine; log.prepend(row);
+        const elemRel = ev.elementRelation ? window.BattleSim.renderElementRelation(ev.elementRelation) : '';
+        const row=document.createElement('div'); 
+        row.innerHTML = eventLine + (elemRel ? ' ' + elemRel : '');
+        log.prepend(row);
         if(log.children.length>18) log.lastChild.remove();
       }
       if(ev.target){

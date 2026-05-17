@@ -1571,3 +1571,62 @@ body{background:linear-gradient(180deg,#080a10,#0b0f18 45%,#07090f)!important;co
 .battle-advice-block{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.battle-next-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .shortcut-card.primary-card{border-color:rgba(241,195,109,.55);background:linear-gradient(180deg,rgba(93,67,30,.8),rgba(45,31,22,.9));}
 @media(max-width:720px){.analysis-grid{grid-template-columns:1fr}.fusion-help-row{align-items:flex-start;flex-direction:column}.fusion-help-row .btn{width:100%}.goal-progress{grid-template-columns:1fr}.goal-progress .btn{width:100%}.smart-list.compact{grid-template-columns:1fr}.battle-next-actions .btn{flex:1 1 46%;}.compact-shop-grid{grid-template-columns:1fr}.smart-suggest span,.battle-advice-block span{font-size:.78rem}}
+
+/* V45: Element Relation Display */
+.elem-relation {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 6px;
+  animation: elemPulse 0.4s ease-out;
+}
+.elem-relation.strong {
+  background: rgba(34, 197, 94, 0.18);
+  color: #8df0aa;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+.elem-relation.weak {
+  background: rgba(239, 68, 68, 0.18);
+  color: #ff9898;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+@keyframes elemPulse {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+#battleLog .hit { animation: unitHit 0.25s ease-out; }
+#battleLog .heal { animation: unitHeal 0.25s ease-out; }
+
+@keyframes unitHit {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+@keyframes unitHeal {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+/* Element badges on combat units */
+.elem-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 11px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.elem-Fire { background: rgba(239, 68, 68, 0.25); border-color: rgba(239, 68, 68, 0.45); }
+.elem-Water { background: rgba(59, 130, 246, 0.25); border-color: rgba(59, 130, 246, 0.45); }
+.elem-Nature { background: rgba(34, 197, 94, 0.25); border-color: rgba(34, 197, 94, 0.45); }
+.elem-Light { background: rgba(251, 191, 36, 0.25); border-color: rgba(251, 191, 36, 0.45); }
+.elem-Dark { background: rgba(107, 114, 128, 0.35); border-color: rgba(148, 163, 184, 0.45); }
