@@ -1,6 +1,6 @@
-const CACHE_NAME = 'abyss-grimoire-v44-smart-assist-cache-v1';
+const CACHE_NAME = 'abyss-grimoire-v44-friendly-ui-cache-v2';
 const ASSETS = [
-  './', './index.html', './style.css', './manifest.json',
+  './', './index.html', './style.css', './theme-friendly.css', './manifest.json',
   './js/data.js', './js/state.js', './js/battle.js', './js/ui.js', './js/main.js',
   './icons/icon-192.png', './icons/icon-512.png'
 ];
